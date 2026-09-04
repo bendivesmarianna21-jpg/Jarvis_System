@@ -1,6 +1,9 @@
 import datetime
 import json
+import smtplib
 import sqlite3
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import urllib.request
 import streamlit as st
 
@@ -119,19 +122,6 @@ def init_db():
             ),
         ),
     )
-    c.execute(
-        "INSERT INTO gmail_cache (timestamp, sender, subject, snippet) VALUES"
-        " (?, ?, ?, ?)",
-        (
-            str(datetime.datetime.now()),
-            "telc gGmbH",
-            "Resultados examen telc Deutsch B2",
-            (
-                "Estimada participante, su puntaje en el módulo oral es de 67"
-                " puntos."
-            ),
-        ),
-    )
     conn.commit()
 
   conn.close()
@@ -166,7 +156,6 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Identidad y datos biográficos
     if any(
         w in q_lower
         for w in [
@@ -185,7 +174,6 @@ class JarvisMind:
           " cuentas con nacionalidad peruana (registrado en Central Command)."
       )
 
-    # Consulta en caché de Gmail si se pregunta por correos
     if any(
         w in q_lower for w in ["correo", "gmail", "mensaje", "bandeja", "mail"]
     ):
@@ -208,7 +196,6 @@ class JarvisMind:
       except Exception as e:
         return f"Error al consultar caché de correo: {e}"
 
-    # Búsqueda general en documentos y legales
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -241,7 +228,6 @@ class JarvisMind:
     except Exception:
       pass
 
-    # IA Rápida
     api_key_to_use = api_key_override.strip()
     if not api_key_to_use:
       try:
@@ -272,7 +258,6 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-# Clima dinámico en vivo
 live_temp = "21.5°C"
 try:
   url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
@@ -283,12 +268,11 @@ try:
 except Exception:
   pass
 
-# Interfaz HUD Principal
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
+        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">SATURDAY, 05 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
     </div>
     <script>
         function updateClock() {{
@@ -316,9 +300,6 @@ clock_html = f"""
 st.components.v1.html(clock_html, height=30)
 st.markdown("---")
 
-# ==========================================
-# SECCIONES TÁCTICAS (PESTAÑAS DE CONTROL)
-# ==========================================
 tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_memoria = (
     st.tabs([
         "[CONSOLE] CENTRAL COMMAND",
@@ -343,9 +324,9 @@ with tab_consola:
                 - Autonomía Cognitiva: ACTIVA<br>
                 - Módulo de Visión AI: SEGURO<br>
                 - Gestor de Comunicaciones: ACTIVO<br><br>
-                <b>CRONOGRAMA (LUNES):</b><br>
-                - [!] Examen de Alemán (Mañana)<br>
-                - [!] Llegada Au Pair Safira (Tarde)
+                <b>CRONOGRAMA:</b><br>
+                - [!] Examen de Alemán (Próximo)<br>
+                - [!] Ausbildungsbeginn (St. Joseph)
             </div>
         """,
         unsafe_allow_html=True,
@@ -446,10 +427,7 @@ with tab_docs:
       except Exception as e:
         st.error(f"Error de almacenamiento: {e}")
     else:
-      st.warning(
-          "Por favor, ingresa un título y proporciona el contenido fotográfico o"
-          " escrito."
-      )
+      st.warning("Por favor, ingresa un título y proporciona el contenido.")
 
   st.markdown("---")
   st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
@@ -610,44 +588,99 @@ with tab_legal:
     st.error(f"Error al cargar expedientes: {e}")
 
 with tab_gmail:
-  st.subheader("GESTIÓN Y REGISTRO DE CORREOS")
-  st.markdown(
-      "Añade de forma rápida cualquier notificación o correo importante a tu"
-      " central de mandos:"
+  st.subheader("GESTIÓN Y ENVÍO DE CORREOS")
+
+  action_mode = st.radio(
+      "Selecciona la operación de correo:",
+      ["Registrar / Guardar Notificación", "Enviar Correo a Destinatario"],
   )
 
-  with st.form("mail_form"):
-    mail_sender = st.text_input(
-        "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
-    )
-    mail_subject = st.text_input("Asunto del correo:")
-    mail_snippet = st.text_area("Contenido o extracto principal:")
-    mail_submit = st.form_submit_button(
-        "REGISTRAR CORREO EN BANDEJA", use_container_width=True
-    )
+  if action_mode == "Registrar / Guardar Notificación":
+    st.markdown("Añade cualquier notificación o correo importante a la base de datos:")
+    with st.form("mail_form"):
+      mail_sender = st.text_input(
+          "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
+      )
+      mail_subject = st.text_input("Asunto del correo:")
+      mail_snippet = st.text_area("Contenido o extracto principal:")
+      mail_submit = st.form_submit_button(
+          "REGISTRAR CORREO EN BANDEJA", use_container_width=True
+      )
 
-    if mail_submit and mail_sender and mail_subject:
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-            " VALUES (?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                mail_sender,
-                mail_subject,
-                mail_snippet,
-            ),
-        )
-        conn.commit()
-        conn.close()
-        st.success(
-            "¡Correo registrado correctamente en la bandeja de J.A.R.V.I.S.!"
-        )
-        st.rerun()
-      except Exception as e:
-        st.error(f"Error al registrar correo: {e}")
+      if mail_submit and mail_sender and mail_subject:
+        try:
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
+              " VALUES (?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  mail_sender,
+                  mail_subject,
+                  mail_snippet,
+              ),
+          )
+          conn.commit()
+          conn.close()
+          st.success("¡Correo registrado correctamente en la bandeja!")
+          st.rerun()
+        except Exception as e:
+          st.error(f"Error al registrar correo: {e}")
+  else:
+    st.markdown("Envía un mensaje o correo electrónico a cualquier persona:")
+    with st.form("send_mail_form"):
+      smtp_sender = st.text_input(
+          "Tu Correo (Gmail remitente):",
+          placeholder="tucorreo@gmail.com",
+      )
+      smtp_password = st.text_input(
+          "Contraseña de aplicación de Gmail:",
+          type="password",
+          placeholder="Contraseña de 16 dígitos de Google",
+      )
+      mail_to = st.text_input(
+          "Destinatario:", placeholder="destinatario@correo.com"
+      )
+      mail_title = st.text_input("Asunto:")
+      mail_body = st.text_area("Mensaje:")
+      send_submit = st.form_submit_button(
+          "ENVIAR CORREO ELECTRÓNICO", use_container_width=True
+      )
+
+      if send_submit and smtp_sender and smtp_password and mail_to:
+        try:
+          msg = MIMEMultipart()
+          msg["From"] = smtp_sender
+          msg["To"] = mail_to
+          msg["Subject"] = mail_title
+          msg.attach(MIMEText(mail_body, "plain", "utf-8"))
+
+          server = smtplib.SMTP("smtp.gmail.com", 587)
+          server.starttls()
+          server.login(smtp_sender, smtp_password)
+          server.sendmail(smtp_sender, mail_to, msg.as_string())
+          server.quit()
+
+          st.success(f"¡Correo enviado con éxito a {mail_to}!")
+
+          # Guardar copia en el historial local
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
+              " VALUES (?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  f"Enviado a: {mail_to}",
+                  mail_title,
+                  mail_body,
+              ),
+          )
+          conn.commit()
+          conn.close()
+        except Exception as e:
+          st.error(f"Error al enviar el correo (verifica tu contraseña de aplicación): {e}")
 
   st.markdown("---")
   st.subheader("CORREOS EN BANDEJA CENTRAL")
@@ -660,9 +693,9 @@ with tab_gmail:
 
     if mail_rows:
       for mr in mail_rows:
-        with st.expander(f"[{mr[0]}] {mr[2]} — De: {mr[1]}"):
+        with st.expander(f"[{mr[0]}] {mr[2]} — De/Para: {mr[1]}"):
           st.write(f"**Fecha y Hora:** {mr[1]}")
-          st.write(f"**Contenido / Extracto:** {mr[4]}")
+          st.write(f"**Contenido / Mensaje:** {mr[4]}")
     else:
       st.info("No hay correos registrados actualmente.")
   except Exception as e:
