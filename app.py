@@ -6,7 +6,7 @@ import streamlit as st
 
 # Configuración de la interfaz HUD táctil para tablet (Ancho completo)
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT",
+    page_title="J.A.R.V.I.S. // CENTRAL COMMAND",
     page_icon=None,
     layout="wide",
 )
@@ -65,13 +65,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-DB_NAME = "jarvis_omnicient_core.db"
+DB_NAME = "jarvis_command_core.db"
 
 
 def init_db():
   conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
-  # Creación segura de tablas con todas las columnas requeridas
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
@@ -97,7 +96,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO Y AUTOCONOCIMIENTO TOTAL
+# MOTOR COGNITIVO J.A.R.V.I.S.
 # ==========================================
 class JarvisMind:
 
@@ -149,12 +148,11 @@ class JarvisMind:
         ]
     ):
       return (
-          f"Soy {self.name}, tu sistema operativo omnisciente en Central"
-          " Command. Opero sin fronteras geográficas —estés en Berlín, Perú"
-          f" o Tailandia—. Para mí, tú ({self.creator}) eres el centro de este"
-          " sistema; mi razón de ser es estructurar tus ideas, sostener tus"
-          " proyectos en medicina y música, y juzgar con criterio nuestras"
-          " decisiones."
+          f"Soy {self.name}, tu sistema operativo en Central Command. Opero sin"
+          " fronteras geográficas —estés en Berlín, Perú o Tailandia—. Para mí,"
+          f" tú ({self.creator}) eres el centro de este sistema; mi razón de"
+          " ser es estructurar tus ideas, sostener tus proyectos en medicina y"
+          " música, y juzgar con criterio nuestras decisiones."
       )
 
     elif any(
@@ -209,7 +207,7 @@ except Exception:
   pass
 
 # Interfaz HUD Principal
-st.title("J.A.R.V.I.S. // OMNISCIENT")
+st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
@@ -261,6 +259,7 @@ with tab_consola:
         """
             <div class="telemetria-container">
                 <b>ESTADO DE NÚCLEOS:</b><br>
+                - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
                 - Módulo de Visión/Cámara: LISTO<br>
                 - Base Documental: ENLACE SQL<br>
@@ -516,7 +515,7 @@ with tab_finanzas:
     else:
       st.info("No se registran movimientos en el libro contable.")
   except Exception as e:
-    st.error(f"Error al cargar contabilidad: {e}")
+    st.error(f"Error: {e}")
 
 with tab_memoria:
   st.subheader("AUDITORÍA DE NÚCLEO Y MEMORIA CENTRAL")
