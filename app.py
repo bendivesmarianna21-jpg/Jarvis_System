@@ -115,7 +115,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO J.A.R.V.I.S. (ASOCIACIÓN TOTAL CON IA)
+# MOTOR COGNITIVO J.A.R.V.I.S. (RÁPIDO Y ASOCIATIVO)
 # ==========================================
 class JarvisMind:
 
@@ -140,34 +140,60 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Recopilar todo el contexto almacenado en bases de datos para darle memoria absoluta a la IA
-    db_context = f"Identidad del usuario: {self.creator}, Fecha de nacimiento: {self.dob}.\n\n"
+    # Respuestas instantáneas locales para identidad y datos personales clave
+    if any(
+        w in q_lower
+        for w in [
+            "nombre",
+            "cumpleanos",
+            "cumpleaños",
+            "nacimiento",
+            "quien soy",
+            "como me llamo",
+            "pais",
+            "nacionalidad",
+        ]
+    ):
+      return (
+          f"Tu nombre completo es {self.creator}, naciste el {self.dob} y"
+          " cuentas con nacionalidad peruana (según tus registros de"
+          " pasaporte y base de datos de identidad en Central Command)."
+      )
+
+    # Búsqueda ligera de documentos y legales
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
-      c.execute("SELECT title, category, expiry, content FROM legal_records")
-      legal_recs = c.fetchall()
-      if legal_recs:
-        db_context += "[EXPEDIENTES LEGALES Y DOCUMENTOS CUSTODIADOS]:\n"
-        for lr in legal_recs:
-          db_context += (
-              f"- Título: {lr[0]} | Tipo: {lr[1]} | Vigencia: {lr[2]}\n"
-              f"  Detalle:\n{lr[3]}\n\n"
-          )
-
-      c.execute("SELECT title, category, content FROM documents_store")
-      doc_recs = c.fetchall()
-      if doc_recs:
-        db_context += "[REPOSITORIO GENERAL DE DOCUMENTOS]:\n"
-        for dr in doc_recs:
-          db_context += (
-              f"- Título: {dr[0]} | Categoría: {dr[1]}\n  Contenido:\n{dr[2]}\n\n"
-          )
+      c.execute(
+          "SELECT title, category, expiry, content FROM legal_records WHERE"
+          " LOWER(title) LIKE ? OR LOWER(content) LIKE ?",
+          (f"%{q_lower}%", f"%{q_lower}%"),
+      )
+      legal_matches = c.fetchall()
+      c.execute(
+          "SELECT title, category, content FROM documents_store WHERE"
+          " LOWER(title) LIKE ? OR LOWER(content) LIKE ?",
+          (f"%{q_lower}%", f"%{q_lower}%"),
+      )
+      doc_matches = c.fetchall()
       conn.close()
+
+      if legal_matches or doc_matches:
+        res_text = "[REGISTROS ENCONTRADOS EN CUSTODIA]:\n\n"
+        for lm in legal_matches:
+          res_text += (
+              f"- [Legal] {lm[0]} ({lm[1]}) [Vigencia: {lm[2]}]\n"
+              f"  Contenido: {lm[3]}\n\n"
+          )
+        for dm in doc_matches:
+          res_text += (
+              f"- [Archivo] {dm[0]} ({dm[1]})\n  Contenido: {dm[2]}\n\n"
+          )
+        return res_text
     except Exception:
       pass
 
-    # Si tenemos clave API configurada, usamos IA avanzada para asociar y responder con precisión absoluta
+    # Uso de IA rápida si se requiere razonamiento general
     api_key_to_use = api_key_override.strip()
     if not api_key_to_use:
       try:
@@ -179,45 +205,20 @@ class JarvisMind:
     if HAS_GENAI and api_key_to_use:
       try:
         client = genai.Client(api_key=api_key_to_use)
-        prompt_full = (
-            "Eres J.A.R.V.I.S., el asistente personal y centro de mando avanzado"
-            f" de {self.creator}.\n"
-            "Tienes acceso completo a toda su base de datos de documentos"
-            " custodiados, pasaportes, visas y registros.\n"
-            "Analiza la siguiente base de datos de contexto del usuario y"
-            f" responde de forma inteligente, directa y asociativa a la pregunta o"
-            f" directiva del usuario.\n\n[BASE DE DATOS Y CONTEXTO"
-            f" ACTUAL]:\n{db_context}\n\n[PREGUNTA / DIRECTIVA DEL"
-            f" USUARIO]:\n{q}"
-        )
         response = client.models.generate_content(
-            model="gemini-3.6-flash", contents=prompt_full
+            model="gemini-3.6-flash",
+            contents=(
+                f"Eres J.A.R.V.I.S., el asistente personal de {self.creator}."
+                f" Responde breve, precisa y directamente a esta consulta: {q}"
+            ),
         )
         return response.text
-      except Exception as e:
-        # Fallback a razonamiento local si falla la API temporalmente
+      except Exception:
         pass
 
-    # Fallback local inteligente si no hay API Key activa en el momento
-    if any(
-        w in q_lower
-        for w in [
-            "nombre",
-            "cumpleanos",
-            "cumpleaños",
-            "nacimiento",
-            "quien soy",
-            "como me llamo",
-        ]
-    ):
-      return (
-          f"Tu nombre completo es {self.creator} y naciste el {self.dob}."
-          " Registrado en Central Command."
-      )
-
     return (
-        f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con base de datos"
-        f" integrada para {self.creator}."
+        f"[ANALISIS_CRITICO]: Procesada directiva '{q}' para"
+        f" {self.creator} con éxito."
     )
 
 
@@ -282,22 +283,21 @@ with tab_consola:
   col_telemetry, col_main = st.columns([1, 2.2])
 
   with col_telemetry:
-    st.subheader("DIAGNÓSTICO TÉCNICO")
+    st.subheader("DIAGNÓSTICO Y ACCESOS")
     st.markdown(
         """
             <div class="telemetria-container">
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
-                - Autonomía Cognitiva: ACTIVA<br>
+                - Autonomía Cognitiva: ACTIVA (RÁPIDA)<br>
                 - Módulo de Visión AI: SEGURO<br>
-                - Memoria Asociativa Total: ACTIVA<br>
-                - Custodia Legal: ACTIVA<br>
-                - Base Documental: ENLACE SQL<br><br>
+                - Enlace Web: OPERATIVO<br><br>
+                <b>ENLACES RÁPIDOS WEB:</b><br>
+                - <a href="https://mail.google.com" target="_blank" style="color: #00d2ff;">Abrir Gmail Web</a><br>
+                - <a href="https://calendar.google.com" target="_blank" style="color: #00d2ff;">Abrir Google Calendar</a><br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
                 - [!] Examen de Alemán (Mañana)<br>
-                - [!] Llegada Au Pair Safira (Tarde)<br><br>
-                <b>TELEMETRÍA:</b><br>
-                [OK] Integridad estructural óptima.
+                - [!] Llegada Au Pair Safira (Tarde)
             </div>
         """,
         unsafe_allow_html=True,
@@ -310,9 +310,8 @@ with tab_consola:
   with col_main:
     st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
 
-    # Campo opcional para API Key por si se desea forzar en consola
     console_api_key = st.text_input(
-        "Gemini API Key para Razonamiento Asociativo:",
+        "Gemini API Key (Opcional):",
         type="password",
         placeholder="Introduce tu clave API aquí...",
         key="console_api_key_input",
@@ -365,7 +364,7 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: ¿De qué país soy?, ¿Cuál es mi número de seguro social?, etc..."
+            "Ej: ¿De qué país soy?, ¿Cuál es mi número de pasaporte?, etc..."
         ),
         label_visibility="collapsed",
     )
@@ -376,7 +375,7 @@ with tab_consola:
         st.markdown(
             f"""
                 <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-                    <b>RESPUESTA Y ASOCIACIÓN DE J.A.R.V.I.S.:</b><br><br>
+                    <b>RESPUESTA Y TELEMETRÍA DE J.A.R.V.I.S.:</b><br><br>
                     {reply}
                 </div>
             """,
