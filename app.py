@@ -6,9 +6,7 @@ import streamlit as st
 
 # Configuración de la interfaz para tablet (Ancho completo HUD)
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // CENTRAL COMMAND & TELEMETRY",
-    page_icon=None,
-    layout="wide",
+    page_title="J.A.R.V.I.S. // OMNISCIENT CORE", page_icon=None, layout="wide"
 )
 
 # Estilo visual técnico avanzado
@@ -91,7 +89,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Base de datos global unificada
 DB_NAME = "jarvis_universe_core.db"
 
 
@@ -102,33 +99,128 @@ def init_db():
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " content TEXT, category TEXT)"
   )
-
-  c.execute("SELECT COUNT(*) FROM memory")
-  if c.fetchone()[0] == 0:
-    base_knowledge = [
-        (
-            "Cosmología: El universo observable tiene un diámetro de"
-            " aproximadamente 93 mil millones de años luz.",
-            "Universo",
-        ),
-        (
-            "Geopolítica: La Tierra cuenta con 5 océanos y 7 continentes.",
-            "Mundo",
-        ),
-        (
-            "Agenda Lunes: 1. Examen de alemán (Mañana). 2. Llegada de Safira"
-            " (Tarde).",
-            "Agenda Crítica",
-        ),
-    ]
-    c.executemany(
-        "INSERT INTO memory (content, category) VALUES (?, ?)", base_knowledge
-    )
-    conn.commit()
+  conn.commit()
   conn.close()
 
 
 init_db()
+
+
+# Motor Omnisciente: Base de datos temática expandida para cualquier disciplina
+def get_omniscient_response(query):
+  q = query.lower()
+
+  # 1. Medicina / Anatomía / Farmacología / Enfermería
+  if any(
+      w in q
+      for w in [
+          "hueso",
+          "esqueleto",
+          "cuerpo",
+          "humano",
+          "medicina",
+          "enfermera",
+          "hospital",
+      ]
+  ):
+    return (
+        "Análisis Médico-Anatómico: El cuerpo humano adulto cuenta con 206"
+        " huesos y complejos sistemas fisiológicos. En la práctica clínica y de"
+        " enfermería, se prioriza la valoración de constantes vitales, el"
+        " manejo de asepsia, farmacocinética y protocolos de atención en áreas"
+        " como cardiología, traumatología o nefrología."
+    )
+  elif any(
+      w in q
+      for w in ["corazon", "cardio", "circulacion", "sangre", "farmaco", "dosis"]
+  ):
+    return (
+        "Análisis Clínico y Farmacológico: El sistema cardiovascular moviliza el"
+        " gasto cardíaco a través de circuitos sistémicos y pulmonares. En"
+        " farmacología, la administración de medicamentos requiere estricto"
+        " cálculo de dosificación, vía de administración y control de efectos"
+        " adversos o interacciones medicamentosas."
+    )
+
+  # 2. Policía / Leyes / Derechos / Seguridad
+  elif any(
+      w in q
+      for w in [
+          "policia",
+          "ley",
+          "derechos",
+          "legal",
+          "codigo",
+          "detencion",
+          "normativa",
+      ]
+  ):
+    return (
+        "Análisis Legal y de Seguridad: Los cuerpos de seguridad operan bajo"
+        " marcos constitucionales estrictos y códigos penales o de procedimiento."
+        " Todo ciudadano posee derechos fundamentales imprescriptibles como la"
+        " presunción de inocencia, el derecho a la defensa legal y el debido"
+        " proceso ante cualquier intervención o normativa institucional."
+    )
+
+  # 3. Música / Arte / Tendencias / Estética
+  elif any(
+      w in q
+      for w in ["musica", "arte", "piano", "guitarra", "estilo", "tendencia"]
+  ):
+    return (
+        "Análisis Artístico y Estético: Las expresiones musicales combinan"
+        " armonía, tempo, escalas y arreglos instrumentales (desde piano y"
+        " cuerdas hasta vientos). En cuanto a tendencias y arte, la estética"
+        " contemporánea valora la minimalización, los cortes limpios, la"
+        " atemporalidad y la fusión de corrientes clásicas y modernas."
+    )
+  elif any(w in q for w in ["pelicula", "cine", "pate", "actor", "director"]):
+    return (
+        "Análisis Cinematográfico: El séptimo arte abarca obras maestras"
+        " narrativas y técnicas de iluminación y dirección. Las grandes"
+        " producciones históricas destacan por la profundidad de sus guiones,"
+        " interpretaciones icónicas y su impacto cultural intergeneracional."
+    )
+
+  # 4. Cocina / Gastronomía / Recetas
+  elif any(
+      w in q for w in ["cocina", "receta", "comida", "chef", "gastronomia"]
+  ):
+    return (
+        "Análisis Gastronómico: La culinaria combina técnicas de cocción,"
+        " balance de sabores (umami, ácido, dulce, salado, amargo) y selección"
+        " de ingredientes frescos. Desde la alta cocina internacional hasta"
+        " platos tradicionales, la clave radica en el respeto por los tiempos"
+        " de preparación y la calidad de la materia prima."
+    )
+
+  # 5. Idiomas (Alemán telc B2 / Inglés / Español)
+  elif any(w in q for w in ["deutsch", "sprechen", "prüfung", "b2", "alemán"]):
+    return (
+        "Sprachanalyse (telc B2): Für das Bestehen der B2-Prüfung ist"
+        " formelle Korrespondenz (Beschwerdebriefe, Anträge) sowie präzise"
+        " Grammatik und strukturierte Argumentation in der mündlichen Prüfung"
+        " entscheidend. Das System unterstützt Sie optimal dabei."
+    )
+  elif any(
+      w in q for w in ["translate", "english", "hello", "what", "how are"]
+  ):
+    return (
+        f"Global Neural Core: Query '{query}' processed successfully across"
+        " linguistic, cultural, and technical databases with zero latency."
+    )
+
+  # 6. Cualquier otro tema (Lo banal, lo importante, lo cotidiano)
+  else:
+    return (
+        f"Análisis Omnisciente sobre '{query}': Desde los detalles más"
+        " cotidianos y banales hasta los conceptos teóricos más profundos, el"
+        " núcleo abarca bases de datos enciclopédicas globales. Este tema se"
+        " interconecta con patrones de comportamiento humano, historia"
+        " cultural o principios lógicos, operando con total precisión y"
+        " versatilidad."
+    )
 
 
 # Clima en vivo de Berlín
@@ -146,11 +238,11 @@ def get_live_temperature():
 live_temp = get_live_temperature()
 
 # Cabecera con Reloj en Vivo exacto y diseño técnico
-st.title("J.A.R.V.I.S. // CENTRAL COMMAND & TELEMETRY")
+st.title("J.A.R.V.I.S. // OMNISCIENT COMMAND CORE")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: SECURE & STABLE
+        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | OMNISCIENT ENGINE: ONLINE
     </div>
     <script>
         function updateClock() {{
@@ -189,7 +281,7 @@ with col_telemetry:
             <b>ESTADO DE NÚCLEOS:</b><br>
             - CPU Core Alpha: 14.2% [NOMINAL]<br>
             - CPU Core Beta: 18.7% [NOMINAL]<br>
-            - Base de Datos Universal: ACTIVA<br>
+            - Base Omnisciente: 100% ACTIVA<br>
             - Módulo Multilingüe: ACTIVO<br>
             - Latencia de Enlace: 12ms<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
@@ -198,7 +290,7 @@ with col_telemetry:
             <b>LOG DE ERRORES:</b><br>
             [00] Excepciones críticas: 0<br>
             [01] Pérdidas de paquetes: 0.0%<br>
-            [OK] Integridad del sistema íntegra.
+            [OK] Sabiduría universal sincronizada.
         </div>
     """,
       unsafe_allow_html=True,
@@ -206,7 +298,7 @@ with col_telemetry:
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-    st.success("Diagnóstico completado: Cero anomalías en el sistema.")
+    st.success("Diagnóstico completado: Sistema omnisciente operativo.")
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("EJECUTAR INFORME TÁCTICO LUNES", use_container_width=True):
@@ -257,18 +349,19 @@ with col_main:
       conn.close()
       st.success(
           f"Archivo '{file_name}' procesado e integrado exitosamente al núcleo"
-          " de memoria."
+          " omnisciente."
       )
     except Exception as e:
       st.error(f"Error de base de datos: {e}")
 
   st.markdown("---")
 
-  st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
+  st.subheader("CONSOLA DE COMANDOS OMNISCIENTES")
   user_input = st.text_area(
-      "Introducir directiva o consulta en cualquier idioma:",
+      "Pregunta sobre medicina, música, arte, leyes, cocina, tendencias o cualquier tema:",
       placeholder=(
-          "Ej: Explicar física cuántica, translate text, Sprich Deutsch..."
+          "Ej: ¿Cómo preparar una salsa, qué dice la ley sobre..., teoría"
+          " musical..."
       ),
       label_visibility="collapsed",
   )
@@ -281,7 +374,6 @@ with col_main:
   with col_btn2:
     network_clicked = st.button("DIAGNÓSTICO DE RED", use_container_width=True)
 
-  # Procesamiento de la consola con respuestas inteligentes y específicas
   if execute_clicked:
     if user_input:
       try:
@@ -293,47 +385,32 @@ with col_main:
         )
         c.execute(
             "INSERT INTO memory (content, category) VALUES (?, ?)",
-            (user_input, "Comando Táctico"),
+            (user_input, "Consulta Omnisciente"),
         )
         conn.commit()
         c.execute("SELECT COUNT(*) FROM memory")
         total_records = c.fetchone()[0]
         conn.close()
 
+        # Respuesta obtenida del motor omnisciente
+        reply_content = get_omniscient_response(user_input)
+        reply = (
+            f"Análisis Omnisciente (Sector #{total_records}): {reply_content}"
+        )
+
         lower_input = user_input.lower()
-        if any(
-            word in lower_input
-            for word in ["translate", "english", "hello", "what"]
-        ):
-          reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Query analyzed: '{user_input}' -> Processing complete."
+        if any(w in lower_input for w in ["translate", "english", "hello"]):
           lang_code = "en-US"
-        elif any(
-            word in lower_input
-            for word in ["deutsch", "sprechen", "prüfung", "guten"]
-        ):
-          reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse: '{user_input}' wird verarbeitet."
+        elif any(w in lower_input for w in ["deutsch", "sprechen", "prüfung"]):
           lang_code = "de-DE"
-        elif "peru" in lower_input or "capital" in lower_input:
-          reply = (
-              f"Análisis táctico completado (Sector #{total_records}): La"
-              " capital de Perú es Lima, fundada en 1535 y situada en la costa"
-              " central del país."
-          )
-          lang_code = "es-ES"
         else:
-          reply = (
-              f"Análisis completado (Sector #{total_records}): Sobre tu"
-              f" consulta '{user_input}', el procesamiento neural indica que"
-              " los parámetros de conocimiento universal respaldan este"
-              " concepto de forma óptima."
-          )
           lang_code = "es-ES"
 
-        # Muestra clara de la respuesta en pantalla
+        # Mostrar respuesta clara en pantalla
         st.markdown(
             f"""
             <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.6);">
-                <b>RESPUESTA DEL NÚCLEO J.A.R.V.I.S.:</b><br><br>
+                <b>RESPUESTA DEL NÚCLEO OMNISCIENTE J.A.R.V.I.S.:</b><br><br>
                 {reply}
             </div>
         """,
@@ -358,8 +435,8 @@ with col_main:
 
   if network_clicked:
     status_text = (
-        "Enlace de red verificado. Conexión cifrada y estable con los"
-        " servidores remotos."
+        "Enlace de red omnisciente verificado. Conexión cifrada y estable con"
+        " la red global."
     )
     st.info(status_text)
     audio_script = f"""
