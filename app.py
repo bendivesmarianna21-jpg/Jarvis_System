@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Estilo visual técnico avanzado (Sin líneas blancas, 100% colorimetría neón cian)
+# Estilo visual técnico avanzado
 st.markdown(
     """
     <style>
@@ -72,7 +72,7 @@ st.markdown(
             box-shadow: 0 0 15px rgba(0, 210, 255, 0.6) !important;
         }
 
-        .stAlert {
+        .stAlert, .stSuccess {
             background-color: #050f1d !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
             font-family: 'Courier New', Courier, monospace !important;
@@ -80,7 +80,6 @@ st.markdown(
             color: #00d2ff !important;
         }
         
-        /* Corrección estricta de separadores a colorimetría cian */
         hr {
             border: none !important;
             height: 1px !important;
@@ -104,7 +103,6 @@ def init_db():
       " content TEXT, category TEXT)"
   )
 
-  # Ingesta inicial de datos universales y agenda si está vacía
   c.execute("SELECT COUNT(*) FROM memory")
   if c.fetchone()[0] == 0:
     base_knowledge = [
@@ -234,7 +232,6 @@ with col_telemetry:
     st.components.v1.html(voice_report, height=0)
 
 with col_main:
-  # 1. Ingesta de Documentos y Enlaces
   st.subheader("INGESTA DE DOCUMENTOS Y ENLACES FUENTE")
   uploaded_file = st.file_uploader(
       "Cargar archivo para análisis (TXT, PY, MD, CSV):",
@@ -267,7 +264,6 @@ with col_main:
 
   st.markdown("---")
 
-  # 2. Consola de Comandos Tácticos (Con respuestas complejas, consejos y soporte multilingüe/voz)
   st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
   user_input = st.text_area(
       "Introducir directiva o consulta en cualquier idioma:",
@@ -280,77 +276,91 @@ with col_main:
   col_btn1, col_btn2 = st.columns(2)
 
   with col_btn1:
-    if st.button("EJECUTAR PROTOCOLO", use_container_width=True):
-      if user_input:
-        try:
-          conn = sqlite3.connect(DB_NAME)
-          c = conn.cursor()
-          c.execute(
-              "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY"
-              " AUTOINCREMENT, content TEXT, category TEXT)"
-          )
-          c.execute(
-              "INSERT INTO memory (content, category) VALUES (?, ?)",
-              (user_input, "Comando Táctico"),
-          )
-          conn.commit()
-          c.execute("SELECT COUNT(*) FROM memory")
-          total_records = c.fetchone()[0]
-          conn.close()
-
-          lower_input = user_input.lower()
-          if any(
-              word in lower_input
-              for word in ["translate", "english", "hello", "what"]
-          ):
-            reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Multilingual analysis completed."
-            lang_code = "en-US"
-          elif any(
-              word in lower_input
-              for word in ["deutsch", "sprechen", "prüfung", "guten"]
-          ):
-            reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse abgeschlossen."
-            lang_code = "de-DE"
-          else:
-            reply = f"Protocolo ejecutado con éxito. Registro asignado al sector #{total_records}. Análisis y consejos tácticos generados."
-            lang_code = "es-ES"
-
-          st.success(reply)
-
-          speech_script = f"""
-                    <script>
-                        if ('speechSynthesis' in window) {{
-                            window.speechSynthesis.cancel();
-                            const utterance = new SpeechSynthesisUtterance({reply!r});
-                            utterance.lang = '{lang_code}';
-                            window.speechSynthesis.speak(utterance);
-                        }}
-                    </script>
-                    """
-          st.components.v1.html(speech_script, height=0)
-        except Exception as e:
-          st.error(f"Error al escribir en la base de datos: {e}")
-      else:
-        st.warning("Introduce una directiva válida para procesar.")
+    execute_clicked = st.button("EJECUTAR PROTOCOLO", use_container_width=True)
 
   with col_btn2:
-    if st.button("DIAGNÓSTICO DE RED", use_container_width=True):
-      status_text = (
-          "Enlace de red verificado. Conexión cifrada y estable con los"
-          " servidores remotos."
-      )
-      st.info(status_text)
-      audio_script = f"""
-            <script>
-                if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance({status_text!r});
-                    utterance.lang = 'es-ES';
-                    window.speechSynthesis.speak(utterance);
-                }}
-            </script>
-            """
-      st.components.v1.html(audio_script, height=0)
+    network_clicked = st.button("DIAGNÓSTICO DE RED", use_container_width=True)
+
+  # Procesamiento de la consola con visualización directa de respuesta
+  if execute_clicked:
+    if user_input:
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY"
+            " AUTOINCREMENT, content TEXT, category TEXT)"
+        )
+        c.execute(
+            "INSERT INTO memory (content, category) VALUES (?, ?)",
+            (user_input, "Comando Táctico"),
+        )
+        conn.commit()
+        c.execute("SELECT COUNT(*) FROM memory")
+        total_records = c.fetchone()[0]
+        conn.close()
+
+        lower_input = user_input.lower()
+        if any(
+            word in lower_input
+            for word in ["translate", "english", "hello", "what"]
+        ):
+          reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Response: Query analyzed and processed via global neural parameters."
+          lang_code = "en-US"
+        elif any(
+            word in lower_input
+            for word in ["deutsch", "sprechen", "prüfung", "guten"]
+        ):
+          reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Antwort: Analyse und Vorbereitung aktiv."
+          lang_code = "de-DE"
+        else:
+          reply = f"Protocolo ejecutado con éxito. Registro en sector #{total_records}. Análisis táctico: Directiva asimilada correctamente. Los parámetros operan con estabilidad en la base de datos."
+          lang_code = "es-ES"
+
+        # Muestra clara de la respuesta en pantalla
+        st.markdown(
+            f"""
+            <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.6);">
+                <b>RESPUESTA DEL NÚCLEO J.A.R.V.I.S.:</b><br><br>
+                {reply}
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        speech_script = f"""
+                <script>
+                    if ('speechSynthesis' in window) {{
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance({reply!r});
+                        utterance.lang = '{lang_code}';
+                        window.speechSynthesis.speak(utterance);
+                    }}
+                </script>
+                """
+        st.components.v1.html(speech_script, height=0)
+      except Exception as e:
+        st.error(f"Error al escribir en la base de datos: {e}")
+    else:
+      st.warning("Introduce una directiva válida para procesar.")
+
+  if network_clicked:
+    status_text = (
+        "Enlace de red verificado. Conexión cifrada y estable con los"
+        " servidores remotos."
+    )
+    st.info(status_text)
+    audio_script = f"""
+        <script>
+            if ('speechSynthesis' in window) {{
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance({status_text!r});
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.speak(utterance);
+            }}
+        </script>
+        """
+    st.components.v1.html(audio_script, height=0)
 
 # Sección Inferior: Registros de Memoria y Auditoría Central
 st.markdown("---")
