@@ -139,7 +139,14 @@ def get_central_command_response(query):
     )
   elif any(
       w in q
-      for w:="hueso", "esqueleto", "cuerpo", "humano", "medicina", "enfermera"
+      for w in [
+          "hueso",
+          "esqueleto",
+          "cuerpo",
+          "humano",
+          "medicina",
+          "enfermera",
+      ]
   ):
     return (
         "El cuerpo humano es increíblemente resistente y complejo; esos 206"
@@ -149,7 +156,14 @@ def get_central_command_response(query):
     )
   elif any(
       w in q
-      for w:="policia", "ley", "derechos", "legal", "codigo", "detencion"
+      for w in [
+          "policia",
+          "ley",
+          "derechos",
+          "legal",
+          "codigo",
+          "detencion",
+      ]
   ):
     return (
         "Las leyes y los marcos de seguridad existen para proteger el orden y"
@@ -159,7 +173,7 @@ def get_central_command_response(query):
     )
   elif any(
       w in q
-      for w:="musica", "arte", "piano", "guitarra", "estilo", "tendencia"
+      for w in ["musica", "arte", "piano", "guitarra", "estilo", "tendencia"]
   ):
     return (
         "El arte y la música tienen esa capacidad única de ordenar las"
@@ -168,7 +182,7 @@ def get_central_command_response(query):
         " atemporal, crear algo bello siempre vale la pena."
     )
   elif any(
-      w in q for w:="cocina", "receta", "comida", "chef", "gastronomia"
+      w in q for w in ["cocina", "receta", "comida", "chef", "gastronomia"]
   ):
     return (
         "Cocinar es un arte exacto y sensorial a la vez. El secreto casi"
