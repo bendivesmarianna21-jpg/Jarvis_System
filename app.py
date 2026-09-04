@@ -1,11 +1,10 @@
 import datetime
 import json
-import os
 import sqlite3
 import urllib.request
 import streamlit as st
 
-# Importación segura de Google GenAI y librerías de Google API para Gmail
+# Importación segura de Google GenAI
 try:
   from google import genai
   from google.genai import types
@@ -13,16 +12,6 @@ try:
   HAS_GENAI = True
 except ImportError:
   HAS_GENAI = False
-
-try:
-  from google.auth.transport.requests import Request
-  from google.oauth2.credentials import Credentials
-  from google_auth_oauthlib.flow import InstalledAppFlow
-  from googleapiclient.discovery import build
-
-  HAS_GMAIL_API = True
-except ImportError:
-  HAS_GMAIL_API = False
 
 # Configuración de la interfaz HUD táctil para tablet (Ancho completo)
 st.set_page_config(
@@ -114,16 +103,37 @@ def init_db():
       " TEXT)"
   )
 
-  try:
-    c.execute("ALTER TABLE documents_store ADD COLUMN title TEXT")
-  except Exception:
-    pass
-  try:
-    c.execute("ALTER TABLE documents_store ADD COLUMN category TEXT")
-  except Exception:
-    pass
+  # Datos iniciales si la tabla está vacía
+  c.execute("SELECT COUNT(*) FROM gmail_cache")
+  if c.fetchone()[0] == 0:
+    c.execute(
+        "INSERT INTO gmail_cache (timestamp, sender, subject, snippet) VALUES"
+        " (?, ?, ?, ?)",
+        (
+            str(datetime.datetime.now()),
+            "St. Joseph Krankenhaus Berlin",
+            "Confirmación de inicio de Ausbildung",
+            (
+                "Estimada Marian, le confirmamos la recepción de sus"
+                " documentos para el programa de enfermería."
+            ),
+        ),
+    )
+    c.execute(
+        "INSERT INTO gmail_cache (timestamp, sender, subject, snippet) VALUES"
+        " (?, ?, ?, ?)",
+        (
+            str(datetime.datetime.now()),
+            "telc gGmbH",
+            "Resultados examen telc Deutsch B2",
+            (
+                "Estimada participante, su puntaje en el módulo oral es de 67"
+                " puntos."
+            ),
+        ),
+    )
+    conn.commit()
 
-  conn.commit()
   conn.close()
 
 
@@ -131,7 +141,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO J.A.R.V.I.S. (CON GMAIL INTEGRADO)
+# MOTOR COGNITIVO J.A.R.V.I.S.
 # ==========================================
 class JarvisMind:
 
@@ -186,18 +196,15 @@ class JarvisMind:
         mails = c.fetchall()
         conn.close()
         if mails:
-          res_text = "[CORREOS ELECTRÓNICOS SINCRONIZADOS EN BANDEJA]:\n\n"
+          res_text = "[CORREOS ELECTRÓNICOS REGISTRADOS EN BANDEJA]:\n\n"
           for m in mails:
             res_text += (
-                f"- De: {m[1]} | Asunto: {m[2]}\n  Extracto: {m[3]}\n  Fecha:"
+                f"- De: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n  Fecha:"
                 f" {m[0]}\n\n"
             )
           return res_text
         else:
-          return (
-              "No hay correos sincronizados en la caché local de J.A.R.V.I.S."
-              " Sincroniza tu bandeja desde la pestaña [GMAIL]."
-          )
+          return "No hay correos registrados en la bandeja de J.A.R.V.I.S."
       except Exception as e:
         return f"Error al consultar caché de correo: {e}"
 
@@ -317,7 +324,7 @@ tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_memoria = (
         "[CONSOLE] CENTRAL COMMAND",
         "[ARCHIVE] DOCUMENT REPOSITORY",
         "[LEGAL] EXPEDIENTES Y CREDENCIALES",
-        "[GMAIL] CORREO Y COMUNICACIONES",
+        "[GMAIL] GESTIÓN DE CORREOS",
         "[FINANCE] LEDGER & BUDGET",
         "[TELEMETRY] SYSTEM AUDIT",
     ])
@@ -335,7 +342,7 @@ with tab_consola:
                 - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
                 - Módulo de Visión AI: SEGURO<br>
-                - Gmail API Engine: INTEGRADO<br><br>
+                - Gestor de Comunicaciones: ACTIVO<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
                 - [!] Examen de Alemán (Mañana)<br>
                 - [!] Llegada Au Pair Safira (Tarde)
@@ -357,50 +364,6 @@ with tab_consola:
         placeholder="Introduce tu clave API aquí...",
         key="console_api_key_input",
     )
-
-    voice_html = """
-        <div style="background: rgba(4, 12, 24, 0.9); border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 6px; padding: 12px; margin-bottom: 15px; font-family: 'Courier New', Courier, monospace;">
-            <b style="color: #00d2ff; font-size: 11px;">MÓDULO DE INTERACCIÓN POR VOZ (MICRÓFONO):</b><br><br>
-            <button onclick="startListening()" style="background: #040e1b; color: #00d2ff; border: 1px solid #00d2ff; padding: 8px 14px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-weight: bold; cursor: pointer; text-transform: uppercase;">
-                🎤 Iniciar Dictado por Voz
-            </button>
-            <span id="voice-status" style="margin-left: 10px; font-size: 11px; color: #7ab8ff;">Micrófono en espera...</span>
-            <p id="transcript-output" style="margin-top: 10px; color: #ffffff; font-size: 13px; background: #050f1d; padding: 8px; border-radius: 4px; min-height: 24px; border: 1px dashed rgba(0,210,255,0.3);"></p>
-        </div>
-        <script>
-            function startListening() {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) {
-                    alert("Tu navegador no soporta el reconocimiento de voz nativo. Usa Chrome o Safari.");
-                    return;
-                }
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'es-ES';
-                recognition.interimResults = false;
-                
-                const statusEl = document.getElementById('voice-status');
-                const outputEl = document.getElementById('transcript-output');
-                
-                statusEl.innerText = "Escuchando atentamente...";
-                statusEl.style.color = "#00ffcc";
-                
-                recognition.onresult = function(event) {
-                    const speechToText = event.results[0][0].transcript;
-                    outputEl.innerText = speechToText;
-                    statusEl.innerText = "Dictado capturado con éxito.";
-                    statusEl.style.color = "#7ab8ff";
-                };
-                
-                recognition.onerror = function(event) {
-                    statusEl.innerText = "Error en captura de voz.";
-                    statusEl.style.color = "#ff4444";
-                };
-                
-                recognition.start();
-            }
-        </script>
-    """
-    st.components.v1.html(voice_html, height=145)
 
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
@@ -647,123 +610,47 @@ with tab_legal:
     st.error(f"Error al cargar expedientes: {e}")
 
 with tab_gmail:
-  st.subheader("ENLACE DIRECTO CON GMAIL API")
+  st.subheader("GESTIÓN Y REGISTRO DE CORREOS")
   st.markdown(
-      "Introduce tu **ID de cliente** de Google Cloud para sincronizar tu"
-      " bandeja real:"
+      "Añade de forma rápida cualquier notificación o correo importante a tu"
+      " central de mandos:"
   )
 
-  client_id_input = st.text_input(
-      "Google OAuth Client ID:",
-      placeholder="Ej: 997484032355-xxxxx.apps.googleusercontent.com",
-      key="oauth_client_id_field",
-  )
+  with st.form("mail_form"):
+    mail_sender = st.text_input(
+        "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
+    )
+    mail_subject = st.text_input("Asunto del correo:")
+    mail_snippet = st.text_area("Contenido o extracto principal:")
+    mail_submit = st.form_submit_button(
+        "REGISTRAR CORREO EN BANDEJA", use_container_width=True
+    )
 
-  if st.button("SINCRONIZAR BANDEJA DE GMAIL EN VIVO", use_container_width=True):
-    if client_id_input:
+    if mail_submit and mail_sender and mail_subject:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("DELETE FROM gmail_cache")
-
-        # Conexión real con Gmail API
-        if HAS_GMAIL_API:
-          SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-          creds = None
-          token_path = "token.json"
-
-          if os.path.exists(token_path):
-            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-
-          if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-              creds.refresh(Request())
-            else:
-              # Generación automática de credenciales de cliente para flujo web
-              client_config = {
-                  "web": {
-                      "client_id": client_id_input.strip(),
-                      "client_secret": "dummy_secret",
-                      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                      "token_uri": "https://oauth2.googleapis.com/token",
-                  }
-              }
-              flow = InstalledAppFlow.from_client_config(
-                  client_config,
-                  SCOPES,
-                  redirect_uri=(
-                      "https://jarvissystem-xbccgb7cvmkdgqckjvjzjr.streamlit.app/"
-                  ),
-              )
-              auth_url, _ = flow.authorization_url(
-                  prompt="consent", access_type="offline", include_granted_scopes="true"
-              )
-              st.markdown(
-                  f"**AUTORIZACIÓN REQUERIDA:** Haz clic en el siguiente enlace"
-                  f" para autorizar a J.A.R.V.I.S. en tu cuenta de Google:\n\n[🔗"
-                  f" Autorizar Acceso a Gmail]({auth_url})"
-              )
-
-          if creds and creds.valid:
-            service = build("gmail", "v1", credentials=creds)
-            results = (
-                service.users()
-                .messages()
-                .list(userId="me", maxResults=5)
-                .execute()
-            )
-            messages = results.get("messages", [])
-
-            if messages:
-              for msg in messages:
-                txt = (
-                    service.users()
-                    .messages()
-                    .get(userId="me", id=msg["id"])
-                    .execute()
-                )
-                headers = txt["payload"]["headers"]
-                subject = next(
-                    (h["value"] for h in headers if h["name"] == "Subject"),
-                    "Sin Asunto",
-                )
-                sender = next(
-                    (h["value"] for h in headers if h["name"] == "From"),
-                    "Desconocido",
-                )
-                snippet = txt.get("snippet", "")
-                date_val = next(
-                    (h["value"] for h in headers if h["name"] == "Date"),
-                    str(datetime.datetime.now()),
-                )
-
-                c.execute(
-                    "INSERT INTO gmail_cache (timestamp, sender, subject,"
-                    " snippet) VALUES (?, ?, ?, ?)",
-                    (date_val, sender, subject, snippet),
-                )
-              conn.commit()
-              st.success("¡Bandeja de Gmail sincronizada en vivo con éxito!")
-            else:
-              st.info(
-                  "No se encontraron mensajes recientes en tu bandeja de"
-                  " entrada."
-              )
-        else:
-          st.error(
-              "Las librerías de Gmail API no están completamente instaladas en"
-              " el entorno."
-          )
-
+        c.execute(
+            "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
+            " VALUES (?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                mail_sender,
+                mail_subject,
+                mail_snippet,
+            ),
+        )
+        conn.commit()
         conn.close()
+        st.success(
+            "¡Correo registrado correctamente en la bandeja de J.A.R.V.I.S.!"
+        )
         st.rerun()
       except Exception as e:
-        st.error(f"Error al conectar con Gmail API: {e}")
-    else:
-      st.warning("Por favor, introduce tu ID de cliente de Google Cloud.")
+        st.error(f"Error al registrar correo: {e}")
 
   st.markdown("---")
-  st.subheader("CORREOS EN CACHÉ Y LECTURA EN VIVO")
+  st.subheader("CORREOS EN BANDEJA CENTRAL")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -774,13 +661,10 @@ with tab_gmail:
     if mail_rows:
       for mr in mail_rows:
         with st.expander(f"[{mr[0]}] {mr[2]} — De: {mr[1]}"):
-          st.write(f"**Fecha:** {mr[1]}")
-          st.write(f"**Extracto:** {mr[4]}")
+          st.write(f"**Fecha y Hora:** {mr[1]}")
+          st.write(f"**Contenido / Extracto:** {mr[4]}")
     else:
-      st.info(
-          "No hay correos sincronizados en vivo todavía. Introduce tu ID y"
-          " pulsa sincronizar."
-      )
+      st.info("No hay correos registrados actualmente.")
   except Exception as e:
     st.error(f"Error al cargar correos: {e}")
 
