@@ -39,7 +39,7 @@ st.markdown(
             box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
         }
         
-        .stTextArea textarea, .stTextInput input {
+        .stTextArea textarea, .stTextInput input, .stSelectbox select {
             background-color: #050f1d !important;
             color: #00d2ff !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
@@ -83,6 +83,12 @@ def init_db():
       "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
       " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT)"
   )
+  # Nueva tabla estructurada para expedientes legales, pasaportes y contratos
+  c.execute(
+      "CREATE TABLE IF NOT EXISTS legal_records (id INTEGER PRIMARY KEY"
+      " AUTOINCREMENT, timestamp TEXT, title TEXT, category TEXT, expiry"
+      " TEXT, content TEXT)"
+  )
   conn.commit()
   conn.close()
 
@@ -115,7 +121,6 @@ class JarvisMind:
     except Exception:
       pass
 
-    # 1. Autoconocimiento de Creación Continua
     if any(
         w in q_lower
         for w in [
@@ -134,7 +139,6 @@ class JarvisMind:
           " en cada modificación que programamos juntos."
       )
 
-    # 2. Identidad y Propósito
     elif any(
         w in q_lower
         for w in [
@@ -155,7 +159,6 @@ class JarvisMind:
           " nuestras decisiones."
       )
 
-    # 3. Conocimiento del Usuario (Contexto personal)
     elif any(
         w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
     ):
@@ -167,7 +170,15 @@ class JarvisMind:
           " examen de alemán y la llegada de Safira este lunes."
       )
 
-    # 4. Finanzas y Documentos
+    elif any(
+        w in q_lower for w in ["legal", "pasaporte", "visas", "contratos"]
+    ):
+      return (
+          f"[MODULO_LEGAL]: Los expedientes legales, pasaportes, contratos y"
+          f" documentos de identidad están indexados y protegidos en la pestaña"
+          f" '[LEGAL] EXPEDIENTES Y CREDENCIALES', {self.creator}."
+      )
+
     elif any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
       return (
           f"[MODULO_FINANCIERO]: Consultas e ingresos detallados disponibles en"
@@ -181,7 +192,6 @@ class JarvisMind:
           f" correctamente en la base de datos central, {self.creator}."
       )
 
-    # 5. Análisis Crítico General
     else:
       return (
           f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con perspectiva"
@@ -240,9 +250,10 @@ st.markdown("---")
 # ==========================================
 # SECCIONES TÁCTICAS (PESTAÑAS DE CONTROL)
 # ==========================================
-tab_consola, tab_docs, tab_finanzas, tab_memoria = st.tabs([
+tab_consola, tab_docs, tab_legal, tab_finanzas, tab_memoria = st.tabs([
     "[CONSOLE] CENTRAL COMMAND",
     "[ARCHIVE] DOCUMENT REPOSITORY",
+    "[LEGAL] EXPEDIENTES Y CREDENCIALES",
     "[FINANCE] LEDGER & BUDGET",
     "[TELEMETRY] SYSTEM AUDIT",
 ])
@@ -258,6 +269,7 @@ with tab_consola:
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Autonomía Cognitiva: ACTIVA<br>
                 - Base Documental: ENLACE SQL<br>
+                - Módulo Legal: HABILITADO<br>
                 - Control Financiero: ACTIVO<br>
                 - Conectividad: GLOBAL<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
@@ -279,8 +291,8 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: Quien te creo, consulta mis finanzas, analiza el estado de"
-            " los documentos..."
+            "Ej: Revisa mis pasaportes, consulta contratos, analiza"
+            " finanzas..."
         ),
         label_visibility="collapsed",
     )
@@ -303,7 +315,7 @@ with tab_consola:
 with tab_docs:
   st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS")
   uploaded_file = st.file_uploader(
-      "Subir documento para almacenamiento permanente (TXT, PY, MD, CSV):",
+      "Subir documento general (TXT, PY, MD, CSV):",
       type=["txt", "py", "md", "csv"],
   )
 
@@ -346,12 +358,57 @@ with tab_docs:
               key=f"doc_view_{doc[0]}",
           )
     else:
-      st.info(
-          "El repositorio documental se encuentra vacío. Sube archivos"
-          " mediante el panel superior."
-      )
+      st.info("El repositorio documental se encuentra vacío.")
   except Exception as e:
     st.error(f"Error al leer el repositorio: {e}")
+
+with tab_legal:
+  st.subheader("REGISTRO Y CUSTODIA DE EXPEDIENTES LEGALES")
+
+  with st.form("legal_form"):
+    l_title = st.text_input("Título del Registro (Ej: Pasaporte, Visa Au Pair, Contrato Laboral)")
+    l_category = st.selectbox("Categoría Legal", ["Identidad / Pasaporte", "Visa / Permiso de Residencia", "Contrato Laboral / Formación", "Acuerdo Legal / Otro"])
+    l_expiry = st.text_input("Fecha de Expiración / Vigencia (Ej: 2028-12-31 o N/A)")
+    l_content = st.text_area("Detalles, Cláusulas o Texto del Documento:", height=120)
+
+    l_submit = st.form_submit_button("REGISTRAR EXPEDIENTE LEGAL", use_container_width=True)
+
+    if l_submit and l_title:
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO legal_records (timestamp, title, category, expiry, content) VALUES (?, ?, ?, ?, ?)",
+            (str(datetime.datetime.now()), l_title, l_category, l_expiry, l_content),
+        )
+        conn.commit()
+        conn.close()
+        st.success(f"Expediente legal '{l_title}' registrado y custodiado en la base de datos.")
+      except Exception as e:
+        st.error(f"Error al registrar expediente: {e}")
+
+  st.markdown("---")
+  st.subheader("EXPEDIENTES CUSTODIADOS")
+  try:
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT id, timestamp, title, category, expiry, content FROM legal_records")
+    legal_rows = c.fetchall()
+    conn.close()
+
+    if legal_rows:
+      for lr in legal_rows:
+        with st.expander(f"[{lr[0]}] {lr[2]} ({lr[3]}) // VIGENCIA: {lr[4]}"):
+          st.text_area(
+              "Contenido registrado:",
+              lr[5],
+              height=140,
+              key=f"legal_view_{lr[0]}",
+          )
+    else:
+      st.info("No hay expedientes legales registrados en la base de datos de custodia.")
+  except Exception as e:
+    st.error(f"Error al cargar expedientes legales: {e}")
 
 with tab_finanzas:
   st.subheader("CONTROL Y GESTIÓN FINANCIERA")
@@ -365,25 +422,19 @@ with tab_finanzas:
     with col_f3:
       f_type = st.selectbox("Tipo", ["Gasto", "Ingreso"])
 
-    f_submit = st.form_submit_button(
-        "REGISTRAR MOVIMIENTO", use_container_width=True
-    )
+    f_submit = st.form_submit_button("REGISTRAR MOVIMIENTO", use_container_width=True)
 
     if f_submit and f_concept:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO finances (timestamp, concept, amount, type) VALUES"
-            " (?, ?, ?, ?)",
+            "INSERT INTO finances (timestamp, concept, amount, type) VALUES (?, ?, ?, ?)",
             (str(datetime.datetime.now()), f_concept, f_amount, f_type),
         )
         conn.commit()
         conn.close()
-        st.success(
-            f"Transacción '{f_concept}' registrada correctamente en el libro"
-            " contable."
-        )
+        st.success(f"Transacción '{f_concept}' registrada correctamente en el libro contable.")
       except Exception as e:
         st.error(f"Error de registro financiero: {e}")
 
@@ -409,9 +460,7 @@ with tab_finanzas:
       st.markdown("<br>", unsafe_allow_html=True)
       for r in fin_rows:
         tag_type = "[INGRESO]" if r[4] == "Ingreso" else "[GASTO]"
-        st.info(
-            f"{tag_type} [{r[0]}] {r[2]} — {r[3]} € | Timestamp: {r[1]}"
-        )
+        st.info(f"{tag_type} [{r[0]}] {r[2]} — {r[3]} € | Timestamp: {r[1]}")
     else:
       st.info("No se registran movimientos en el libro contable.")
   except Exception as e:
@@ -427,10 +476,7 @@ with tab_memoria:
       rows = c.fetchall()
       conn.close()
       if rows:
-        st.write(
-            f"Se han recuperado **{len(rows)}** registros de auditoría en el"
-            " sistema:"
-        )
+        st.write(f"Se han recuperado **{len(rows)}** registros de auditoría en el sistema:")
         for row in rows:
           st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
       else:
