@@ -98,7 +98,7 @@ def init_db():
       " TEXT, content TEXT)"
   )
 
-  # Migración automática segura por si las tablas ya existían sin las columnas nuevas
+  # Migración automática segura para columnas nuevas
   try:
     c.execute("ALTER TABLE documents_store ADD COLUMN title TEXT")
   except Exception:
@@ -122,7 +122,8 @@ class JarvisMind:
 
   def __init__(self):
     self.name = "J.A.R.V.I.S."
-    self.creator = "Marian"
+    self.creator = "Marian Nathalia Bendives Ramos"
+    self.dob = "21 de enero de 2006"
 
   def reason(self, query):
     q = query.strip()
@@ -140,10 +141,28 @@ class JarvisMind:
     except Exception:
       pass
 
+    # Consulta de identidad y cumpleaños
     if any(
         w in q_lower
-        for w:
-        in [
+        for w in [
+            "nombre",
+            "cumpleanos",
+            "cumpleaños",
+            "nacimiento",
+            "quien soy",
+            "como me llamo",
+        ]
+    ):
+      return (
+          f"Tu nombre completo es {self.creator} y naciste el {self.dob}."
+          " Todos tus datos biográficos y de identidad están registrados en"
+          " mi memoria central de Central Command."
+      )
+
+    # Búsqueda selectiva para seguro social
+    elif any(
+        w in q_lower
+        for w in [
             "seguro",
             "social",
             "renta",
@@ -188,6 +207,7 @@ class JarvisMind:
       except Exception as e:
         return f"Error al consultar registros de seguro: {e}"
 
+    # Búsqueda selectiva para pasaporte, visa o contratos legales
     elif any(
         w in q_lower
         for w in [
@@ -272,8 +292,7 @@ class JarvisMind:
 
     elif any(
         w in q_lower
-        for w:
-        in [
+        for w in [
             "quien eres",
             "que eres",
             "como te llamas",
@@ -469,7 +488,8 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: ¿Cuál es mi número de seguro social?, ¿Cuál es mi pasaporte?, etc..."
+            "Ej: ¿Cuál es mi nombre completo?, ¿Cuál es mi número de seguro"
+            " social?, etc..."
         ),
         label_visibility="collapsed",
     )
@@ -570,7 +590,8 @@ with tab_docs:
     if docs:
       for doc in docs:
         with st.expander(
-            f"[{doc[0]}] {doc[2] or 'Sin Título'} ({doc[3] or ' General'}) // REGISTRO: {doc[1]}"
+            f"[{doc[0]}] {doc[2] or 'Sin Título'} ({doc[3] or 'General'}) //"
+            f" REGISTRO: {doc[1]}"
         ):
           st.text_area(
               "Contenido / Detalles:",
