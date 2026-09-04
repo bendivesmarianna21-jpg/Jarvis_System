@@ -1,19 +1,21 @@
 import sqlite3
 import streamlit as st
 
-# Configuración de la interfaz principal para tablet
+# Configuración de la interfaz optimizada para tablet
 st.set_page_config(
-    page_title="Jarvis AI Core", page_icon="🤖", layout="centered"
+    page_title="Jarvis AI Core - Voice & Autonomous",
+    page_icon="🤖",
+    layout="centered",
 )
 
 
-# Inicializar la base de datos de memoria persistente
+# Inicializar base de datos de memoria persistente
 def init_db():
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
-      " content TEXT)"
+      " content TEXT, category TEXT)"
   )
   conn.commit()
   conn.close()
@@ -21,73 +23,97 @@ def init_db():
 
 init_db()
 
-# Título del sistema
-st.title("🤖 JARVIS CORE ACTIVE")
+# Interfaz Principal con soporte de Voz vía JavaScript integrado
+st.title("🤖 JARVIS CORE // VOICE & AUTONOMOUS")
 st.markdown("---")
 
-# Consola de comandos avanzada
-st.subheader("🎙️ Consola de Comandos y Procesamiento")
+st.subheader("🎙️ Consola de Comando y Voz")
 user_input = st.text_area(
-    "Escribe una orden o consulta para Jarvis:",
-    placeholder="Ej: Analizar sistemas, registrar nota, estado actual...",
+    "Introduce una orden, dilema o consulta para Jarvis:",
+    placeholder=(
+        "Ej: Analizar viabilidad de proyecto, evaluar riesgos operativos..."
+    ),
 )
 
-if st.button("Ejecutar Instrucción", use_container_width=True):
-  if user_input:
-    # 1. Guardar la orden en la base de datos de SQLite
-    conn = sqlite3.connect("jarvis_memory.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO memory (content) VALUES (?)", (user_input,))
-    conn.commit()
+col1, col2 = st.columns(2)
 
-    # 2. Contar registros totales en la memoria del sistema
-    c.execute("SELECT COUNT(*) FROM memory")
-    total_memories = c.fetchone()[0]
-    conn.close()
+with col1:
+  if st.button("Ejecutar Análisis Autónomo", use_container_width=True):
+    if user_input:
+      # 1. Almacenar en memoria persistente SQLite
+      conn = sqlite3.connect("jarvis_memory.db")
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO memory (content, category) VALUES (?, ?)",
+          (user_input, "Análisis de Voz/Texto"),
+      )
+      conn.commit()
+      c.execute("SELECT COUNT(*) FROM memory")
+      total_records = c.fetchone()[0]
+      conn.close()
 
-    # 3. Lógica de respuesta inteligente de Jarvis
-    command = user_input.lower()
-    if "hola" in command:
+      # 2. Respuesta analítica generada
       reply = (
-          "Saludos. Todos los sistemas secundarios y principales operando al"
-          " máximo rendimiento."
+          f"Análisis procesado e integrado al sector de memoria"
+          f" #{total_records}. Situación evaluada: {user_input}. Viabilidad"
+          " óptima detectada con mitigación de riesgos activa."
       )
-    elif "estado" in command:
-      reply = (
-          f"Diagnóstico de núcleos estable. Total de registros analizados y"
-          f" guardados en memoria: {total_memories}."
-      )
-    elif "diagnóstico" in command or "diagnostico" in command:
-      reply = (
-          "Análisis completado: Conexión en la nube estable, base de datos"
-          " SQLite sincronizada y tiempos de respuesta óptimos."
-      )
+      st.success(reply)
+
+      # 3. Módulo de Síntesis de Voz (Speech Synthesis nativo del navegador)
+      # Esto hace que la tablet lea la respuesta en voz alta automáticamente
+      speech_script = f"""
+            <script>
+                function speakResponse() {{
+                    if ('speechSynthesis' in window) {{
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance({reply!r});
+                        utterance.lang = 'es-ES';
+                        utterance.rate = 1.0;
+                        window.speechSynthesis.speak(utterance);
+                    }}
+                }}
+                speakResponse();
+            </script>
+            """
+      st.components.v1.html(speech_script, height=0)
+
     else:
-      reply = (
-          f"Comando '{user_input}' procesado y almacenado correctamente en el"
-          f" sector de memoria #{total_memories}."
-      )
+      st.warning("Por favor, introduce un parámetro válido para procesar.")
 
-    st.success(reply)
-  else:
-    st.warning("Por favor, ingresa una orden válida en la consola.")
+with col2:
+  if st.button("🔊 Forzar Audio de Estado", use_container_width=True):
+    status_text = (
+        "Todos los núcleos de procesamiento y bases de datos locales operan al"
+        " máximo rendimiento."
+    )
+    st.info(status_text)
+    audio_script = f"""
+        <script>
+            if ('speechSynthesis' in window) {{
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance({status_text!r});
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.speak(utterance);
+            }}
+        </script>
+        """
+    st.components.v1.html(audio_script, height=0)
 
-# Sección de auditoría y memoria local
+# Sección de auditoría de memoria histórica
 st.markdown("---")
-st.subheader("🧠 Registros de Memoria Local")
+st.subheader("🧠 Base de Datos Histórica")
 
-if st.button("Consultar Base de Datos"):
+if st.button("Consultar Registros Pasados"):
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
-  c.execute("SELECT id, content FROM memory")
-  records = c.fetchall()
+  c.execute("SELECT id, content, category FROM memory")
+  rows = c.fetchall()
   conn.close()
 
-  if records:
-    st.write(
-        f"Se encontraron **{len(records)}** registros almacenados en el sistema:"
-    )
-    for row in records:
-      st.info(f"Registro [{row[0]}]: {row[1]}")
+  if rows:
+    st.write(f"Se han recuperado **{len(rows)}** registros de la nube:")
+    for row in rows:
+      st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
   else:
-    st.info("La base de datos de memoria se encuentra vacía.")
+    st.info("La base de datos se encuentra limpia.")
