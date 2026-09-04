@@ -185,7 +185,7 @@ class JarvisMind:
     # 5. Saludos
     elif any(
         w in q_lower
-        for w:=[
+        for w in [
             "hola",
             "saludos",
             "buenas",
@@ -337,7 +337,6 @@ with col_telemetry:
     )
 
 with col_main:
-  # Recuperado: Ingesta y Análisis de Documentos
   st.subheader("INGESTA DE DOCUMENTOS Y ENLACES FUENTE")
   uploaded_file = st.file_uploader(
       "Cargar archivo para análisis (TXT, PY, MD, CSV):",
@@ -386,7 +385,6 @@ with col_main:
     if user_input:
       reply = jarvis_brain.reason(user_input)
 
-      # Determinación de idioma para la voz
       lower_input = user_input.lower()
       if any(w in lower_input for w in ["translate", "english", "hello"]):
         lang_code = "en-US"
@@ -405,7 +403,6 @@ with col_main:
           unsafe_allow_html=True,
       )
 
-      # Síntesis de voz automática integrada
       speech_script = f"""
             <script>
                 if ('speechSynthesis' in window) {{
