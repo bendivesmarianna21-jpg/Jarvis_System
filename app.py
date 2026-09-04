@@ -1,7 +1,7 @@
 import datetime
+import json
 import sqlite3
 import urllib.request
-import json
 import streamlit as st
 
 # Configuración de la interfaz optimizada para tablet (Ancho completo HUD)
@@ -118,11 +118,11 @@ def get_live_temperature():
       temp = data["current"]["temperature_2m"]
       return f"{temp}°C"
   except Exception:
-    return "21.5°C"  # Valor de respaldo seguro ante cortes de red
+    return "21.5°C"
 
 
-# Captura de parámetros temporales y ambientales automáticos
-now = datetime.datetime.now()
+# Corrección horaria: Forzar hora local de Berlín (UTC+2 en verano / CEST)
+now = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
 current_date = now.strftime("%A, %d %B %Y").upper()
 current_time = now.strftime("%H:%M:%S")
 live_temp = get_live_temperature()
