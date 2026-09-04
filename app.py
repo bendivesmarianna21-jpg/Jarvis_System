@@ -97,6 +97,17 @@ def init_db():
       " AUTOINCREMENT, timestamp TEXT, title TEXT, category TEXT, expiry"
       " TEXT, content TEXT)"
   )
+
+  # Migración automática segura por si las tablas ya existían sin las columnas nuevas
+  try:
+    c.execute("ALTER TABLE documents_store ADD COLUMN title TEXT")
+  except Exception:
+    pass
+  try:
+    c.execute("ALTER TABLE documents_store ADD COLUMN category TEXT")
+  except Exception:
+    pass
+
   conn.commit()
   conn.close()
 
@@ -129,10 +140,10 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Búsqueda selectiva y asociativa para seguro social
     if any(
         w in q_lower
-        for w in [
+        for w:
+        in [
             "seguro",
             "social",
             "renta",
@@ -172,13 +183,11 @@ class JarvisMind:
         else:
           return (
               "No he encontrado un registro específico de seguro social en la"
-              " base de datos actual. Asegúrate de haberlo archivado o"
-              " escaneado."
+              " base de datos actual."
           )
       except Exception as e:
         return f"Error al consultar registros de seguro: {e}"
 
-    # Búsqueda selectiva para pasaporte, visa o contratos legales
     elif any(
         w in q_lower
         for w in [
@@ -263,7 +272,8 @@ class JarvisMind:
 
     elif any(
         w in q_lower
-        for w in [
+        for w:
+        in [
             "quien eres",
             "que eres",
             "como te llamas",
@@ -560,7 +570,7 @@ with tab_docs:
     if docs:
       for doc in docs:
         with st.expander(
-            f"[{doc[0]}] {doc[2]} ({doc[3]}) // REGISTRO: {doc[1]}"
+            f"[{doc[0]}] {doc[2] or 'Sin Título'} ({doc[3] or ' General'}) // REGISTRO: {doc[1]}"
         ):
           st.text_area(
               "Contenido / Detalles:",
