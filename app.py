@@ -403,6 +403,13 @@ with tab_legal:
 
   st.markdown("---")
 
+  # Campo de respaldo para introducir la API Key directamente si en secrets falla
+  custom_api_key = st.text_input(
+      "Gemini API Key (Opcional si ya está en Secrets):",
+      type="password",
+      placeholder="Introduce tu clave API aquí...",
+  )
+
   st.markdown(
       "**ANÁLISIS AUTOMÁTICO DE DOCUMENTOS POR VISIÓN ARTIFICIAL:**"
   )
@@ -427,68 +434,69 @@ with tab_legal:
             "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
         ):
           try:
-            api_key = None
-            try:
-              if "GEMINI_API_KEY" in st.secrets:
-                api_key = st.secrets["GEMINI_API_KEY"]
-            except Exception:
-              pass
+            # Determinación prioritaria de la API Key (campo manual o secrets)
+            api_key_to_use = custom_api_key.strip()
+            if not api_key_to_use:
+              try:
+                if "GEMINI_API_KEY" in st.secrets:
+                  api_key_to_use = st.secrets["GEMINI_API_KEY"]
+              except Exception:
+                pass
 
-            client = (
-                genai.Client(api_key=api_key)
-                if api_key
-                else genai.Client()
-            )
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[
-                    types.Part.from_bytes(
-                        data=img_bytes, mime_type=legal_img.type
-                    ),
-                    (
-                        "Extrae con precisión milimétrica de este documento los"
-                        " siguientes datos en formato limpio y estructurado:"
-                        " Título del documento, Categoría (Pasaporte, Visa,"
-                        " Contrato u otro), Fecha de Expiración o Vencimiento"
-                        " exacta, y Todos los datos clave (Número de"
-                        " pasaporte, nombres, fechas de emisión, nacionalidad,"
-                        " etc.)."
-                    ),
-                ],
-            )
-            extracted_analysis = response.text
+            if not api_key_to_use:
+              st.error(
+                  "No se detectó ninguna API Key válida. Por favor, introdúcela"
+                  " arriba o configúrala en Streamlit Secrets."
+              )
+            else:
+              client = genai.Client(api_key=api_key_to_use)
+              response = client.models.generate_content(
+                  model="gemini-2.5-flash",
+                  contents=[
+                      types.Part.from_bytes(
+                          data=img_bytes, mime_type=legal_img.type
+                      ),
+                      (
+                          "Extrae con precisión milimétrica de este documento"
+                          " los siguientes datos en formato limpio y"
+                          " estructurado: Título del documento, Categoría"
+                          " (Pasaporte, Visa, Contrato u otro), Fecha de"
+                          " Expiración o Vencimiento exacta, y Todos los datos"
+                          " clave (Número de pasaporte, nombres, fechas de"
+                          " emisión, nacionalidad, etc.)."
+                      ),
+                  ],
+              )
+              extracted_analysis = response.text
 
-            conn = sqlite3.connect(DB_NAME)
-            c = conn.cursor()
-            c.execute(
-                "INSERT INTO legal_records (timestamp, title, category, expiry,"
-                " content) VALUES (?, ?, ?, ?, ?)",
-                (
-                    str(datetime.datetime.now()),
-                    legal_img.name,
-                    "Expediente Analizado por AI",
-                    "Ver detalle extraído",
-                    extracted_analysis,
-                ),
-            )
-            conn.commit()
-            conn.close()
+              conn = sqlite3.connect(DB_NAME)
+              c = conn.cursor()
+              c.execute(
+                  "INSERT INTO legal_records (timestamp, title, category,"
+                  " expiry, content) VALUES (?, ?, ?, ?, ?)",
+                  (
+                      str(datetime.datetime.now()),
+                      legal_img.name,
+                      "Expediente Analizado por AI",
+                      "Ver detalle extraído",
+                      extracted_analysis,
+                  ),
+              )
+              conn.commit()
+              conn.close()
 
-            st.success("¡Análisis visual completado y archivado en custodia!")
-            st.markdown(
-                f"""
+              st.success("¡Análisis visual completado y archivado en custodia!")
+              st.markdown(
+                  f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
                     <b>DATOS EXTRAÍDOS POR J.A.R.V.I.S.:</b><br><br>
                     {extracted_analysis}
                 </div>
             """,
-                unsafe_allow_html=True,
-            )
+                  unsafe_allow_html=True,
+              )
           except Exception as e:
-            st.error(
-                f"Error al conectar con el núcleo de visión AI: {e}. Asegúrate"
-                " de configurar tu API Key en los secretos de Streamlit Cloud."
-            )
+            st.error(f"Error al conectar con el núcleo de visión AI: {e}")
 
   st.markdown("---")
   st.subheader("EXPEDIENTES CUSTODIADOS")
