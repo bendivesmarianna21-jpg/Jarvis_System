@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="J.A.R.V.I.S. // CORE TELEMETRY", page_icon=None, layout="wide"
 )
 
-# Estilo visual técnico avanzado idéntico al diseño original
+# Estilo visual técnico avanzado
 st.markdown(
     """
     <style>
@@ -73,7 +73,6 @@ st.markdown(
         .stAlert {
             background-color: #050f1d !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
-            color: #00d2ff !important;
             font-family: 'Courier New', Courier, monospace !important;
             border-radius: 4px !important;
         }
@@ -87,7 +86,7 @@ st.markdown(
 )
 
 
-# Base de datos local
+# Base de datos local con auto-reparación
 def init_db():
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
@@ -161,7 +160,7 @@ with col_telemetry:
             - CPU Core Alpha: 14.2% [NOMINAL]<br>
             - CPU Core Beta: 18.7% [NOMINAL]<br>
             - SQLite Engine: CONECTADO<br>
-            - Cloud Enclave: CIFRADO (AES-256)<br>
+            - Módulo Multilingüe: ACTIVO<br>
             - Latencia de Enlace: 12ms<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
             - [!] Examen de Alemán (Mañana)<br>
@@ -210,9 +209,9 @@ with col_main:
   st.markdown("---")
   st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
   user_input = st.text_area(
-      "Introducir directiva de análisis autónomo:",
+      "Introducir directiva o consulta en cualquier idioma:",
       placeholder=(
-          "Ej: Evaluar riesgos operativos, sintetizar directrices de proyecto..."
+          "Ej: Translate this text, Analizar parámetros, Sprich Deutsch..."
       ),
       label_visibility="collapsed",
   )
@@ -226,27 +225,40 @@ with col_main:
         c = conn.cursor()
         c.execute(
             "INSERT INTO memory (content, category) VALUES (?, ?)",
-            (user_input, "Comando Táctico"),
+            (user_input, "Comando Multilingüe"),
         )
         conn.commit()
         c.execute("SELECT COUNT(*) FROM memory")
         total_records = c.fetchone()[0]
         conn.close()
 
-        reply = (
-            f"Protocolo ejecutado con éxito. Registro asignado al sector"
-            f" #{total_records}. Análisis de viabilidad y evaluación de riesgos"
-            " completados."
-        )
+        # Detección básica de idioma para adaptar la respuesta multilingüe
+        lower_input = user_input.lower()
+        if any(
+            word in lower_input
+            for word in ["translate", "english", "hello", "what"]
+        ):
+          reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Multilingual analysis completed."
+          lang_code = "en-US"
+        elif any(
+            word in lower_input
+            for word in ["deutsch", "sprechen", "prüfung", "guten"]
+        ):
+          reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse abgeschlossen."
+          lang_code = "de-DE"
+        else:
+          reply = f"Protocolo ejecutado con éxito. Registro asignado al sector #{total_records}. Análisis multilingüe completado."
+          lang_code = "es-ES"
+
         st.success(reply)
 
-        # Síntesis de voz automática
+        # Síntesis de voz adaptada al idioma detectado
         speech_script = f"""
                 <script>
                     if ('speechSynthesis' in window) {{
                         window.speechSynthesis.cancel();
                         const utterance = new SpeechSynthesisUtterance({reply!r});
-                        utterance.lang = 'es-ES';
+                        utterance.lang = '{lang_code}';
                         window.speechSynthesis.speak(utterance);
                     }}
                 </script>
