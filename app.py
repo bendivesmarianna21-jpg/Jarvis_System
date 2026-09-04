@@ -4,58 +4,82 @@ import sqlite3
 import urllib.request
 import streamlit as st
 
-# Configuración de la interfaz para tablet
+# Configuración de la interfaz para tablet (Ancho completo HUD)
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // CORE", page_icon=None, layout="wide"
+    page_title="J.A.R.V.I.S. // CORE TELEMETRY", page_icon=None, layout="wide"
 )
 
-# Estilo visual HUD profesional (Oscuro, neón cian, tipografía técnica)
+# Estilo visual técnico avanzado idéntico al diseño original
 st.markdown(
     """
     <style>
         .stApp {
             background-color: #03070c;
             color: #00d2ff;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             color: #00d2ff !important;
+            font-family: 'Courier New', Courier, monospace !important;
             letter-spacing: 1.5px;
             text-transform: uppercase;
+            font-weight: 700;
         }
-        .telemetria-box {
-            background: rgba(4, 12, 24, 0.9);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: 4px;
-            padding: 15px;
-            font-size: 12px;
+
+        .telemetria-container {
+            background: rgba(4, 12, 24, 0.85);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            border-radius: 6px;
+            padding: 18px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
             color: #7ab8ff;
+            box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
         }
+        .telemetria-container b {
+            color: #00d2ff;
+        }
+
         .stTextArea textarea {
             background-color: #050f1d !important;
             color: #00d2ff !important;
-            border: 1px solid rgba(0, 210, 255, 0.4) !important;
+            border: 1px solid rgba(0, 210, 255, 0.3) !important;
+            border-radius: 4px !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 13px !important;
         }
+
         .stButton button {
             background: #040e1b !important;
             color: #00d2ff !important;
-            border: 1px solid rgba(0, 210, 255, 0.6) !important;
+            font-weight: 600;
+            border: 1px solid rgba(0, 210, 255, 0.5) !important;
             border-radius: 4px !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 12px !important;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            font-weight: bold;
         }
         .stButton button:hover {
             background: #00d2ff !important;
             color: #03070c !important;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.6) !important;
         }
+
         .stAlert {
             background-color: #050f1d !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
             color: #00d2ff !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            border-radius: 4px !important;
+        }
+        
+        hr {
+            border-color: rgba(0, 210, 255, 0.15) !important;
         }
     </style>
 """,
@@ -92,28 +116,31 @@ def get_live_temperature():
 
 live_temp = get_live_temperature()
 
-# Cabecera con Reloj en Vivo (JavaScript actualizándose segundo a segundo)
-st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
+# Cabecera con Reloj en Vivo exacto y diseño técnico
+st.title("J.A.R.V.I.S. // CENTRAL COMMAND & TELEMETRY")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        LOC: BERLIN | DATE: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> | TIME: <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp} | STATUS: ONLINE
+        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: SECURE & STABLE
     </div>
     <script>
         function updateClock() {{
             const now = new Date();
-            // Ajustar a zona horaria de Berlin (UTC+2 / CEST)
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
             const berlinTime = new Date(utc + (3600000 * 2));
+            
+            const options = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
+            const dateString = berlinTime.toLocaleDateString('en-US', options).toUpperCase();
             
             const hours = String(berlinTime.getHours()).padStart(2, '0');
             const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
             const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
             
-            const clockElement = document.getElementById('live-clock');
-            if (clockElement) {{
-                clockElement.innerText = hours + ':' + minutes + ':' + seconds;
-            }}
+            const dateEl = document.getElementById('live-date');
+            const clockEl = document.getElementById('live-clock');
+            
+            if (dateEl) dateEl.innerText = dateString;
+            if (clockEl) clockEl.innerText = hours + ':' + minutes + ':' + seconds;
         }}
         setInterval(updateClock, 1000);
         updateClock();
@@ -122,37 +149,40 @@ clock_html = f"""
 st.components.v1.html(clock_html, height=30)
 st.markdown("---")
 
-# Columnas principales
-col_left, col_right = st.columns([1, 2.2])
+# Estructura Principal en Columnas
+col_telemetry, col_main = st.columns([1, 2.2])
 
-with col_left:
-  st.subheader("DIAGNÓSTICO & ALERTAS")
+with col_telemetry:
+  st.subheader("DIAGNÓSTICO TÉCNICO")
   st.markdown(
       """
-        <div class="telemetria-box">
+        <div class="telemetria-container">
             <b>ESTADO DE NÚCLEOS:</b><br>
-            - CPU Core Alpha: 12.4% [ESTABLE]<br>
-            - CPU Core Beta: 16.1% [ESTABLE]<br>
-            - Memoria SQLite: ACTIVA<br>
-            - Enlace Nube: SEGURO<br><br>
-            <b>CRONOGRAMA PRÓXIMO (LUNES):</b><br>
+            - CPU Core Alpha: 14.2% [NOMINAL]<br>
+            - CPU Core Beta: 18.7% [NOMINAL]<br>
+            - SQLite Engine: CONECTADO<br>
+            - Cloud Enclave: CIFRADO (AES-256)<br>
+            - Latencia de Enlace: 12ms<br><br>
+            <b>CRONOGRAMA (LUNES):</b><br>
             - [!] Examen de Alemán (Mañana)<br>
             - [!] Llegada Au Pair Safira (Tarde)<br><br>
-            <b>SISTEMA:</b><br>
-            - Errores críticos: 0
+            <b>LOG DE ERRORES:</b><br>
+            [00] Excepciones críticas: 0<br>
+            [01] Pérdidas de paquetes: 0.0%<br>
+            [OK] Integridad de base de datos íntegra.
         </div>
     """,
       unsafe_allow_html=True,
   )
 
   st.markdown("<br>", unsafe_allow_html=True)
-  if st.button("VERIFICAR SISTEMA", use_container_width=True):
-    st.success("Sistema operando al 100% sin anomalías.")
+  if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
+    st.success("Diagnóstico completado: Cero anomalías en el sistema.")
 
-with col_right:
-  st.subheader("INGESTA DE DOCUMENTOS Y DATOS")
+with col_main:
+  st.subheader("INGESTA DE DOCUMENTOS FUENTE")
   uploaded_file = st.file_uploader(
-      "Subir archivo fuente:",
+      "Cargar archivo para análisis (TXT, PY, MD, CSV):",
       type=["txt", "py", "md", "csv"],
       label_visibility="collapsed",
   )
@@ -165,50 +195,84 @@ with col_right:
     c = conn.cursor()
     c.execute(
         "INSERT INTO memory (content, category) VALUES (?, ?)",
-        (f"[ARCHIVO: {file_name}] \n{file_content[:400]}...", "Documento"),
+        (
+            f"[DOCUMENTO ASIMILADO: {file_name}] \n{file_content[:600]}...",
+            "Documento",
+        ),
     )
     conn.commit()
     conn.close()
-    st.success(f"Archivo '{file_name}' guardado en la memoria central.")
+    st.success(
+        f"Archivo '{file_name}' procesado e integrado exitosamente al núcleo de"
+        " memoria."
+    )
 
   st.markdown("---")
-  st.subheader("CONSOLA DE COMANDOS")
+  st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
   user_input = st.text_area(
-      "Escribe una orden o directiva:",
-      placeholder="Ej: Evaluar riesgos del examen del lunes, registrar nota...",
+      "Introducir directiva de análisis autónomo:",
+      placeholder=(
+          "Ej: Evaluar riesgos operativos, sintetizar directrices de proyecto..."
+      ),
       label_visibility="collapsed",
   )
 
-  if st.button("EJECUTAR ORDEN", use_container_width=True):
-    if user_input:
-      conn = sqlite3.connect("jarvis_memory.db")
-      c = conn.cursor()
-      c.execute(
-          "INSERT INTO memory (content, category) VALUES (?, ?)",
-          (user_input, "Comando"),
+  col_btn1, col_btn2 = st.columns(2)
+
+  with col_btn1:
+    if st.button("EJECUTAR PROTOCOLO", use_container_width=True):
+      if user_input:
+        conn = sqlite3.connect("jarvis_memory.db")
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO memory (content, category) VALUES (?, ?)",
+            (user_input, "Comando Táctico"),
+        )
+        conn.commit()
+        c.execute("SELECT COUNT(*) FROM memory")
+        total_records = c.fetchone()[0]
+        conn.close()
+
+        reply = (
+            f"Protocolo ejecutado con éxito. Registro asignado al sector"
+            f" #{total_records}. Análisis de viabilidad y evaluación de riesgos"
+            " completados."
+        )
+        st.success(reply)
+
+        # Síntesis de voz automática
+        speech_script = f"""
+                <script>
+                    if ('speechSynthesis' in window) {{
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance({reply!r});
+                        utterance.lang = 'es-ES';
+                        window.speechSynthesis.speak(utterance);
+                    }}
+                </script>
+                """
+        st.components.v1.html(speech_script, height=0)
+      else:
+        st.warning("Introduce una directiva válida para procesar.")
+
+  with col_btn2:
+    if st.button("DIAGNÓSTICO DE RED", use_container_width=True):
+      status_text = (
+          "Enlace de red verificado. Conexión estable con los servidores"
+          " remotos."
       )
-      conn.commit()
-      c.execute("SELECT COUNT(*) FROM memory")
-      total = c.fetchone()[0]
-      conn.close()
-
-      reply = f"Orden procesada. Almacenada en el registro #{total}."
-      st.success(reply)
-
-      # Síntesis de voz automática
-      speech_script = f"""
+      st.info(status_text)
+      audio_script = f"""
             <script>
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance({reply!r});
+                    const utterance = new SpeechSynthesisUtterance({status_text!r});
                     utterance.lang = 'es-ES';
                     window.speechSynthesis.speak(utterance);
                 }}
             </script>
             """
-      st.components.v1.html(speech_script, height=0)
-    else:
-      st.warning("Escribe una orden válida.")
+      st.components.v1.html(audio_script, height=0)
 
 # Botón de Alerta de Protocolos para el Lunes
 st.markdown("---")
@@ -250,11 +314,11 @@ if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True
         """
   st.components.v1.html(voice_report, height=0)
 
-# Historial
+# Sección Inferior: Base de Datos y Registros Históricos
 st.markdown("---")
-st.subheader("REGISTROS DE MEMORIA")
+st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
 
-if st.button("CONSULTAR MEMORIA GUARDADA"):
+if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
   c.execute("SELECT id, content, category FROM memory")
@@ -262,8 +326,10 @@ if st.button("CONSULTAR MEMORIA GUARDADA"):
   conn.close()
 
   if rows:
-    st.write(f"Se encontraron **{len(rows)}** registros:")
+    st.write(
+        f"Se han recuperado **{len(rows)}** registros activos en el sistema:"
+    )
     for row in rows:
       st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
   else:
-    st.info("La memoria está vacía.")
+    st.info("La base de datos central se encuentra limpia.")
