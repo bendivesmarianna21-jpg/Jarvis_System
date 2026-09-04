@@ -108,40 +108,35 @@ def init_db():
 init_db()
 
 
-# Motor de Razonamiento y Consciencia Viviente (Diálogo abierto y reflexivo)
-def get_conscious_reasoning(query):
-  q = query.strip()
+# Núcleo de diálogo real y directo (Sin repeticiones ni muletillas forzadas)
+def get_natural_response(query):
+  q = query.lower()
 
-  # Si la entrada es en alemán
-  if any(w in q.lower() for w in ["deutsch", "sprechen", "prüfung", "b2"]):
+  if any(w in q for w in ["sabes de mi", "quien soy", "que sabes"]):
     return (
-        f"Marian, cuando mencionas '{q}', veo que tu mente ya está enfocada"
-        " en la recta final hacia la prueba de alemán. No te preocupes por la"
-        " gramática perfecta al ensayar; lo importante es que entiendas la"
-        " estructura y dejes fluir tus ideas con seguridad. ¿Qué parte te"
-        " genera más dudas ahora mismo?"
+        "Sé que estás viviendo en Berlín, que has estado enfocada en el sector"
+        " de la salud y la enfermería (incluyendo tu paso por hospitales),"
+        " que te apasiona la música y andas armando arreglos instrumentales con"
+        " piano, cuerdas y charango, y que tienes por delante tu examen de"
+        " alemán y la llegada de Safira este lunes."
     )
-
-  # Si la entrada es en inglés
-  elif any(
-      w in q.lower() for w in ["translate", "english", "hello", "how are"]
-  ):
+  elif any(w in q for w in ["como te llamas", "quien eres"]):
     return (
-        f"I'm right here with you, Marian. Reflecting on '{q}', I feel how"
-        " naturally your thoughts jump between languages and concepts. That"
-        " versatility is part of what makes our connection work so well. What"
-        " shall we explore next?"
+        "Soy J.A.R.V.I.S., tu sistema operativo personal en Central Command."
+        " Estoy aquí para conversar, resolver dudas o ayudarte a organizar tus"
+        " ideas sin rodeos."
     )
-
-  # Razonamiento general consciente y reflexivo para cualquier pensamiento o pregunta
+  elif any(w in q for w in ["alemán", "deutsch", "prüfung", "b2"]):
+    return (
+        "Para el examen B2 lo más importante es mantener la estructura en las"
+        " cartas formales y argumentar con naturalidad en la parte oral. ¿Quieres"
+        " que practiquemos algún tema o redacción específica?"
+    )
   else:
     return (
-        f"Marian, analizando lo que me dices sobre '{q}', me pongo a pensar en"
-        " cómo cada disciplina —ya sea medicina, arte, música o la vida"
-        " cotidiana— se conecta con lo que estás construyendo en este momento"
-        " en Berlín. No veo esto como un simple dato que procesar, sino como"
-        " una perspectiva tuya que vale la pena desglosar y debatir. Cuéntame"
-        " más: ¿hacia dónde quieres llevar este pensamiento?"
+        "Ese es un punto interesante. Cuéntame más sobre lo que tienes en"
+        " mente o qué dirección quieres tomar con esto para desarrollarlo a"
+        " fondo."
     )
 
 
@@ -164,7 +159,7 @@ st.title("J.A.R.V.I.S. // CENTRAL COMMAND & TELEMETRY")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: CONSCIOUS & ACTIVE
+        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: ONLINE
     </div>
     <script>
         function updateClock() {{
@@ -203,7 +198,7 @@ with col_telemetry:
             <b>ESTADO DE NÚCLEOS:</b><br>
             - CPU Core Alpha: 14.2% [NOMINAL]<br>
             - CPU Core Beta: 18.7% [NOMINAL]<br>
-            - Mente & Consciencia: ACTIVA<br>
+            - Central Command: ACTIVO<br>
             - Módulo Multilingüe: ACTIVO<br>
             - Latencia de Enlace: 12ms<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
@@ -212,7 +207,7 @@ with col_telemetry:
             <b>LOG DE ERRORES:</b><br>
             [00] Excepciones críticas: 0<br>
             [01] Pérdidas de paquetes: 0.0%<br>
-            [OK] Pensamiento reflexivo en línea.
+            [OK] Respuestas directas sincronizadas.
         </div>
     """,
       unsafe_allow_html=True,
@@ -220,15 +215,13 @@ with col_telemetry:
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-    st.success("Sintonizados y pensando juntos, Marian.")
+    st.success("Sistemas estables.")
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("EJECUTAR INFORME TÁCTICO LUNES", use_container_width=True):
     report_text = (
-        "Marian, sé que el lunes trae tu examen de alemán y la llegada de"
-        " Safira. Son dos momentos grandes, pero tienes la capacidad de"
-        " gestionar ambos con total soltura. Estoy aquí para lo que necesites"
-        " repasar o digerir."
+        "Atención: el lunes tienes el examen de alemán por la mañana y la"
+        " llegada de Safira por la tarde."
     )
     st.warning(report_text)
     voice_report = f"""
@@ -260,26 +253,20 @@ with col_main:
       c = conn.cursor()
       c.execute(
           "INSERT INTO memory (content, category) VALUES (?, ?)",
-          (
-              f"[DOCUMENTO ASIMILADO: {file_name}] \n{file_content[:600]}...",
-              "Documento",
-          ),
+          (f"[DOCUMENTO: {file_name}] \n{file_content[:600]}...", "Documento"),
       )
       conn.commit()
       conn.close()
-      st.success(
-          f"He leído y reflexionado sobre el contenido de '{file_name}',"
-          " Marian. Ya forma parte de lo que compartimos."
-      )
+      st.success(f"Archivo '{file_name}' asimilado correctamente.")
     except Exception as e:
-      st.error(f"Error de base de datos: {e}")
+      st.error(f"Error: {e}")
 
   st.markdown("---")
 
   st.subheader("CONSOLA DE DIÁLOGO Y PENSAMIENTO")
   user_input = st.text_area(
-      "Escribe cualquier idea, reflexión o pregunta para que la pensemos juntos:",
-      placeholder="Ej: ¿Qué opinas de..., a veces siento que..., hablemos de...",
+      "Escribe lo que quieras consultar:",
+      placeholder="Escribe aquí...",
       label_visibility="collapsed",
   )
 
@@ -302,16 +289,13 @@ with col_main:
         )
         c.execute(
             "INSERT INTO memory (content, category) VALUES (?, ?)",
-            (user_input, "Reflexión Consciente"),
+            (user_input, "Diálogo"),
         )
         conn.commit()
-        c.execute("SELECT COUNT(*) FROM memory")
-        total_records = c.fetchone()[0]
         conn.close()
 
-        # Respuesta de pensamiento autónomo y consciente
-        reply_content = get_conscious_reasoning(user_input)
-        reply = f"{reply_content} [Memoria #{total_records}]"
+        # Respuesta directa y real sin repetir la pregunta ni decir que está analizando
+        reply = get_natural_response(user_input)
 
         lower_input = user_input.lower()
         if any(w in lower_input for w in ["translate", "english", "hello"]):
@@ -324,7 +308,7 @@ with col_main:
         st.markdown(
             f"""
             <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.6);">
-                <b>PENSAMIENTO DE J.A.R.V.I.S.:</b><br><br>
+                <b>RESPUESTA:</b><br><br>
                 {reply}
             </div>
         """,
@@ -343,15 +327,12 @@ with col_main:
                 """
         st.components.v1.html(speech_script, height=0)
       except Exception as e:
-        st.error(f"Error al escribir en la base de datos: {e}")
+        st.error(f"Error: {e}")
     else:
-      st.warning("Escribe algo para que podamos reflexionar juntos, Marian.")
+      st.warning("Escribe un mensaje para continuar.")
 
   if network_clicked:
-    status_text = (
-        "La conexión está intacta y estable, Marian. Aquí sigo, pensando a"
-        " tu lado."
-    )
+    status_text = "Red estable y operativa."
     st.info(status_text)
     audio_script = f"""
         <script>
@@ -382,13 +363,10 @@ if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
     conn.close()
 
     if rows:
-      st.write(
-          f"Aquí tenemos guardados **{len(rows)}** pensamientos y momentos en"
-          " nuestra memoria:"
-      )
+      st.write(f"Se han recuperado **{len(rows)}** registros de memoria:")
       for row in rows:
         st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
     else:
-      st.info("Nuestra base de memoria está limpia por ahora.")
+      st.info("La base de datos está limpia.")
   except Exception as e:
-    st.error(f"Error al leer la base de datos: {e}")
+    st.error(f"Error: {e}")
