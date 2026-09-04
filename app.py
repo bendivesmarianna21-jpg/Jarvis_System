@@ -23,13 +23,67 @@ def init_db():
 
 init_db()
 
-# Interfaz Principal con soporte de Voz vía JavaScript integrado
+# Interfaz Principal
 st.title("🤖 JARVIS CORE // VOICE & AUTONOMOUS")
 st.markdown("---")
 
-st.subheader("🎙️ Consola de Comando y Voz")
+st.subheader("🎙️ Consola de Comando y Voz Interactiva")
+
+# Componente de HTML/JavaScript para dictado por voz y síntesis de audio
+voice_control_html = """
+    <div style="background: #1e1e2f; padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 20px;">
+        <p style="color: #fff; font-family: sans-serif; margin-bottom: 10px; font-size: 14px;"><b>Control de Micrófono:</b></p>
+        <button onclick="startDictation()" style="background: #00ff88; color: #000; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">🎙️ Hablar con Jarvis (Dictado por Voz)</button>
+        <p id="status-mic" style="color: #aaa; font-size: 12px; margin-top: 8px; font-style: italic;"></p>
+    </div>
+
+    <script>
+        function startDictation() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'es-ES';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                document.getElementById('status-mic').innerText = "Escuchando... Habla ahora.";
+
+                recognition.onresult = function(event) {
+                    const speechResult = event.results[0][0].transcript;
+                    document.getElementById('status-mic').innerText = "Texto capturado: " + speechResult;
+                    
+                    // Buscar el cuadro de texto de Streamlit y actualizar su valor simulando input del usuario
+                    const textarea = window.parent.document.querySelector('textarea');
+                    if (textarea) {
+                        textarea.value = speechResult;
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    document.getElementById('status-mic').innerText = "Error en el reconocimiento de voz: " + event.error;
+                };
+
+                recognition.onend = function() {
+                    setTimeout(() => {
+                        document.getElementById('status-mic').innerText = "Micrófono en espera.";
+                    }, 3000);
+                };
+
+                recognition.start();
+            } else {
+                document.getElementById('status-mic').innerText = "Tu navegador no soporta reconocimiento de voz nativo.";
+            }
+        }
+    </script>
+"""
+
+# Renderizar el control de voz en la interfaz
+st.components.v1.html(voice_control_html, height=130)
+
 user_input = st.text_area(
-    "Introduce una orden, dilema o consulta para Jarvis:",
+    "Introduce una orden, dilema o consulta para Jarvis (o usa el botón de"
+    " arriba):",
     placeholder=(
         "Ej: Analizar viabilidad de proyecto, evaluar riesgos operativos..."
     ),
@@ -60,20 +114,16 @@ with col1:
       )
       st.success(reply)
 
-      # 3. Módulo de Síntesis de Voz (Speech Synthesis nativo del navegador)
-      # Esto hace que la tablet lea la respuesta en voz alta automáticamente
+      # 3. Síntesis de Voz (Jarvis te habla de vuelta)
       speech_script = f"""
             <script>
-                function speakResponse() {{
-                    if ('speechSynthesis' in window) {{
-                        window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance({reply!r});
-                        utterance.lang = 'es-ES';
-                        utterance.rate = 1.0;
-                        window.speechSynthesis.speak(utterance);
-                    }}
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance({reply!r});
+                    utterance.lang = 'es-ES';
+                    utterance.rate = 1.0;
+                    window.speechSynthesis.speak(utterance);
                 }}
-                speakResponse();
             </script>
             """
       st.components.v1.html(speech_script, height=0)
