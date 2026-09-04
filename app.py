@@ -285,7 +285,7 @@ col_telemetry, col_main = st.columns([1, 2.2])
 with col_telemetry:
   st.subheader("DIAGNÓSTICO TÉCNICO")
 
-  # Control de Mute global en la barra lateral de telemetría
+  # Control de Mute global
   voice_mute = st.toggle("🔇 MUTEAR VOZ (MODO SILENCIOSO)", value=False)
 
   st.markdown(
@@ -294,7 +294,7 @@ with col_telemetry:
             <b>ESTADO DE NÚCLEOS:</b><br>
             - Autonomía Cognitiva: ACTIVA<br>
             - Juicio Crítico: HABILITADO<br>
-            - Reconocimiento de Voz: LISTO<br>
+            - Sintetizador de Voz: ACTIVO<br>
             - Ingesor de Documentos: ACTIVO<br>
             - Conectividad Geográfica: GLOBAL<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
@@ -362,67 +362,14 @@ with col_main:
 
   st.markdown("---")
 
-  st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO VERBAL")
+  st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
 
   user_input = st.text_area(
-      "Escribe o dicta tu instrucción:",
-      placeholder=(
-          "Ej: Juzga mi día, háblame de ti, o usa el micrófono abajo..."
-      ),
+      "Escribe tu instrucción:",
+      placeholder="Ej: Juzga mi día, háblame de ti, analiza mis metas...",
       key="user_query_box",
       label_visibility="collapsed",
   )
-
-  mic_html = """
-    <div style="margin: 10px 0;">
-        <button onclick="startListening()" style="background: #040e1b; color: #00d2ff; border: 1px solid rgba(0,210,255,0.6); padding: 8px 15px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-size: 12px; cursor: pointer; text-transform: uppercase; font-weight: bold;">
-            🎙️ ACTIVAR MICRÓFONO (HABLAR CON JARVIS)
-        </button>
-        <span id="mic-status" style="margin-left: 10px; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #7ab8ff;"></span>
-    </div>
-    <script>
-        function startListening() {
-            const statusEl = document.getElementById('mic-status');
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                statusEl.innerText = "[!] Tu navegador no soporta reconocimiento de voz.";
-                return;
-            }
-            
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'es-ES';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-            
-            statusEl.innerText = "[ESCUCHANDO...] Habla ahora.";
-            
-            recognition.onresult = function(event) {
-                const speechResult = event.results[0][0].transcript;
-                statusEl.innerText = "[OK] Capturado: " + speechResult;
-                
-                const docTextareas = window.parent.document.querySelectorAll("textarea");
-                if (docTextareas.length > 0) {
-                    const targetArea = docTextareas[0];
-                    targetArea.value = speechResult;
-                    targetArea.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            };
-            
-            recognition.onerror = function(event) {
-                statusEl.innerText = "[!] Error de audio: " + event.error;
-            };
-            
-            recognition.onend = function() {
-                if (statusEl.innerText.includes("[ESCUCHANDO...]")) {
-                    statusEl.innerText = "[LISTO]";
-                }
-            };
-            
-            recognition.start();
-        }
-    </script>
-    """
-  st.components.v1.html(mic_html, height=50)
 
   c1, c2 = st.columns(2)
   with c1:
@@ -452,7 +399,7 @@ with col_main:
           unsafe_allow_html=True,
       )
 
-      # Si el Mute está desactivado, Jarvis habla. Si está activado, solo escribe.
+      # Módulo de voz robusto vinculado al botón físico táctil de procesamiento
       if not voice_mute:
         speech_script = f"""
             <script>
@@ -466,7 +413,7 @@ with col_main:
             """
         st.components.v1.html(speech_script, height=0)
     else:
-      st.warning("Escribe o dicta una instrucción para que Jarvis procese.")
+      st.warning("Escribe una instrucción para que Jarvis procese.")
 
   if network_clicked:
     status_text = (
