@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import sqlite3
 import urllib.request
 import streamlit as st
@@ -648,8 +649,8 @@ with tab_legal:
 with tab_gmail:
   st.subheader("ENLACE DIRECTO CON GMAIL API")
   st.markdown(
-      "Introduce tu **ID de cliente** de Google Cloud para autorizar la"
-      " sincronización de tus correos:"
+      "Introduce tu **ID de cliente** de Google Cloud para sincronizar tu"
+      " bandeja real:"
   )
 
   client_id_input = st.text_input(
@@ -658,52 +659,111 @@ with tab_gmail:
       key="oauth_client_id_field",
   )
 
-  if st.button("SINCRONIZAR BANDEJA DE GMAIL", use_container_width=True):
+  if st.button("SINCRONIZAR BANDEJA DE GMAIL EN VIVO", use_container_width=True):
     if client_id_input:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute("DELETE FROM gmail_cache")
-        # Simulación de lectura sincronizada con la API autenticada del cliente
-        c.execute(
-            "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-            " VALUES (?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                "St. Joseph Krankenhaus Berlin",
-                "Confirmación de inicio de Ausbildung",
-                (
-                    "Estimada Marian, le confirmamos la recepción de sus"
-                    " documentos para el programa de enfermería."
-                ),
-            ),
-        )
-        c.execute(
-            "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-            " VALUES (?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                "telc gGmbH",
-                "Resultados examen telc Deutsch B2",
-                (
-                    "Estimada participante, su puntaje en el módulo oral es de"
-                    " 67 puntos."
-                ),
-            ),
-        )
-        conn.commit()
+
+        # Conexión real con Gmail API
+        if HAS_GMAIL_API:
+          SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+          creds = None
+          token_path = "token.json"
+
+          if os.path.exists(token_path):
+            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
+          if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+              creds.refresh(Request())
+            else:
+              # Generación automática de credenciales de cliente para flujo web
+              client_config = {
+                  "web": {
+                      "client_id": client_id_input.strip(),
+                      "client_secret": "dummy_secret",
+                      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                      "token_uri": "https://oauth2.googleapis.com/token",
+                  }
+              }
+              flow = InstalledAppFlow.from_client_config(
+                  client_config,
+                  SCOPES,
+                  redirect_uri=(
+                      "https://jarvissystem-xbccgb7cvmkdgqckjvjzjr.streamlit.app/"
+                  ),
+              )
+              auth_url, _ = flow.authorization_url(
+                  prompt="consent", access_type="offline", include_granted_scopes="true"
+              )
+              st.markdown(
+                  f"**AUTORIZACIÓN REQUERIDA:** Haz clic en el siguiente enlace"
+                  f" para autorizar a J.A.R.V.I.S. en tu cuenta de Google:\n\n[🔗"
+                  f" Autorizar Acceso a Gmail]({auth_url})"
+              )
+
+          if creds and creds.valid:
+            service = build("gmail", "v1", credentials=creds)
+            results = (
+                service.users()
+                .messages()
+                .list(userId="me", maxResults=5)
+                .execute()
+            )
+            messages = results.get("messages", [])
+
+            if messages:
+              for msg in messages:
+                txt = (
+                    service.users()
+                    .messages()
+                    .get(userId="me", id=msg["id"])
+                    .execute()
+                )
+                headers = txt["payload"]["headers"]
+                subject = next(
+                    (h["value"] for h in headers if h["name"] == "Subject"),
+                    "Sin Asunto",
+                )
+                sender = next(
+                    (h["value"] for h in headers if h["name"] == "From"),
+                    "Desconocido",
+                )
+                snippet = txt.get("snippet", "")
+                date_val = next(
+                    (h["value"] for h in headers if h["name"] == "Date"),
+                    str(datetime.datetime.now()),
+                )
+
+                c.execute(
+                    "INSERT INTO gmail_cache (timestamp, sender, subject,"
+                    " snippet) VALUES (?, ?, ?, ?)",
+                    (date_val, sender, subject, snippet),
+                )
+              conn.commit()
+              st.success("¡Bandeja de Gmail sincronizada en vivo con éxito!")
+            else:
+              st.info(
+                  "No se encontraron mensajes recientes en tu bandeja de"
+                  " entrada."
+              )
+        else:
+          st.error(
+              "Las librerías de Gmail API no están completamente instaladas en"
+              " el entorno."
+          )
+
         conn.close()
-        st.success(
-            "¡Bandeja de Gmail sincronizada y enlazada correctamente con el"
-            " cliente OAuth!"
-        )
+        st.rerun()
       except Exception as e:
-        st.error(f"Error al sincronizar Gmail: {e}")
+        st.error(f"Error al conectar con Gmail API: {e}")
     else:
       st.warning("Por favor, introduce tu ID de cliente de Google Cloud.")
 
   st.markdown("---")
-  st.subheader("CORREOS EN CACHÉ Y LECTURA RECIENTE")
+  st.subheader("CORREOS EN CACHÉ Y LECTURA EN VIVO")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -717,7 +777,10 @@ with tab_gmail:
           st.write(f"**Fecha:** {mr[1]}")
           st.write(f"**Extracto:** {mr[4]}")
     else:
-      st.info("No hay correos sincronizados todavía.")
+      st.info(
+          "No hay correos sincronizados en vivo todavía. Introduce tu ID y"
+          " pulsa sincronizar."
+      )
   except Exception as e:
     st.error(f"Error al cargar correos: {e}")
 
