@@ -120,10 +120,19 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Búsqueda inteligente en expedientes legales
+    # Consulta inteligente orientada a expedientes, vigencias y expiración
     if any(
         w in q_lower
-        for w in ["visa", "pasaporte", "contrato", "legal", "identidad"]
+        for w in [
+            "visa",
+            "pasaporte",
+            "contrato",
+            "legal",
+            "identidad",
+            "expira",
+            "cuando",
+            "vigencia",
+        ]
     ):
       try:
         conn = sqlite3.connect(DB_NAME)
@@ -133,20 +142,20 @@ class JarvisMind:
         conn.close()
 
         if records:
-          res_text = "[EXPEDIENTES LEGALES RECUPERADOS]:\n"
+          res_text = "[ESTADO DE EXPEDIENTES Y VIGENCIAS CUSTODIADAS]:\n"
           for r in records:
             res_text += (
-                f"- Título: {r[0]} | Categoría: {r[1]} | Vigencia: {r[2]}\n"
-                f"  Detalles: {r[3]}\n"
+                f"- Documento: {r[0]} | Tipo: {r[1]} | Expiración/Vigencia:"
+                f" {r[2]}\n  Detalles: {r[3]}\n"
             )
           return res_text
         else:
           return (
-              "No hay expedientes legales registrados en la base de datos"
-              " todavía."
+              "No hay expedientes legales o documentos de identidad en custodia"
+              " en este momento."
           )
       except Exception as e:
-        return f"Error al consultar registros legales: {e}"
+        return f"Error al consultar base de datos legal: {e}"
 
     if any(
         w in q_lower
@@ -271,9 +280,8 @@ with tab_consola:
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
-                - Módulo de Archivos/Fotos: OPTIMIZADO<br>
+                - Custodia Legal: ACTIVA<br>
                 - Base Documental: ENLACE SQL<br>
-                - Módulo Legal: HABILITADO<br>
                 - Control Financiero: ACTIVO<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
                 - [!] Examen de Alemán (Mañana)<br>
@@ -294,7 +302,7 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: Que sabes sobre mi visa, analiza mis expedientes, etc..."
+            "Ej: ¿Cuándo expira mi pasaporte?, revisa mis visas, etc..."
         ),
         label_visibility="collapsed",
     )
@@ -372,9 +380,24 @@ with tab_docs:
 with tab_legal:
   st.subheader("CUSTODIA DE EXPEDIENTES LEGALES Y CREDENCIALES")
 
+  # Botón para limpiar registros de prueba anteriores y empezar limpios
+  if st.button("PURGAR REGISTROS DE PRUEBA ANTERIORES"):
+    try:
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute("DELETE FROM legal_records")
+      conn.commit()
+      conn.close()
+      st.success("Base de datos de expedientes legales purgada correctamente.")
+      st.rerun()
+    except Exception as e:
+      st.error(f"Error al purgar: {e}")
+
+  st.markdown("---")
+
   with st.form("legal_form"):
     l_title = st.text_input(
-        "Título del Registro (Ej: Pasaporte Alemán, Visa Au Pair, Contrato)"
+        "Título del Expediente (Ej: Pasaporte Alemán, Visa Au Pair)"
     )
     l_category = st.selectbox(
         "Categoría Legal",
@@ -385,10 +408,12 @@ with tab_legal:
             "Acuerdo Legal / Otro",
         ],
     )
-    l_expiry = st.text_input("Fecha de Expiración / Vigencia (Ej: 2028-12-31)")
+    l_expiry = st.text_input(
+        "Fecha de Expiración / Vigencia exacta (Ej: 2030-05-14)"
+    )
     l_content = st.text_area(
-        "Datos clave extraídos o cláusulas (Escribe aquí los datos de la"
-        " foto/documento):",
+        "Detalles o datos clave visibles en la foto (Número de documento,"
+        " titular, condiciones):",
         height=100,
     )
 
@@ -434,10 +459,12 @@ with tab_legal:
 
     if legal_rows:
       for lr in legal_rows:
-        with st.expander(f"[{lr[0]}] {lr[2]} ({lr[3]}) // VIGENCIA: {lr[4]}"):
+        with st.expander(
+            f"[{lr[0]}] {lr[2]} ({lr[3]}) // EXPIRACIÓN: {lr[4]}"
+        ):
           st.text_area("Datos registrados:", lr[5], height=120, key=f"legal_view_{lr[0]}")
     else:
-      st.info("No hay expedientes legales registrados.")
+      st.info("No hay expedientes legales registrados actualmente.")
   except Exception as e:
     st.error(f"Error: {e}")
 
