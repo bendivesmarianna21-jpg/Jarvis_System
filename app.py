@@ -86,7 +86,7 @@ st.markdown(
 )
 
 
-# Base de datos local con auto-reparación
+# Base de datos local con reseteo de seguridad para evitar conflictos de esquema
 def init_db():
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
@@ -190,21 +190,24 @@ with col_main:
     file_content = uploaded_file.read().decode("utf-8", errors="ignore")
     file_name = uploaded_file.name
 
-    conn = sqlite3.connect("jarvis_memory.db")
-    c = conn.cursor()
-    c.execute(
-        "INSERT INTO memory (content, category) VALUES (?, ?)",
-        (
-            f"[DOCUMENTO ASIMILADO: {file_name}] \n{file_content[:600]}...",
-            "Documento",
-        ),
-    )
-    conn.commit()
-    conn.close()
-    st.success(
-        f"Archivo '{file_name}' procesado e integrado exitosamente al núcleo de"
-        " memoria."
-    )
+    try:
+      conn = sqlite3.connect("jarvis_memory.db")
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO memory (content, category) VALUES (?, ?)",
+          (
+              f"[DOCUMENTO ASIMILADO: {file_name}] \n{file_content[:600]}...",
+              "Documento",
+          ),
+      )
+      conn.commit()
+      conn.close()
+      st.success(
+          f"Archivo '{file_name}' procesado e integrado exitosamente al núcleo"
+          " de memoria."
+      )
+    except Exception as e:
+      st.error(f"Error de base de datos: {e}")
 
   st.markdown("---")
   st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
@@ -221,49 +224,55 @@ with col_main:
   with col_btn1:
     if st.button("EJECUTAR PROTOCOLO", use_container_width=True):
       if user_input:
-        conn = sqlite3.connect("jarvis_memory.db")
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO memory (content, category) VALUES (?, ?)",
-            (user_input, "Comando Multilingüe"),
-        )
-        conn.commit()
-        c.execute("SELECT COUNT(*) FROM memory")
-        total_records = c.fetchone()[0]
-        conn.close()
+        try:
+          conn = sqlite3.connect("jarvis_memory.db")
+          c = conn.cursor()
+          # Forzar creación si por alguna razón no existe
+          c.execute(
+              "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY"
+              " AUTOINCREMENT, content TEXT, category TEXT)"
+          )
+          c.execute(
+              "INSERT INTO memory (content, category) VALUES (?, ?)",
+              (user_input, "Comando Multilingüe"),
+          )
+          conn.commit()
+          c.execute("SELECT COUNT(*) FROM memory")
+          total_records = c.fetchone()[0]
+          conn.close()
 
-        # Detección básica de idioma para adaptar la respuesta multilingüe
-        lower_input = user_input.lower()
-        if any(
-            word in lower_input
-            for word in ["translate", "english", "hello", "what"]
-        ):
-          reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Multilingual analysis completed."
-          lang_code = "en-US"
-        elif any(
-            word in lower_input
-            for word in ["deutsch", "sprechen", "prüfung", "guten"]
-        ):
-          reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse abgeschlossen."
-          lang_code = "de-DE"
-        else:
-          reply = f"Protocolo ejecutado con éxito. Registro asignado al sector #{total_records}. Análisis multilingüe completado."
-          lang_code = "es-ES"
+          lower_input = user_input.lower()
+          if any(
+              word in lower_input
+              for word in ["translate", "english", "hello", "what"]
+          ):
+            reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Multilingual analysis completed."
+            lang_code = "en-US"
+          elif any(
+              word in lower_input
+              for word in ["deutsch", "sprechen", "prüfung", "guten"]
+          ):
+            reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse abgeschlossen."
+            lang_code = "de-DE"
+          else:
+            reply = f"Protocolo ejecutado con éxito. Registro asignado al sector #{total_records}. Análisis multilingüe completado."
+            lang_code = "es-ES"
 
-        st.success(reply)
+          st.success(reply)
 
-        # Síntesis de voz adaptada al idioma detectado
-        speech_script = f"""
-                <script>
-                    if ('speechSynthesis' in window) {{
-                        window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance({reply!r});
-                        utterance.lang = '{lang_code}';
-                        window.speechSynthesis.speak(utterance);
-                    }}
-                </script>
-                """
-        st.components.v1.html(speech_script, height=0)
+          speech_script = f"""
+                    <script>
+                        if ('speechSynthesis' in window) {{
+                            window.speechSynthesis.cancel();
+                            const utterance = new SpeechSynthesisUtterance({reply!r});
+                            utterance.lang = '{lang_code}';
+                            window.speechSynthesis.speak(utterance);
+                        }}
+                    </script>
+                    """
+          st.components.v1.html(speech_script, height=0)
+        except Exception as e:
+          st.error(f"Error al escribir en la base de datos: {e}")
       else:
         st.warning("Introduce una directiva válida para procesar.")
 
@@ -291,30 +300,35 @@ st.markdown("---")
 st.subheader("PROTOCOLOS ACTIVOS // AGENDA CRÍTICA")
 
 if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True):
-  conn = sqlite3.connect("jarvis_memory.db")
-  c = conn.cursor()
-  c.execute(
-      "INSERT INTO memory (content, category) VALUES (?, ?)",
-      (
-          "Protocolo Lunes: 1. Examen de alemán. 2. Llegada de la nueva Au Pair"
-          " Safira por la tarde.",
-          "Agenda Crítica",
-      ),
-  )
-  conn.commit()
-  conn.close()
+  try:
+    conn = sqlite3.connect("jarvis_memory.db")
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " content TEXT, category TEXT)"
+    )
+    c.execute(
+        "INSERT INTO memory (content, category) VALUES (?, ?)",
+        (
+            "Protocolo Lunes: 1. Examen de alemán. 2. Llegada de la nueva Au Pair"
+            " Safira por la tarde.",
+            "Agenda Crítica",
+        ),
+    )
+    conn.commit()
+    conn.close()
 
-  report_text = (
-      "Atención Marian. He integrado las directivas críticas a los registros de"
-      " memoria. Para este lunes tienes dos eventos prioritarios: por la"
-      " mañana, tu examen de alemán; y por la tarde, la llegada de la nueva Au"
-      " Pair, Safira. Recomiendo mantener la sesión de estudio centrada y"
-      " coordinar los tiempos de recepción para evitar solapamientos"
-      " operativos."
-  )
-  st.warning(report_text)
+    report_text = (
+        "Atención Marian. He integrado las directivas críticas a los registros"
+        " de memoria. Para este lunes tienes dos eventos prioritarios: por la"
+        " mañana, tu examen de alemán; y por la tarde, la llegada de la nueva"
+        " Au Pair, Safira. Recomiendo mantener la sesión de estudio centrada"
+        " y coordinar los tiempos de recepción para evitar solapamientos"
+        " operativos."
+    )
+    st.warning(report_text)
 
-  voice_report = f"""
+    voice_report = f"""
         <script>
             if ('speechSynthesis' in window) {{
                 window.speechSynthesis.cancel();
@@ -324,24 +338,33 @@ if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True
             }}
         </script>
         """
-  st.components.v1.html(voice_report, height=0)
+    st.components.v1.html(voice_report, height=0)
+  except Exception as e:
+    st.error(f"Error crítico en base de datos: {e}")
 
 # Sección Inferior: Base de Datos y Registros Históricos
 st.markdown("---")
 st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
 
 if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
-  conn = sqlite3.connect("jarvis_memory.db")
-  c = conn.cursor()
-  c.execute("SELECT id, content, category FROM memory")
-  rows = c.fetchall()
-  conn.close()
-
-  if rows:
-    st.write(
-        f"Se han recuperado **{len(rows)}** registros activos en el sistema:"
+  try:
+    conn = sqlite3.connect("jarvis_memory.db")
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " content TEXT, category TEXT)"
     )
-    for row in rows:
-      st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
-  else:
-    st.info("La base de datos central se encuentra limpia.")
+    c.execute("SELECT id, content, category FROM memory")
+    rows = c.fetchall()
+    conn.close()
+
+    if rows:
+      st.write(
+          f"Se han recuperado **{len(rows)}** registros activos en el sistema:"
+      )
+      for row in rows:
+        st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
+    else:
+      st.info("La base de datos central se encuentra limpia.")
+  except Exception as e:
+    st.error(f"Error al leer la base de datos: {e}")
