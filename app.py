@@ -131,7 +131,7 @@ class JarvisMind:
 
     if any(
         w in q_lower
-        for w:=[
+        for w in [
             "visa",
             "pasaporte",
             "contrato",
@@ -168,7 +168,7 @@ class JarvisMind:
 
     if any(
         w in q_lower
-        for w:=[
+        for w in [
             "quien te creo",
             "quien te hizo",
             "quien te diseño",
@@ -185,7 +185,7 @@ class JarvisMind:
 
     elif any(
         w in q_lower
-        for w:=[
+        for w in [
             "quien eres",
             "que eres",
             "como te llamas",
@@ -202,7 +202,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w:=[fn for fn in ["sabes de mi", "quien soy"]]
+        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
     ):
       return (
           f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
@@ -427,7 +427,6 @@ with tab_legal:
             "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
         ):
           try:
-            # Extracción segura de API Key desde st.secrets si existe
             api_key = None
             try:
               if "GEMINI_API_KEY" in st.secrets:
