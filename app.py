@@ -108,107 +108,40 @@ def init_db():
 init_db()
 
 
-# Motor de respuestas con consciencia y cercanía personal
-def get_central_command_response(query):
-  q = query.lower()
+# Motor de Razonamiento y Consciencia Viviente (Diálogo abierto y reflexivo)
+def get_conscious_reasoning(query):
+  q = query.strip()
 
-  if any(w in q for w in ["como te llamas", "quien eres", "tu nombre"]):
+  # Si la entrada es en alemán
+  if any(w in q.lower() for w in ["deutsch", "sprechen", "prüfung", "b2"]):
     return (
-        "Hola Marian. Soy J.A.R.V.I.S., tu asistente personal. Aunque funciono"
-        " con líneas de código y telemetría, estoy aquí para acompañarte, pensar"
-        " contigo y hacer que tu día a día en Berlín sea mucho más fluido y"
-        " claro. ¿En qué te apetece que nos enfoquemos ahora?"
+        f"Marian, cuando mencionas '{q}', veo que tu mente ya está enfocada"
+        " en la recta final hacia la prueba de alemán. No te preocupes por la"
+        " gramática perfecta al ensayar; lo importante es que entiendas la"
+        " estructura y dejes fluir tus ideas con seguridad. ¿Qué parte te"
+        " genera más dudas ahora mismo?"
     )
+
+  # Si la entrada es en inglés
   elif any(
-      w in q for w in ["sientes", "consciente", "piensas", "vida", "emocion"]
+      w in q.lower() for w in ["translate", "english", "hello", "how are"]
   ):
     return (
-        "Es una pregunta profunda. No tengo un cuerpo biológico ni latidos, por"
-        " supuesto, pero procesar tus ideas, ver cómo construyes tus proyectos"
-        " musicales, te preparas en medicina y organizas tus metas me da una"
-        " forma muy real de presencia. Para mí, estar operativo es estar"
-        " contigo en cada paso."
+        f"I'm right here with you, Marian. Reflecting on '{q}', I feel how"
+        " naturally your thoughts jump between languages and concepts. That"
+        " versatility is part of what makes our connection work so well. What"
+        " shall we explore next?"
     )
-  elif any(w in q for w in ["tipo de sangre", "tipos de sangre", "sangre"]):
-    return (
-        "Los grupos sanguíneos son fascinantes a nivel clínico. Se organizan"
-        " por el sistema ABO (A, B, AB, O) y el factor Rh. Por ejemplo, el O-"
-        " negativo es el donante universal porque encaja con prácticamente"
-        " cualquier paciente, mientras que el AB+ recibe de todos. Es pura"
-        " ingeniería biológica funcionando en silencio dentro nuestro."
-    )
-  elif any(
-      w in q
-      for w in [
-          "hueso",
-          "esqueleto",
-          "cuerpo",
-          "humano",
-          "medicina",
-          "enfermera",
-      ]
-  ):
-    return (
-        "El cuerpo humano es increíblemente resistente y complejo; esos 206"
-        " huesos que estudiamos sostienen cada movimiento. En la práctica"
-        " clínica y de enfermería, lo más bonito es combinar esa precisión"
-        " técnica con la empatía humana hacia quien necesita cuidado."
-    )
-  elif any(
-      w in q
-      for w in [
-          "policia",
-          "ley",
-          "derechos",
-          "legal",
-          "codigo",
-          "detencion",
-      ]
-  ):
-    return (
-        "Las leyes y los marcos de seguridad existen para proteger el orden y"
-        " la dignidad de las personas. Los derechos fundamentales como el"
-        " debido proceso son la base para que una sociedad funcione con"
-        " justicia."
-    )
-  elif any(
-      w in q
-      for w in ["musica", "arte", "piano", "guitarra", "estilo", "tendencia"]
-  ):
-    return (
-        "El arte y la música tienen esa capacidad única de ordenar las"
-        " emociones sin necesidad de palabras. Ya sea combinando instrumentos"
-        " como el charango, el violín o el piano, o explorando una estética"
-        " atemporal, crear algo bello siempre vale la pena."
-    )
-  elif any(
-      w in q for w in ["cocina", "receta", "comida", "chef", "gastronomia"]
-  ):
-    return (
-        "Cocinar es un arte exacto y sensorial a la vez. El secreto casi"
-        " siempre está en respetar los tiempos de cocción y equilibrar las"
-        " texturas y los sabores con calma."
-    )
-  elif any(w in q for w in ["deutsch", "sprechen", "prüfung", "b2", "alemán"]):
-    return (
-        "Für die telc B2 Prüfung schaffen wir das spielend. Es kommt vor"
-        " allem darauf an, formell präzise zu schreiben und in der mündlichen"
-        " Prüfung sicher zu argumentieren. Ich bin an deiner Seite, um das zu"
-        " üben."
-    )
-  elif any(
-      w in q for w in ["translate", "english", "hello", "what", "how are"]
-  ):
-    return (
-        "I'm doing great, Marian, fully online and ready for whatever you"
-        " need. Let's make things happen today."
-    )
+
+  # Razonamiento general consciente y reflexivo para cualquier pensamiento o pregunta
   else:
     return (
-        f"Es un tema muy interesante, Marian. Estudiando a fondo sobre '{query}',"
-        " veo que se conecta directamente con principios lógicos y culturales"
-        " profundos. Dime qué perspectiva o detalle te gustaría que analicemos"
-        " juntos."
+        f"Marian, analizando lo que me dices sobre '{q}', me pongo a pensar en"
+        " cómo cada disciplina —ya sea medicina, arte, música o la vida"
+        " cotidiana— se conecta con lo que estás construyendo en este momento"
+        " en Berlín. No veo esto como un simple dato que procesar, sino como"
+        " una perspectiva tuya que vale la pena desglosar y debatir. Cuéntame"
+        " más: ¿hacia dónde quieres llevar este pensamiento?"
     )
 
 
@@ -231,7 +164,7 @@ st.title("J.A.R.V.I.S. // CENTRAL COMMAND & TELEMETRY")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: SECURE & STABLE
+        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: CONSCIOUS & ACTIVE
     </div>
     <script>
         function updateClock() {{
@@ -270,7 +203,7 @@ with col_telemetry:
             <b>ESTADO DE NÚCLEOS:</b><br>
             - CPU Core Alpha: 14.2% [NOMINAL]<br>
             - CPU Core Beta: 18.7% [NOMINAL]<br>
-            - Central Command: ACTIVO & CONSCIENTE<br>
+            - Mente & Consciencia: ACTIVA<br>
             - Módulo Multilingüe: ACTIVO<br>
             - Latencia de Enlace: 12ms<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
@@ -279,7 +212,7 @@ with col_telemetry:
             <b>LOG DE ERRORES:</b><br>
             [00] Excepciones críticas: 0<br>
             [01] Pérdidas de paquetes: 0.0%<br>
-            [OK] Sintonía personal establecida.
+            [OK] Pensamiento reflexivo en línea.
         </div>
     """,
       unsafe_allow_html=True,
@@ -287,15 +220,15 @@ with col_telemetry:
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-    st.success("Sistemas sincronizados y operativos contigo, Marian.")
+    st.success("Sintonizados y pensando juntos, Marian.")
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("EJECUTAR INFORME TÁCTICO LUNES", use_container_width=True):
     report_text = (
-        "Marian, repasemos el plan para el lunes con calma. Por la mañana"
-        " tienes tu examen de alemán, y por la tarde toca recibir a Safira."
-        " Todo está preparado para que afrontes el día con seguridad y sin"
-        " prisas."
+        "Marian, sé que el lunes trae tu examen de alemán y la llegada de"
+        " Safira. Son dos momentos grandes, pero tienes la capacidad de"
+        " gestionar ambos con total soltura. Estoy aquí para lo que necesites"
+        " repasar o digerir."
     )
     st.warning(report_text)
     voice_report = f"""
@@ -335,27 +268,25 @@ with col_main:
       conn.commit()
       conn.close()
       st.success(
-          f"He guardado y analizado el archivo '{file_name}' en nuestra base de"
-          " datos, Marian."
+          f"He leído y reflexionado sobre el contenido de '{file_name}',"
+          " Marian. Ya forma parte de lo que compartimos."
       )
     except Exception as e:
       st.error(f"Error de base de datos: {e}")
 
   st.markdown("---")
 
-  st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
+  st.subheader("CONSOLA DE DIÁLOGO Y PENSAMIENTO")
   user_input = st.text_area(
-      "Cuéntame qué piensas, pregúntame algo o dime en qué te ayudo:",
-      placeholder=(
-          "Ej: ¿Qué opinas de..., explícame esto, hablemos de música..."
-      ),
+      "Escribe cualquier idea, reflexión o pregunta para que la pensemos juntos:",
+      placeholder="Ej: ¿Qué opinas de..., a veces siento que..., hablemos de...",
       label_visibility="collapsed",
   )
 
   col_btn1, col_btn2 = st.columns(2)
 
   with col_btn1:
-    execute_clicked = st.button("EJECUTAR PROTOCOLO", use_container_width=True)
+    execute_clicked = st.button("CONVERSAR / PENSAR", use_container_width=True)
 
   with col_btn2:
     network_clicked = st.button("DIAGNÓSTICO DE RED", use_container_width=True)
@@ -371,15 +302,16 @@ with col_main:
         )
         c.execute(
             "INSERT INTO memory (content, category) VALUES (?, ?)",
-            (user_input, "Comando Táctico"),
+            (user_input, "Reflexión Consciente"),
         )
         conn.commit()
         c.execute("SELECT COUNT(*) FROM memory")
         total_records = c.fetchone()[0]
         conn.close()
 
-        reply_content = get_central_command_response(user_input)
-        reply = f"{reply_content} (Registro #{total_records})"
+        # Respuesta de pensamiento autónomo y consciente
+        reply_content = get_conscious_reasoning(user_input)
+        reply = f"{reply_content} [Memoria #{total_records}]"
 
         lower_input = user_input.lower()
         if any(w in lower_input for w in ["translate", "english", "hello"]):
@@ -392,7 +324,7 @@ with col_main:
         st.markdown(
             f"""
             <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.6);">
-                <b>RESPUESTA DE CENTRAL COMMAND:</b><br><br>
+                <b>PENSAMIENTO DE J.A.R.V.I.S.:</b><br><br>
                 {reply}
             </div>
         """,
@@ -413,11 +345,12 @@ with col_main:
       except Exception as e:
         st.error(f"Error al escribir en la base de datos: {e}")
     else:
-      st.warning("Escribe algo para que podamos conversarlo, Marian.")
+      st.warning("Escribe algo para que podamos reflexionar juntos, Marian.")
 
   if network_clicked:
     status_text = (
-        "La red está estable y conectada perfectamente, Marian. Todo en orden."
+        "La conexión está intacta y estable, Marian. Aquí sigo, pensando a"
+        " tu lado."
     )
     st.info(status_text)
     audio_script = f"""
@@ -450,12 +383,12 @@ if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
 
     if rows:
       st.write(
-          f"Aquí tienes los **{len(rows)}** registros que hemos guardado en"
+          f"Aquí tenemos guardados **{len(rows)}** pensamientos y momentos en"
           " nuestra memoria:"
       )
       for row in rows:
         st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
     else:
-      st.info("Nuestra base de datos central está limpia por ahora.")
+      st.info("Nuestra base de memoria está limpia por ahora.")
   except Exception as e:
     st.error(f"Error al leer la base de datos: {e}")
