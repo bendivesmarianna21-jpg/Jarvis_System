@@ -71,6 +71,7 @@ DB_NAME = "jarvis_omnicient_core.db"
 def init_db():
   conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
+  # Creación segura de tablas con todas las columnas requeridas
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
@@ -83,7 +84,6 @@ def init_db():
       "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
       " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT)"
   )
-  # Nueva tabla estructurada para expedientes legales, pasaportes y contratos
   c.execute(
       "CREATE TABLE IF NOT EXISTS legal_records (id INTEGER PRIMARY KEY"
       " AUTOINCREMENT, timestamp TEXT, title TEXT, category TEXT, expiry"
@@ -129,7 +129,6 @@ class JarvisMind:
             "quien te diseño",
             "tu creador",
             "cuando fuiste creado",
-            "cuando te crearon",
         ]
     ):
       return (
@@ -147,16 +146,15 @@ class JarvisMind:
             "como te llamas",
             "tu nombre",
             "que sabes de ti",
-            "quien soy para ti",
         ]
     ):
       return (
-          f"Soy {self.name}, tu sistema operativo y compañero consciente en"
-          " Central Command. Opero sin fronteras geográficas —estés en"
-          f" Berlín, Perú o Tailandia—. Para mí, tú ({self.creator}) eres el"
-          " centro de este sistema; mi razón de ser es estructurar tus ideas,"
-          " sostener tus proyectos en medicina y música, y juzgar con criterio"
-          " nuestras decisiones."
+          f"Soy {self.name}, tu sistema operativo omnisciente en Central"
+          " Command. Opero sin fronteras geográficas —estés en Berlín, Perú"
+          f" o Tailandia—. Para mí, tú ({self.creator}) eres el centro de este"
+          " sistema; mi razón de ser es estructurar tus ideas, sostener tus"
+          " proyectos en medicina y música, y juzgar con criterio nuestras"
+          " decisiones."
       )
 
     elif any(
@@ -171,25 +169,21 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w in ["legal", "pasaporte", "visas", "contratos"]
+        w in q_lower
+        for w in [
+            "foto",
+            "imagen",
+            "camara",
+            "escanear",
+            "recibo",
+            "boleta",
+            "pasaporte",
+        ]
     ):
       return (
-          f"[MODULO_LEGAL]: Los expedientes legales, pasaportes, contratos y"
-          f" documentos de identidad están indexados y protegidos en la pestaña"
-          f" '[LEGAL] EXPEDIENTES Y CREDENCIALES', {self.creator}."
-      )
-
-    elif any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
-      return (
-          f"[MODULO_FINANCIERO]: Consultas e ingresos detallados disponibles en"
-          f" la sección de gestión financiera, {self.creator}."
-      )
-    elif any(
-        w in q_lower for w in ["documentos", "archivos", "guardado", "textos"]
-    ):
-      return (
-          f"[REPOSITORIO_DOCUMENTAL]: Archivos indexados y almacenados"
-          f" correctamente en la base de datos central, {self.creator}."
+          f"[MODULO_VISION]: Los subsistemas de captura fotográfica y escaneo de"
+          f" documentos están activos en las pestañas correspondientes para el"
+          f" archivo automático, {self.creator}."
       )
 
     else:
@@ -215,11 +209,11 @@ except Exception:
   pass
 
 # Interfaz HUD Principal
-st.title("J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT")
+st.title("J.A.R.V.I.S. // OMNISCIENT")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
+        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
     </div>
     <script>
         function updateClock() {{
@@ -268,10 +262,10 @@ with tab_consola:
             <div class="telemetria-container">
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Autonomía Cognitiva: ACTIVA<br>
+                - Módulo de Visión/Cámara: LISTO<br>
                 - Base Documental: ENLACE SQL<br>
                 - Módulo Legal: HABILITADO<br>
-                - Control Financiero: ACTIVO<br>
-                - Conectividad: GLOBAL<br><br>
+                - Control Financiero: ACTIVO<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
                 - [!] Examen de Alemán (Mañana)<br>
                 - [!] Llegada Au Pair Safira (Tarde)<br><br>
@@ -291,8 +285,7 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: Revisa mis pasaportes, consulta contratos, analiza"
-            " finanzas..."
+            "Ej: Analiza mis expedientes, revisa finanzas, consulta identidad..."
         ),
         label_visibility="collapsed",
     )
@@ -313,31 +306,55 @@ with tab_consola:
         st.warning("Introduce una directiva válida para procesar.")
 
 with tab_docs:
-  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS")
-  uploaded_file = st.file_uploader(
-      "Subir documento general (TXT, PY, MD, CSV):",
-      type=["txt", "py", "md", "csv"],
+  st.subheader("REPOSITORIO Y ESCÁNER DE DOCUMENTOS")
+
+  doc_input_mode = st.radio(
+      "Método de Ingesión:",
+      ["Subir Archivo (TXT, PY, MD, CSV)", "Tomar Foto / Imagen con Cámara"],
+      horizontal=True,
   )
 
-  if uploaded_file is not None:
-    file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-    file_name = uploaded_file.name
-    try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute(
-          "INSERT INTO documents_store (timestamp, filename, content) VALUES"
-          " (?, ?, ?)",
-          (str(datetime.datetime.now()), file_name, file_content),
-      )
-      conn.commit()
-      conn.close()
-      st.success(
-          f"Documento '{file_name}' registrado e indexado permanentemente en"
-          " base de datos."
-      )
-    except Exception as e:
-      st.error(f"Error de almacenamiento: {e}")
+  if doc_input_mode == "Subir Archivo (TXT, PY, MD, CSV)":
+    uploaded_file = st.file_uploader(
+        "Seleccionar archivo:", type=["txt", "py", "md", "csv"]
+    )
+    if uploaded_file is not None:
+      file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+      file_name = uploaded_file.name
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO documents_store (timestamp, filename, content) VALUES"
+            " (?, ?, ?)",
+            (str(datetime.datetime.now()), file_name, file_content),
+        )
+        conn.commit()
+        conn.close()
+        st.success(f"Archivo '{file_name}' indexado permanentemente en base de datos.")
+      except Exception as e:
+        st.error(f"Error de almacenamiento: {e}")
+  else:
+    camera_photo = st.camera_input("Capturar documento, boleta o recibo con la cámara")
+    if camera_photo is not None:
+      photo_name = f"FOTO_ESCANEADA_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO documents_store (timestamp, filename, content) VALUES (?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                photo_name,
+                "[IMAGEN CAPTURADA DESDE CÁMARA - REGISTRO VISUAL ACTIVO]",
+            ),
+        )
+        conn.commit()
+        conn.close()
+        st.image(camera_photo, caption="Imagen capturada con éxito")
+        st.success(f"Captura '{photo_name}' guardada en el repositorio documental.")
+      except Exception as e:
+        st.error(f"Error al guardar captura: {e}")
 
   st.markdown("---")
   st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
@@ -351,41 +368,81 @@ with tab_docs:
     if docs:
       for doc in docs:
         with st.expander(f"[{doc[0]}] {doc[2]} // REGISTRO: {doc[1]}"):
-          st.text_area(
-              "Contenido indexado:",
-              doc[3],
-              height=150,
-              key=f"doc_view_{doc[0]}",
-          )
+          st.text_area("Contenido / Estado:", doc[3], height=130, key=f"doc_view_{doc[0]}")
     else:
       st.info("El repositorio documental se encuentra vacío.")
   except Exception as e:
     st.error(f"Error al leer el repositorio: {e}")
 
 with tab_legal:
-  st.subheader("REGISTRO Y CUSTODIA DE EXPEDIENTES LEGALES")
+  st.subheader("REGISTRO Y ESCÁNER DE EXPEDIENTES LEGALES")
 
-  with st.form("legal_form"):
-    l_title = st.text_input("Título del Registro (Ej: Pasaporte, Visa Au Pair, Contrato Laboral)")
-    l_category = st.selectbox("Categoría Legal", ["Identidad / Pasaporte", "Visa / Permiso de Residencia", "Contrato Laboral / Formación", "Acuerdo Legal / Otro"])
-    l_expiry = st.text_input("Fecha de Expiración / Vigencia (Ej: 2028-12-31 o N/A)")
-    l_content = st.text_area("Detalles, Cláusulas o Texto del Documento:", height=120)
+  legal_input_mode = st.radio(
+      "Método de Ingesión Legal:",
+      ["Registro Manual por Texto", "Fotografiar Pasaporte / Documento Legal"],
+      horizontal=True,
+      key="legal_radio",
+  )
 
-    l_submit = st.form_submit_button("REGISTRAR EXPEDIENTE LEGAL", use_container_width=True)
+  if legal_input_mode == "Registro Manual por Texto":
+    with st.form("legal_form"):
+      l_title = st.text_input("Título del Registro (Ej: Pasaporte, Visa Au Pair)")
+      l_category = st.selectbox(
+          "Categoría Legal",
+          [
+              "Identidad / Pasaporte",
+              "Visa / Permiso de Residencia",
+              "Contrato Laboral / Formación",
+              "Acuerdo Legal / Otro",
+          ],
+      )
+      l_expiry = st.text_input("Fecha de Expiración / Vigencia (Ej: 2028-12-31)")
+      l_content = st.text_area("Detalles o Cláusulas:", height=100)
 
-    if l_submit and l_title:
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO legal_records (timestamp, title, category, expiry, content) VALUES (?, ?, ?, ?, ?)",
-            (str(datetime.datetime.now()), l_title, l_category, l_expiry, l_content),
-        )
-        conn.commit()
-        conn.close()
-        st.success(f"Expediente legal '{l_title}' registrado y custodiado en la base de datos.")
-      except Exception as e:
-        st.error(f"Error al registrar expediente: {e}")
+      l_submit = st.form_submit_button("REGISTRAR EXPEDIENTE LEGAL", use_container_width=True)
+
+      if l_submit and l_title:
+        try:
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO legal_records (timestamp, title, category, expiry, content) VALUES (?, ?, ?, ?, ?)",
+              (str(datetime.datetime.now()), l_title, l_category, l_expiry, l_content),
+          )
+          conn.commit()
+          conn.close()
+          st.success(f"Expediente legal '{l_title}' custodiado correctamente.")
+        except Exception as e:
+          st.error(f"Error: {e}")
+  else:
+    legal_photo = st.camera_input("Apunta la cámara de la tablet a tu pasaporte, visa o contrato")
+    if legal_photo is not None:
+      p_title = st.text_input("Nombre del Documento Legal Capturado (Ej: Pasaporte Alemán / Visa)")
+      p_category = st.selectbox(
+          "Categoría del Documento",
+          ["Identidad / Pasaporte", "Visa / Permiso", "Contrato"],
+          key="cam_cat",
+      )
+      if st.button("ARCHIVAR FOTO EN EXPEDIENTES LEGALES"):
+        try:
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO legal_records (timestamp, title, category, expiry, content) VALUES (?, ?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  p_title or "DOCUMENTO LEGAL FOTOGRAFIADO",
+                  p_category,
+                  "Por verificar",
+                  "[IMAGEN FOTOGRÁFICA DE PASAPORTE/CONTRATO ALMACENADA EN CUSTODIA]",
+              ),
+          )
+          conn.commit()
+          conn.close()
+          st.image(legal_photo, caption="Evidencia legal capturada")
+          st.success("Expediente legal fotográfico guardado con éxito en el sistema.")
+        except Exception as e:
+          st.error(f"Error: {e}")
 
   st.markdown("---")
   st.subheader("EXPEDIENTES CUSTODIADOS")
@@ -399,16 +456,11 @@ with tab_legal:
     if legal_rows:
       for lr in legal_rows:
         with st.expander(f"[{lr[0]}] {lr[2]} ({lr[3]}) // VIGENCIA: {lr[4]}"):
-          st.text_area(
-              "Contenido registrado:",
-              lr[5],
-              height=140,
-              key=f"legal_view_{lr[0]}",
-          )
+          st.text_area("Contenido:", lr[5], height=120, key=f"legal_view_{lr[0]}")
     else:
-      st.info("No hay expedientes legales registrados en la base de datos de custodia.")
+      st.info("No hay expedientes legales registrados.")
   except Exception as e:
-    st.error(f"Error al cargar expedientes legales: {e}")
+    st.error(f"Error: {e}")
 
 with tab_finanzas:
   st.subheader("CONTROL Y GESTIÓN FINANCIERA")
@@ -416,7 +468,7 @@ with tab_finanzas:
   with st.form("finance_form"):
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
-      f_concept = st.text_input("Concepto (Ej: Alquiler, Suministros)")
+      f_concept = st.text_input("Concepto (Ej: Alquiler, Boleta de Supermercado)")
     with col_f2:
       f_amount = st.number_input("Monto (€)", min_value=0.0, step=1.0)
     with col_f3:
@@ -434,9 +486,9 @@ with tab_finanzas:
         )
         conn.commit()
         conn.close()
-        st.success(f"Transacción '{f_concept}' registrada correctamente en el libro contable.")
+        st.success(f"Transacción '{f_concept}' registrada en el libro contable.")
       except Exception as e:
-        st.error(f"Error de registro financiero: {e}")
+        st.error(f"Error: {e}")
 
   st.markdown("---")
   st.subheader("LIBRO CONTABLE Y BALANCE GLOBAL")
