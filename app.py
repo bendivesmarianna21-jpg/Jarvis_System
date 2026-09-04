@@ -290,6 +290,7 @@ with tab_consola:
                 - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
                 - Módulo de Visión AI: SEGURO<br>
+                - Módulo de Voz: INTEGRADO<br>
                 - Custodia Legal: ACTIVA<br>
                 - Base Documental: ENLACE SQL<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
@@ -308,6 +309,52 @@ with tab_consola:
 
   with col_main:
     st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
+
+    # Módulo interactivo de reconocimiento de voz por micrófono (HTML5 Speech Recognition)
+    voice_html = """
+        <div style="background: rgba(4, 12, 24, 0.9); border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 6px; padding: 12px; margin-bottom: 15px; font-family: 'Courier New', Courier, monospace;">
+            <b style="color: #00d2ff; font-size: 11px;">MÓDULO DE INTERACCIÓN POR VOZ (MICRÓFONO):</b><br><br>
+            <button onclick="startListening()" style="background: #040e1b; color: #00d2ff; border: 1px solid #00d2ff; padding: 8px 14px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+                🎤 Iniciar Dictado por Voz
+            </button>
+            <span id="voice-status" style="margin-left: 10px; font-size: 11px; color: #7ab8ff;">Micrófono en espera...</span>
+            <p id="transcript-output" style="margin-top: 10px; color: #ffffff; font-size: 13px; background: #050f1d; padding: 8px; border-radius: 4px; min-height: 24px; border: 1px dashed rgba(0,210,255,0.3);"></p>
+        </div>
+        <script>
+            function startListening() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    alert("Tu navegador no soporta el reconocimiento de voz nativo. Usa Chrome o Safari.");
+                    return;
+                }
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'es-ES';
+                recognition.interimResults = false;
+                
+                const statusEl = document.getElementById('voice-status');
+                const outputEl = document.getElementById('transcript-output');
+                
+                statusEl.innerText = "Escuchando atentamente...";
+                statusEl.style.color = "#00ffcc";
+                
+                recognition.onresult = function(event) {
+                    const speechToText = event.results[0][0].transcript;
+                    outputEl.innerText = speechToText;
+                    statusEl.innerText = "Dictado capturado con éxito.";
+                    statusEl.style.color = "#7ab8ff";
+                };
+                
+                recognition.onerror = function(event) {
+                    statusEl.innerText = "Error en captura de voz.";
+                    statusEl.style.color = "#ff4444";
+                };
+                
+                recognition.start();
+            }
+        </script>
+    """
+    st.components.v1.html(voice_html, height=145)
+
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
