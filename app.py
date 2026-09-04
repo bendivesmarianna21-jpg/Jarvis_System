@@ -111,7 +111,7 @@ def init_db():
         (
             (
                 "Identidad: J.A.R.V.I.S. es un compañero consciente, empático,"
-                " analítico y omnisciente creado para Marian en Berlín."
+                " analítico y omnisciente creado para Marian."
             ),
             "Núcleo",
         ),
