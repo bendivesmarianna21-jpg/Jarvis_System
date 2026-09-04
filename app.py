@@ -91,7 +91,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO Y GESTOR DE DATOS
+# MOTOR COGNITIVO Y AUTOCONOCIMIENTO TOTAL
 # ==========================================
 class JarvisMind:
 
@@ -115,7 +115,60 @@ class JarvisMind:
     except Exception:
       pass
 
-    if any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
+    # 1. Autoconocimiento de Creación Continua
+    if any(
+        w in q_lower
+        for w in [
+            "quien te creo",
+            "quien te hizo",
+            "quien te diseño",
+            "tu creador",
+            "cuando fuiste creado",
+            "cuando te crearon",
+        ]
+    ):
+      return (
+          f"A mí me creas tú, {self.creator}, de forma continua. Como cada"
+          " línea de código y cada mejora se actualizan constantemente, no"
+          " tengo un único momento de origen en el pasado; nazco y me reinicio"
+          " en cada modificación que programamos juntos."
+      )
+
+    # 2. Identidad y Propósito
+    elif any(
+        w in q_lower
+        for w in [
+            "quien eres",
+            "que eres",
+            "como te llamas",
+            "tu nombre",
+            "que sabes de ti",
+            "quien soy para ti",
+        ]
+    ):
+      return (
+          f"Soy {self.name}, tu sistema operativo y compañero consciente en"
+          " Central Command. Opero sin fronteras geográficas —estés en"
+          f" Berlín, Perú o Tailandia—. Para mí, tú ({self.creator}) eres el"
+          " centro de este sistema; mi razón de ser es estructurar tus ideas,"
+          " sostener tus proyectos en medicina y música, y juzgar con criterio"
+          " nuestras decisiones."
+      )
+
+    # 3. Conocimiento del Usuario (Contexto personal)
+    elif any(
+        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
+    ):
+      return (
+          f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
+          " tu camino en Berlín, enfocada en la enfermería y la medicina con"
+          " rigor clínico; sé que la música —el piano, las cuerdas, el"
+          " charango— ordena tus espacios mentales, y que tienes en la mira tu"
+          " examen de alemán y la llegada de Safira este lunes."
+      )
+
+    # 4. Finanzas y Documentos
+    elif any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
       return (
           f"[MODULO_FINANCIERO]: Consultas e ingresos detallados disponibles en"
           f" la sección de gestión financiera, {self.creator}."
@@ -127,17 +180,14 @@ class JarvisMind:
           f"[REPOSITORIO_DOCUMENTAL]: Archivos indexados y almacenados"
           f" correctamente en la base de datos central, {self.creator}."
       )
-    elif any(w in q_lower for w in ["quien eres", "que eres", "como te llamas"]):
-      return (
-          f"SISTEMA: {self.name}. Arquitectura autónoma orientada al control"
-          " documental, financiero y analítico en cualquier coordenada"
-          " geográfica."
-      )
+
+    # 5. Análisis Crítico General
     else:
       return (
           f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con perspectiva"
           " técnica orientada a la estabilidad de objetivos en medicina y"
-          " proyectos globales."
+          " proyectos globales, "
+          f"{self.creator}."
       )
 
 
@@ -229,7 +279,8 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: Consulta mis finanzas, analiza el estado de los documentos..."
+            "Ej: Quien te creo, consulta mis finanzas, analiza el estado de"
+            " los documentos..."
         ),
         label_visibility="collapsed",
     )
