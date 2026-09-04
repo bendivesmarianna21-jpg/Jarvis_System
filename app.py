@@ -4,7 +4,7 @@ import sqlite3
 import urllib.request
 import streamlit as st
 
-# Configuración de la interfaz HUD para tablet (Ancho completo)
+# Configuración de la interfaz HUD táctil para tablet (Ancho completo)
 st.set_page_config(
     page_title="J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT",
     page_icon=None,
@@ -71,17 +71,14 @@ DB_NAME = "jarvis_omnicient_core.db"
 def init_db():
   conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
-  # Tabla de memoria general e interacciones
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
   )
-  # Tabla estructurada para documentos almacenados
   c.execute(
       "CREATE TABLE IF NOT EXISTS documents_store (id INTEGER PRIMARY KEY"
       " AUTOINCREMENT, timestamp TEXT, filename TEXT, content TEXT)"
   )
-  # Tabla estructurada para finanzas
   c.execute(
       "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
       " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT)"
@@ -111,7 +108,7 @@ class JarvisMind:
       c = conn.cursor()
       c.execute(
           "INSERT INTO memory (timestamp, content, category) VALUES (?, ?, ?)",
-          (str(datetime.datetime.now()), q, "Consulta Central"),
+          (str(datetime.datetime.now()), q, "CONSULTA_CENTRAL"),
       )
       conn.commit()
       conn.close()
@@ -120,29 +117,27 @@ class JarvisMind:
 
     if any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
       return (
-          f"Módulo financiero consultado, {self.creator}. Puedes revisar el"
-          " detalle exacto de tus ingresos y egresos en la pestaña 'Módulo"
-          " Financiero' de este Central Command."
+          f"[MODULO_FINANCIERO]: Consultas e ingresos detallados disponibles en"
+          f" la sección de gestión financiera, {self.creator}."
       )
     elif any(
         w in q_lower for w in ["documentos", "archivos", "guardado", "textos"]
     ):
       return (
-          f"Revisando los registros documentales, {self.creator}. Tienes acceso"
-          " completo al repositorio de archivos almacenados desde la pestaña"
-          " 'Archivo Documental'."
+          f"[REPOSITORIO_DOCUMENTAL]: Archivos indexados y almacenados"
+          f" correctamente en la base de datos central, {self.creator}."
       )
     elif any(w in q_lower for w in ["quien eres", "que eres", "como te llamas"]):
       return (
-          f"Soy {self.name}, tu sistema operativo omnisciente. Organizo tus"
-          " documentos, controlo tus finanzas y juzgo con criterio tus metas"
-          " en medicina y música, estés donde estés."
+          f"SISTEMA: {self.name}. Arquitectura autónoma orientada al control"
+          " documental, financiero y analítico en cualquier coordenada"
+          " geográfica."
       )
     else:
       return (
-          f"Marian, analizando tu planteamiento con perspectiva crítica:"
-          f" '{q}'. Considero que debemos estructurar los datos con rigor para"
-          " asegurar que respalde tus objetivos a largo plazo."
+          f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con perspectiva"
+          " técnica orientada a la estabilidad de objetivos en medicina y"
+          " proyectos globales."
       )
 
 
@@ -164,7 +159,7 @@ st.title("J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
+        GLOBAL STATUS: ONLINE (ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
     </div>
     <script>
         function updateClock() {{
@@ -193,13 +188,13 @@ st.components.v1.html(clock_html, height=30)
 st.markdown("---")
 
 # ==========================================
-# ORGANIZACIÓN POR PESTAÑAS (FORMATOS Y VISTAS)
+# SECCIONES TÁCTICAS (PESTAÑAS DE CONTROL)
 # ==========================================
 tab_consola, tab_docs, tab_finanzas, tab_memoria = st.tabs([
-    "🖥️ Central Command",
-    "📄 Archivo Documental",
-    "💶 Módulo Financiero",
-    "🧠 Memoria y Auditoría",
+    "[CONSOLE] CENTRAL COMMAND",
+    "[ARCHIVE] DOCUMENT REPOSITORY",
+    "[FINANCE] LEDGER & BUDGET",
+    "[TELEMETRY] SYSTEM AUDIT",
 ])
 
 with tab_consola:
@@ -218,8 +213,8 @@ with tab_consola:
                 <b>CRONOGRAMA (LUNES):</b><br>
                 - [!] Examen de Alemán (Mañana)<br>
                 - [!] Llegada Au Pair Safira (Tarde)<br><br>
-                <b>SISTEMA:</b><br>
-                [OK] Almacenamiento estructurado listo.
+                <b>TELEMETRÍA:</b><br>
+                [OK] Integridad estructural óptima.
             </div>
         """,
         unsafe_allow_html=True,
@@ -234,8 +229,7 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: Muéstrame mis finanzas, analiza un texto, consulta"
-            " documentos..."
+            "Ej: Consulta mis finanzas, analiza el estado de los documentos..."
         ),
         label_visibility="collapsed",
     )
@@ -246,14 +240,14 @@ with tab_consola:
         st.markdown(
             f"""
                 <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-                    <b>RESPUESTA Y JUICIO DE J.A.R.V.I.S.:</b><br><br>
+                    <b>RESPUESTA Y TELEMETRÍA DE J.A.R.V.I.S.:</b><br><br>
                     {reply}
                 </div>
             """,
             unsafe_allow_html=True,
         )
       else:
-        st.warning("Introduce una directiva válida.")
+        st.warning("Introduce una directiva válida para procesar.")
 
 with tab_docs:
   st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS")
@@ -276,14 +270,14 @@ with tab_docs:
       conn.commit()
       conn.close()
       st.success(
-          f"Documento '{file_name}' almacenado permanentemente en la base de"
-          " datos."
+          f"Documento '{file_name}' registrado e indexado permanentemente en"
+          " base de datos."
       )
     except Exception as e:
-      st.error(f"Error al almacenar: {e}")
+      st.error(f"Error de almacenamiento: {e}")
 
   st.markdown("---")
-  st.subheader("ARCHIVOS ALMACENADOS EN EL SISTEMA")
+  st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -293,20 +287,20 @@ with tab_docs:
 
     if docs:
       for doc in docs:
-        with st.expander(f"📁 [{doc[0]}] {doc[2]} — (Guardado: {doc[1]})"):
+        with st.expander(f"[{doc[0]}] {doc[2]} // REGISTRO: {doc[1]}"):
           st.text_area(
-              "Contenido del documento:",
+              "Contenido indexado:",
               doc[3],
               height=150,
               key=f"doc_view_{doc[0]}",
           )
     else:
       st.info(
-          "No hay documentos almacenados todavía. Sube uno arriba para"
-          " registrarlo."
+          "El repositorio documental se encuentra vacío. Sube archivos"
+          " mediante el panel superior."
       )
   except Exception as e:
-    st.error(f"Error al leer archivos: {e}")
+    st.error(f"Error al leer el repositorio: {e}")
 
 with tab_finanzas:
   st.subheader("CONTROL Y GESTIÓN FINANCIERA")
@@ -314,7 +308,7 @@ with tab_finanzas:
   with st.form("finance_form"):
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
-      f_concept = st.text_input("Concepto (Ej: Alquiler, Material clínico)")
+      f_concept = st.text_input("Concepto (Ej: Alquiler, Suministros)")
     with col_f2:
       f_amount = st.number_input("Monto (€)", min_value=0.0, step=1.0)
     with col_f3:
@@ -336,13 +330,14 @@ with tab_finanzas:
         conn.commit()
         conn.close()
         st.success(
-            f"Movimiento '{f_concept}' registrado correctamente en el sistema."
+            f"Transacción '{f_concept}' registrada correctamente en el libro"
+            " contable."
         )
       except Exception as e:
-        st.error(f"Error financiero: {e}")
+        st.error(f"Error de registro financiero: {e}")
 
   st.markdown("---")
-  st.subheader("REGISTRO GLOBAL DE MOVIMIENTOS")
+  st.subheader("LIBRO CONTABLE Y BALANCE GLOBAL")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -362,18 +357,17 @@ with tab_finanzas:
 
       st.markdown("<br>", unsafe_allow_html=True)
       for r in fin_rows:
-        color_tag = "🟢" if r[4] == "Ingreso" else "🔴"
+        tag_type = "[INGRESO]" if r[4] == "Ingreso" else "[GASTO]"
         st.info(
-            f"{color_tag} **[{r[0]}] {r[2]}** — {r[3]} € ({r[4]}) | Fecha:"
-            f" {r[1]}"
+            f"{tag_type} [{r[0]}] {r[2]} — {r[3]} € | Timestamp: {r[1]}"
         )
     else:
-      st.info("No hay registros financieros guardados todavía.")
+      st.info("No se registran movimientos en el libro contable.")
   except Exception as e:
-    st.error(f"Error al cargar finanzas: {e}")
+    st.error(f"Error al cargar contabilidad: {e}")
 
 with tab_memoria:
-  st.subheader("AUDITORÍA DE MEMORIA CENTRAL")
+  st.subheader("AUDITORÍA DE NÚCLEO Y MEMORIA CENTRAL")
   if st.button("CONSULTAR HISTORIAL DE DIÁLOGO"):
     try:
       conn = sqlite3.connect(DB_NAME)
@@ -383,11 +377,12 @@ with tab_memoria:
       conn.close()
       if rows:
         st.write(
-            f"Se han recuperado **{len(rows)}** interacciones registradas:"
+            f"Se han recuperado **{len(rows)}** registros de auditoría en el"
+            " sistema:"
         )
         for row in rows:
           st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
       else:
-        st.info("La base de datos está limpia.")
+        st.info("La base de datos central se encuentra limpia.")
     except Exception as e:
-      st.error(f"Error: {e}")
+      st.error(f"Error al leer auditoría: {e}")
