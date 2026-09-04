@@ -3,8 +3,15 @@ import json
 import sqlite3
 import urllib.request
 import streamlit as st
-from google import genai
-from google.genai import types
+
+# Importación segura del módulo de visión AI para evitar errores de entorno
+try:
+  from google import genai
+  from google.genai import types
+
+  HAS_GENAI = True
+except ImportError:
+  HAS_GENAI = False
 
 # Configuración de la interfaz HUD táctil para tablet (Ancho completo)
 st.set_page_config(
@@ -98,7 +105,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO Y VISUAL J.A.R.V.I.S.
+# MOTOR COGNITIVO J.A.R.V.I.S.
 # ==========================================
 class JarvisMind:
 
@@ -122,7 +129,6 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Búsqueda inteligente en expedientes legales
     if any(
         w in q_lower
         for w in [
@@ -149,7 +155,7 @@ class JarvisMind:
           for r in records:
             res_text += (
                 f"- Documento: {r[0]} | Tipo: {r[1]} | Vigencia/Expiración:"
-                f" {r[2]}\n  Datos Extraídos:\n{r[3]}\n\n"
+                f" {r[2]}\n  Datos:\n{r[3]}\n\n"
             )
           return res_text
         else:
@@ -173,7 +179,7 @@ class JarvisMind:
       return (
           f"A mí me creas tú, {self.creator}, de forma continua. Como cada"
           " línea de código y cada mejora se actualizan constantemente, no"
-          " tengo un único momento de origen en pasado; nazco y me reinicio"
+          " tengo un único momento de origen en el pasado; nazco y me reinicio"
           " en cada modificación que programamos juntos."
       )
 
@@ -283,7 +289,7 @@ with tab_consola:
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
-                - Módulo de Visión AI: HABILITADO<br>
+                - Módulo de Visión AI: SEGURO<br>
                 - Custodia Legal: ACTIVA<br>
                 - Base Documental: ENLACE SQL<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
@@ -411,60 +417,64 @@ with tab_legal:
     st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
 
     if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
-      with st.spinner(
-          "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
-      ):
-        try:
-          client = genai.Client()
-          response = client.models.generate_content(
-              model="gemini-2.5-flash",
-              contents=[
-                  types.Part.from_bytes(data=img_bytes, mime_type=legal_img.type),
-                  (
-                      "Extrae con precisión milimétrica de este documento los"
-                      " siguientes datos en formato limpio y estructurado: Título"
-                      " del documento, Categoría (Pasaporte, Visa, Contrato u"
-                      " otro), Fecha de Expiración o Vencimiento exacta, y Todos"
-                      " los datos clave (Número de pasaporte, nombres, fechas de"
-                      " emisión, nacionalidad, etc.)."
-                  ),
-              ],
-          )
-          extracted_analysis = response.text
+      if not HAS_GENAI:
+        st.error(
+            "El módulo de visión AI requiere que 'google-genai' esté instalado"
+            " en el entorno o en requirements.txt."
+        )
+      else:
+        with st.spinner(
+            "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
+        ):
+          try:
+            client = genai.Client()
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    types.Part.from_bytes(
+                        data=img_bytes, mime_type=legal_img.type
+                    ),
+                    (
+                        "Extrae con precisión milimétrica de este documento los"
+                        " siguientes datos en formato limpio y estructurado:"
+                        " Título del documento, Categoría (Pasaporte, Visa,"
+                        " Contrato u otro), Fecha de Expiración o Vencimiento"
+                        " exacta, y Todos los datos clave (Número de"
+                        " pasaporte, nombres, fechas de emisión, nacionalidad,"
+                        " etc.)."
+                    ),
+                ],
+            )
+            extracted_analysis = response.text
 
-          # Guardamos automáticamente en SQLite
-          conn = sqlite3.connect(DB_NAME)
-          c = conn.cursor()
-          c.execute(
-              "INSERT INTO legal_records (timestamp, title, category, expiry,"
-              " content) VALUES (?, ?, ?, ?, ?)",
-              (
-                  str(datetime.datetime.now()),
-                  legal_img.name,
-                  "Expediente Analizado por AI",
-                  "Ver detalle extraído",
-                  extracted_analysis,
-              ),
-          )
-          conn.commit()
-          conn.close()
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO legal_records (timestamp, title, category, expiry,"
+                " content) VALUES (?, ?, ?, ?, ?)",
+                (
+                    str(datetime.datetime.now()),
+                    legal_img.name,
+                    "Expediente Analizado por AI",
+                    "Ver detalle extraído",
+                    extracted_analysis,
+                ),
+            )
+            conn.commit()
+            conn.close()
 
-          st.success("¡Análisis visual completado y archivado en custodia!")
-          st.markdown(
-              f"""
+            st.success("¡Análisis visual completado y archivado en custodia!")
+            st.markdown(
+                f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
                     <b>DATOS EXTRAÍDOS POR J.A.R.V.I.S.:</b><br><br>
                     {extracted_analysis}
                 </div>
             """,
-              unsafe_allow_html=True,
-          )
-        except Exception as e:
-          st.error(
-              f"Error al conectar con el núcleo de visión AI: {e}. Asegúrate"
-              " de que la API Key está configurada correctamente en Streamlit"
-              " Secrets."
-          )
+                unsafe_allow_html=True,
+            )
+          except Exception as e:
+            st.error(f"Error al conectar con el núcleo de visión AI: {e}")
 
   st.markdown("---")
   st.subheader("EXPEDIENTES CUSTODIADOS")
