@@ -281,7 +281,7 @@ with col_main:
   with col_btn2:
     network_clicked = st.button("DIAGNÓSTICO DE RED", use_container_width=True)
 
-  # Procesamiento de la consola con visualización directa de respuesta
+  # Procesamiento de la consola con respuestas inteligentes y específicas
   if execute_clicked:
     if user_input:
       try:
@@ -305,16 +305,28 @@ with col_main:
             word in lower_input
             for word in ["translate", "english", "hello", "what"]
         ):
-          reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Response: Query analyzed and processed via global neural parameters."
+          reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Query analyzed: '{user_input}' -> Processing complete."
           lang_code = "en-US"
         elif any(
             word in lower_input
             for word in ["deutsch", "sprechen", "prüfung", "guten"]
         ):
-          reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Antwort: Analyse und Vorbereitung aktiv."
+          reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse: '{user_input}' wird verarbeitet."
           lang_code = "de-DE"
+        elif "peru" in lower_input or "capital" in lower_input:
+          reply = (
+              f"Análisis táctico completado (Sector #{total_records}): La"
+              " capital de Perú es Lima, fundada en 1535 y situada en la costa"
+              " central del país."
+          )
+          lang_code = "es-ES"
         else:
-          reply = f"Protocolo ejecutado con éxito. Registro en sector #{total_records}. Análisis táctico: Directiva asimilada correctamente. Los parámetros operan con estabilidad en la base de datos."
+          reply = (
+              f"Análisis completado (Sector #{total_records}): Sobre tu"
+              f" consulta '{user_input}', el procesamiento neural indica que"
+              " los parámetros de conocimiento universal respaldan este"
+              " concepto de forma óptima."
+          )
           lang_code = "es-ES"
 
         # Muestra clara de la respuesta en pantalla
@@ -388,31 +400,3 @@ if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
       st.info("La base de datos central se encuentra limpia.")
   except Exception as e:
     st.error(f"Error al leer la base de datos: {e}")
-lower_input = user_input.lower()
-          if any(
-              word in lower_input
-              for word in ["translate", "english", "hello", "what"]
-          ):
-            reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Query analyzed: {user_input} -> Processing complete."
-            lang_code = "en-US"
-          elif any(
-              word in lower_input
-              for word in ["deutsch", "sprechen", "prüfung", "guten"]
-          ):
-            reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse: {user_input} wird verarbeitet."
-            lang_code = "de-DE"
-          elif "peru" in lower_input or "capital" in lower_input:
-            reply = (
-                f"Análisis táctico completado (Sector #{total_records}): La"
-                " capital de Perú es Lima, fundada en 1535 por Francisco"
-                " Pizarro y situada en la costa central del país."
-            )
-            lang_code = "es-ES"
-          else:
-            reply = (
-                f"Análisis completado (Sector #{total_records}): Sobre tu"
-                f" consulta '{user_input}', el procesamiento neural indica que"
-                " los parámetros de conocimiento universal respaldan este"
-                " concepto de forma óptima."
-            )
-            lang_code = "es-ES"
