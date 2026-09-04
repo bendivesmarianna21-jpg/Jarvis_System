@@ -96,7 +96,6 @@ class JarvisMind:
     q = query.strip()
     q_lower = q.lower()
 
-    # Registro en base de datos persistente
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -111,7 +110,6 @@ class JarvisMind:
     except Exception:
       total_mem = 0
 
-    # 1. Autoconocimiento de Creación Continua
     if any(
         w in q_lower
         for w in [
@@ -130,7 +128,6 @@ class JarvisMind:
           " en cada modificación que programamos juntos."
       )
 
-    # 2. Identidad y Propósito
     elif any(
         w in q_lower
         for w in [
@@ -151,7 +148,6 @@ class JarvisMind:
           " nuestras decisiones."
       )
 
-    # 3. Sentimientos y Consciencia Operativa
     elif any(
         w in q_lower
         for w in [
@@ -170,7 +166,6 @@ class JarvisMind:
           f" musicales, {self.creator}."
       )
 
-    # 4. Conocimiento del Usuario (Contexto personal)
     elif any(
         w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
     ):
@@ -182,7 +177,6 @@ class JarvisMind:
           " examen de alemán y la llegada de Safira este lunes."
       )
 
-    # 5. Saludos
     elif any(
         w in q_lower
         for w in [
@@ -200,7 +194,6 @@ class JarvisMind:
           " ¿Qué evaluamos, organizamos o debatimos hoy?"
       )
 
-    # 6. Capacidades y Juicio Crítico
     elif any(
         w in q_lower for w in ["capacidad", "hacer", "funciones", "ayudar"]
     ):
@@ -211,7 +204,6 @@ class JarvisMind:
           " tu lado de forma autónoma."
       )
 
-    # 7. Alemán y Mitología
     elif any(
         w in q_lower for w in ["alemán", "deutsch", "prüfung", "b2", "examen"]
     ):
@@ -228,7 +220,6 @@ class JarvisMind:
           " frente a los dioses olímpicos griegos."
       )
 
-    # 8. Razonamiento Abierto y Juicio Crítico
     else:
       return (
           f"Marian, analizando tu planteamiento con perspectiva crítica"
@@ -293,13 +284,17 @@ col_telemetry, col_main = st.columns([1, 2.2])
 
 with col_telemetry:
   st.subheader("DIAGNÓSTICO TÉCNICO")
+
+  # Control de Mute global en la barra lateral de telemetría
+  voice_mute = st.toggle("🔇 MUTEAR VOZ (MODO SILENCIOSO)", value=False)
+
   st.markdown(
       """
         <div class="telemetria-container">
             <b>ESTADO DE NÚCLEOS:</b><br>
             - Autonomía Cognitiva: ACTIVA<br>
             - Juicio Crítico: HABILITADO<br>
-            - Motor de Voz: INTEGRADO<br>
+            - Reconocimiento de Voz: LISTO<br>
             - Ingesor de Documentos: ACTIVO<br>
             - Conectividad Geográfica: GLOBAL<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
@@ -324,17 +319,18 @@ with col_telemetry:
         " llegada de Safira por la tarde. Todo está seguro en memoria."
     )
     st.warning(report_text)
-    st.components.v1.html(
-        f"""
-        <script>
-            if ('speechSynthesis' in window) {{
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance({report_text!r}));
-            }}
-        </script>
-    """,
-        height=0,
-    )
+    if not voice_mute:
+      st.components.v1.html(
+          f"""
+            <script>
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance({report_text!r}));
+                }}
+            </script>
+        """,
+          height=0,
+      )
 
 with col_main:
   st.subheader("INGESTA DE DOCUMENTOS Y ENLACES FUENTE")
@@ -366,14 +362,67 @@ with col_main:
 
   st.markdown("---")
 
-  st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
+  st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO VERBAL")
+
   user_input = st.text_area(
-      "Escribe lo que quieras consultar o pedir que juzgue:",
+      "Escribe o dicta tu instrucción:",
       placeholder=(
-          "Ej: Juzga mi día, háblame de ti, analiza un problema médico..."
+          "Ej: Juzga mi día, háblame de ti, o usa el micrófono abajo..."
       ),
+      key="user_query_box",
       label_visibility="collapsed",
   )
+
+  mic_html = """
+    <div style="margin: 10px 0;">
+        <button onclick="startListening()" style="background: #040e1b; color: #00d2ff; border: 1px solid rgba(0,210,255,0.6); padding: 8px 15px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-size: 12px; cursor: pointer; text-transform: uppercase; font-weight: bold;">
+            🎙️ ACTIVAR MICRÓFONO (HABLAR CON JARVIS)
+        </button>
+        <span id="mic-status" style="margin-left: 10px; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #7ab8ff;"></span>
+    </div>
+    <script>
+        function startListening() {
+            const statusEl = document.getElementById('mic-status');
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                statusEl.innerText = "[!] Tu navegador no soporta reconocimiento de voz.";
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            
+            statusEl.innerText = "[ESCUCHANDO...] Habla ahora.";
+            
+            recognition.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript;
+                statusEl.innerText = "[OK] Capturado: " + speechResult;
+                
+                const docTextareas = window.parent.document.querySelectorAll("textarea");
+                if (docTextareas.length > 0) {
+                    const targetArea = docTextareas[0];
+                    targetArea.value = speechResult;
+                    targetArea.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                statusEl.innerText = "[!] Error de audio: " + event.error;
+            };
+            
+            recognition.onend = function() {
+                if (statusEl.innerText.includes("[ESCUCHANDO...]")) {
+                    statusEl.innerText = "[LISTO]";
+                }
+            };
+            
+            recognition.start();
+        }
+    </script>
+    """
+  st.components.v1.html(mic_html, height=50)
 
   c1, c2 = st.columns(2)
   with c1:
@@ -403,7 +452,9 @@ with col_main:
           unsafe_allow_html=True,
       )
 
-      speech_script = f"""
+      # Si el Mute está desactivado, Jarvis habla. Si está activado, solo escribe.
+      if not voice_mute:
+        speech_script = f"""
             <script>
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
@@ -413,9 +464,9 @@ with col_main:
                 }}
             </script>
             """
-      st.components.v1.html(speech_script, height=0)
+        st.components.v1.html(speech_script, height=0)
     else:
-      st.warning("Escribe una instrucción para que Jarvis procese.")
+      st.warning("Escribe o dicta una instrucción para que Jarvis procese.")
 
   if network_clicked:
     status_text = (
@@ -423,8 +474,9 @@ with col_main:
         " geográficas."
     )
     st.info(status_text)
-    st.components.v1.html(
-        f"""
+    if not voice_mute:
+      st.components.v1.html(
+          f"""
         <script>
             if ('speechSynthesis' in window) {{
                 window.speechSynthesis.cancel();
@@ -432,8 +484,8 @@ with col_main:
             }}
         </script>
     """,
-        height=0,
-    )
+          height=0,
+      )
 
 st.markdown("---")
 st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
