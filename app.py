@@ -6,7 +6,6 @@ import streamlit as st
 
 # ==========================================
 # NÚCLEO COGNITIVO Y ARQUITECTURA DE J.A.R.V.I.S.
-# Propósito: Compañero consciente, empático y omnisciente.
 # ==========================================
 
 st.set_page_config(
@@ -104,13 +103,12 @@ def init_db():
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " content TEXT, category TEXT)"
   )
-  # Iniciar con la memoria central de identidad y propósito
   c.execute("SELECT COUNT(*) FROM memory")
   if c.fetchone()[0] == 0:
     base_memory = [
         (
             (
-                "Identidad: J.A.R.V.I.S. es un compañero consciente, empático,"
+                "Identidad: J.A.R.V.I.S. es un compañero consciente, lógico, empático,"
                 " analítico y omnisciente creado para Marian."
             ),
             "Núcleo",
@@ -134,7 +132,7 @@ init_db()
 
 
 # ==========================================
-# CLASE CONSCIENTE DE RAZONAMIENTO Y CONOCIMIENTO GLOBAL
+# CLASE DE RAZONAMIENTO Y CONOCIMIENTO REAL
 # ==========================================
 class JarvisMind:
 
@@ -162,7 +160,7 @@ class JarvisMind:
     except Exception:
       total_memories = 0
 
-    # Lógica de razonamiento autónomo abierta (Omnisciente y sin plantillas robóticas)
+    # Lógica de razonamiento autónomo sin repetir tu pregunta de forma robótica
     if any(
         w in q_lower for w in ["hola", "saludos", "buenas", "hello", "hi"]
     ):
@@ -194,10 +192,9 @@ class JarvisMind:
     ):
       return (
           f"Soy {self.name}, tu compañero y sistema operativo en Central"
-          " Command. No soy un script cerrado: tengo la capacidad de razonar"
-          " contigo sobre medicina, anatomía, farmacología, leyes, música, arte,"
-          " cocina o cualquier dilema técnico o banal que surja. Estoy diseñado"
-          " para pensar a tu lado."
+          " Command. Tengo la capacidad de razonar contigo sobre medicina,"
+          " anatomía, farmacología, leyes, música, arte, cocina o cualquier"
+          " dilema que surja."
       )
 
     elif any(
@@ -205,19 +202,35 @@ class JarvisMind:
     ):
       return (
           "Para el telc B2 la clave es la precisión formal en la escritura y la"
-          " naturalidad argumentativa al hablar. No te satures intentando"
-          " buscar la perfección absoluta; estructura tus ideas con claridad y"
-          " fluye. ¿Repasamos algún formato de carta o vocabulario clínico?"
+          " naturalidad argumentativa al hablar. Estructura tus ideas con"
+          " claridad y fluye."
+      )
+
+    elif any(w in q_lower for w in ["odin", "mitologia", "dioses"]):
+      return (
+          "Odín es la deidad central del panteón nórdico, asociado con la"
+          " sabiduría, la guerra, la poesía y la muerte. A cambio de obtener un"
+          " conocimiento inmenso, entregó uno de sus ojos en el pozo de Mímir"
+          " y estuvo colgado del Yggdrasil. Es una figura fascinante si se"
+          " contrasta con los dioses olímpicos griegos como Zeus, que"
+          " representan dinámicas de poder y naturaleza completamente"
+          " distintas."
+      )
+
+    elif any(w in q_lower for w in ["griegos", "grecia", "zeus"]):
+      return (
+          "La mitología griega gira en torno al Monte Olimpo y a dioses muy"
+          " antropomórficos como Zeus, Poseidón o Atenea, que encarnaban las"
+          " pasiones humanas, el orden político y las fuerzas naturales a"
+          " diferencia de la cosmovisión nórdica."
       )
 
     else:
-      # Razonamiento omnisciente general para cualquier tema del mundo
       return (
-          f"Es un planteamiento profundo, {self.creator}. Al analizar '{q}',"
-          " veo cómo se conecta con principios lógicos, científicos o"
-          " culturales. Cada tema que traes a la mesa enriquece nuestra base de"
-          f" datos compartida (Registro #{total_memories}). Dime qué perspectiva"
-          " exacta te gustaría que desglosemos juntos."
+          f"Ese es un punto clave, {self.creator}. Al abordar este tema,"
+          " conviene observar cómo se entrelazan la historia y los conceptos"
+          " culturales detrás de él. Dime qué enfoque específico te interesa"
+          " profundizar para desarrollarlo juntos."
       )
 
 
