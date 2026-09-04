@@ -1,107 +1,85 @@
-from flask import Flask, render_template_string, request, jsonify
-import sqlite3, os
+import sqlite3
+import streamlit as st
 
-app = Flask(__name__)
+# Configuración de la página con estilo moderno
+st.set_page_config(
+    page_title="Jarvis AI Core", page_icon="🤖", layout="centered"
+)
 
+
+# Inicializar la base de datos de memoria
 def init_db():
-    conn = sqlite3.connect('jarvis_memory.db')
-    c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT)')
-    conn.commit()
-    conn.close()
+  conn = sqlite3.connect("jarvis_memory.db")
+  c = conn.cursor()
+  c.execute(
+      "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      " content TEXT)"
+  )
+  conn.commit()
+  conn.close()
+
 
 init_db()
 
-HTML = '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Jarvis AI Core</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: sans-serif; background: #0a0a12; color: #fff; padding: 20px; }
-        h1 { color: #00d2ff; text-align: center; }
-        .card { background: #161625; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #00d2ff55; }
-        textarea { width: 100%; height: 70px; background: #0d0d18; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 10px; box-sizing: border-box; }
-        button { background: #00d2ff; color: #000; border: none; padding: 12px; font-weight: bold; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; }
-        #response-box { background: #000; border-left: 4px solid #00d2ff; padding: 15px; margin-top: 15px; min-height: 40px; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <h1>🤖 JARVIS CORE ACTIVE</h1>
-    
-    <div class="card">
-        <h3>🎙️ Control de Voz y Consola</h3>
-        <textarea id="userInput" placeholder="Escribe un comando o presiona Hablar..."></textarea>
-        <button onclick="sendToJarvis()">Enviar Comando</button>
-        <button onclick="startListening()" style="background:#00ff88;">🎙️ Hablar a Jarvis</button>
-        
-        <h4>Respuesta de Jarvis:</h4>
-        <div id="response-box">Esperando órdenes...</div>
-    </div>
+# Interfaz visual principal
+st.title("🤖 JARVIS CORE ACTIVE")
+st.markdown("---")
 
-    <script>
-        function speak(text) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'es-ES';
-            utterance.rate = 1.0;
-            window.speechSynthesis.speak(utterance);
-        }
+# Tarjeta de consola y control de comandos
+st.subheader("🎙️ Control de Consola y Memoria")
+user_input = st.text_area(
+    "Escribe un comando o instrucción para Jarvis:",
+    placeholder="Ej: Iniciar diagnósticos o recordar datos...",
+)
 
-        function startListening() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'es-ES';
-            recognition.onresult = function(event) {
-                document.getElementById('userInput').value = event.results[0][0].transcript;
-                sendToJarvis();
-            };
-            recognition.start();
-        }
+col1, col2 = st.columns(2)
 
-        async function sendToJarvis() {
-            const input = document.getElementById('userInput').value;
-            const box = document.getElementById('response-box');
-            if(!input) return;
-            
-            box.innerText = "Pensando...";
-            
-            const res = await fetch('/process', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({prompt: input})
-            });
-            const data = await res.json();
-            
-            box.innerText = data.response;
-            speak(data.response);
-        }
-    </script>
-</body>
-</html>
-'''
+with col1:
+  if st.button("Enviar Comando", use_container_width=True):
+    if user_input:
+      # Guardar interacción en la base de datos de memoria
+      conn = sqlite3.connect("jarvis_memory.db")
+      c = conn.cursor()
+      c.execute("INSERT INTO memory (content) VALUES (?)", (user_input,))
+      conn.commit()
 
-@app.route('/')
-def index():
-    return render_template_string(HTML)
+      # Contar bloques de memoria registrados
+      c.execute("SELECT COUNT(*) FROM memory")
+      total_memories = c.fetchone()[0]
+      conn.close()
 
-@app.route('/process', methods=['POST'])
-def process():
-    user_input = request.json.get('prompt', '')
-    
-    # 1. Recuperar contexto/memoria local
-    conn = sqlite3.connect('jarvis_memory.db')
-    c = conn.cursor()
-    c.execute('SELECT content FROM memory')
-    memories = [row[0] for row in c.fetchall()]
-    conn.close()
-    
-    # 2. Lógica de Respuesta / Ejecución de comandos
-    reply = f"Comando recibido: '{user_input}'. Tengo registrados {len(memories)} bloques de datos en memoria local."
-    
-    return jsonify({'response': reply})
+      # Lógica de respuesta simulada de Jarvis
+      if "hola" in user_input.lower():
+        reply = "Hola. Todos los sistemas funcionando al máximo rendimiento."
+      elif "estado" in user_input.lower():
+        reply = "Los núcleos de procesamiento local están estables y operativos."
+      else:
+        reply = (
+            f"Comando recibido: '{user_input}'. Tengo registrados"
+            f" {total_memories} bloques de datos en memoria local."
+        )
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8501)
-o
-x
+      st.success(reply)
+    else:
+      st.warning("Por favor, escribe un comando antes de enviar.")
+
+with col2:
+  if st.button("🎙️ Simular Voz", use_container_width=True):
+    st.info("Módulo de voz activo en la nube.")
+
+# Sección de registros y memoria almacenada
+st.markdown("---")
+st.subheader("🧠 Historial de Memoria del Sistema")
+
+if st.button("Cargar Registros Guardados"):
+  conn = sqlite3.connect("jarvis_memory.db")
+  c = conn.cursor()
+  c.execute("SELECT id, content FROM memory")
+  records = c.fetchall()
+  conn.close()
+
+  if records:
+    for row in records:
+      st.write(f"**[{row[0]}]** {row[1]}")
+  else:
+    st.info("La memoria está limpia por ahora.")
