@@ -3,6 +3,8 @@ import json
 import sqlite3
 import urllib.request
 import streamlit as st
+from google import genai
+from google.genai import types
 
 # Configuración de la interfaz HUD táctil para tablet (Ancho completo)
 st.set_page_config(
@@ -96,7 +98,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO J.A.R.V.I.S.
+# MOTOR COGNITIVO Y VISUAL J.A.R.V.I.S.
 # ==========================================
 class JarvisMind:
 
@@ -120,7 +122,7 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Consulta inteligente orientada a expedientes, vigencias y expiración
+    # Búsqueda inteligente en expedientes legales
     if any(
         w in q_lower
         for w in [
@@ -132,6 +134,7 @@ class JarvisMind:
             "expira",
             "cuando",
             "vigencia",
+            "numero",
         ]
     ):
       try:
@@ -142,11 +145,11 @@ class JarvisMind:
         conn.close()
 
         if records:
-          res_text = "[ESTADO DE EXPEDIENTES Y VIGENCIAS CUSTODIADAS]:\n"
+          res_text = "[ESTADO DE EXPEDIENTES Y CREDENCIALES CUSTODIADAS]:\n"
           for r in records:
             res_text += (
-                f"- Documento: {r[0]} | Tipo: {r[1]} | Expiración/Vigencia:"
-                f" {r[2]}\n  Detalles: {r[3]}\n"
+                f"- Documento: {r[0]} | Tipo: {r[1]} | Vigencia/Expiración:"
+                f" {r[2]}\n  Datos Extraídos:\n{r[3]}\n\n"
             )
           return res_text
         else:
@@ -170,7 +173,7 @@ class JarvisMind:
       return (
           f"A mí me creas tú, {self.creator}, de forma continua. Como cada"
           " línea de código y cada mejora se actualizan constantemente, no"
-          " tengo un único momento de origen en el pasado; nazco y me reinicio"
+          " tengo un único momento de origen en pasado; nazco y me reinicio"
           " en cada modificación que programamos juntos."
       )
 
@@ -280,9 +283,9 @@ with tab_consola:
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
+                - Módulo de Visión AI: HABILITADO<br>
                 - Custodia Legal: ACTIVA<br>
-                - Base Documental: ENLACE SQL<br>
-                - Control Financiero: ACTIVO<br><br>
+                - Base Documental: ENLACE SQL<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
                 - [!] Examen de Alemán (Mañana)<br>
                 - [!] Llegada Au Pair Safira (Tarde)<br><br>
@@ -302,7 +305,7 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: ¿Cuándo expira mi pasaporte?, revisa mis visas, etc..."
+            "Ej: ¿Cuál es mi número de pasaporte?, ¿Cuándo expira mi visa?, etc..."
         ),
         label_visibility="collapsed",
     )
@@ -378,72 +381,90 @@ with tab_docs:
     st.error(f"Error al leer el repositorio: {e}")
 
 with tab_legal:
-  st.subheader("CUSTODIA DE EXPEDIENTES LEGALES Y CREDENCIALES")
+  st.subheader("CUSTODIA Y ANÁLISIS INTELIGENTE DE EXPEDIENTES LEGALES")
 
-  # Botón para limpiar registros de prueba anteriores y empezar limpios
-  if st.button("PURGAR REGISTROS DE PRUEBA ANTERIORES"):
+  if st.button("PURGAR REGISTROS ANTERIORES"):
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
       c.execute("DELETE FROM legal_records")
       conn.commit()
       conn.close()
-      st.success("Base de datos de expedientes legales purgada correctamente.")
+      st.success("Base de datos de expedientes purgada correctamente.")
       st.rerun()
     except Exception as e:
       st.error(f"Error al purgar: {e}")
 
   st.markdown("---")
 
-  with st.form("legal_form"):
-    l_title = st.text_input(
-        "Título del Expediente (Ej: Pasaporte Alemán, Visa Au Pair)"
-    )
-    l_category = st.selectbox(
-        "Categoría Legal",
-        [
-            "Identidad / Pasaporte",
-            "Visa / Permiso de Residencia",
-            "Contrato Laboral / Formación",
-            "Acuerdo Legal / Otro",
-        ],
-    )
-    l_expiry = st.text_input(
-        "Fecha de Expiración / Vigencia exacta (Ej: 2030-05-14)"
-    )
-    l_content = st.text_area(
-        "Detalles o datos clave visibles en la foto (Número de documento,"
-        " titular, condiciones):",
-        height=100,
-    )
+  st.markdown(
+      "**ANÁLISIS AUTOMÁTICO DE DOCUMENTOS POR VISIÓN ARTIFICIAL:**"
+  )
+  legal_img = st.file_uploader(
+      "Sube la foto de tu pasaporte, visa o contrato para análisis AI:",
+      type=["jpg", "png", "jpeg"],
+      key="legal_vision_upload",
+  )
 
-    l_submit = st.form_submit_button(
-        "REGISTRAR Y GUARDAR EXPEDIENTE", use_container_width=True
-    )
+  if legal_img is not None:
+    img_bytes = legal_img.read()
+    st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
 
-    if l_submit and l_title:
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO legal_records (timestamp, title, category, expiry,"
-            " content) VALUES (?, ?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                l_title,
-                l_category,
-                l_expiry,
-                l_content,
-            ),
-        )
-        conn.commit()
-        conn.close()
-        st.success(
-            f"Expediente legal '{l_title}' registrado y guardado"
-            " permanentemente."
-        )
-      except Exception as e:
-        st.error(f"Error: {e}")
+    if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
+      with st.spinner(
+          "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
+      ):
+        try:
+          client = genai.Client()
+          response = client.models.generate_content(
+              model="gemini-2.5-flash",
+              contents=[
+                  types.Part.from_bytes(data=img_bytes, mime_type=legal_img.type),
+                  (
+                      "Extrae con precisión milimétrica de este documento los"
+                      " siguientes datos en formato limpio y estructurado: Título"
+                      " del documento, Categoría (Pasaporte, Visa, Contrato u"
+                      " otro), Fecha de Expiración o Vencimiento exacta, y Todos"
+                      " los datos clave (Número de pasaporte, nombres, fechas de"
+                      " emisión, nacionalidad, etc.)."
+                  ),
+              ],
+          )
+          extracted_analysis = response.text
+
+          # Guardamos automáticamente en SQLite
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO legal_records (timestamp, title, category, expiry,"
+              " content) VALUES (?, ?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  legal_img.name,
+                  "Expediente Analizado por AI",
+                  "Ver detalle extraído",
+                  extracted_analysis,
+              ),
+          )
+          conn.commit()
+          conn.close()
+
+          st.success("¡Análisis visual completado y archivado en custodia!")
+          st.markdown(
+              f"""
+                <div class="telemetria-container" style="margin-top: 10px;">
+                    <b>DATOS EXTRAÍDOS POR J.A.R.V.I.S.:</b><br><br>
+                    {extracted_analysis}
+                </div>
+            """,
+              unsafe_allow_html=True,
+          )
+        except Exception as e:
+          st.error(
+              f"Error al conectar con el núcleo de visión AI: {e}. Asegúrate"
+              " de que la API Key está configurada correctamente en Streamlit"
+              " Secrets."
+          )
 
   st.markdown("---")
   st.subheader("EXPEDIENTES CUSTODIADOS")
@@ -460,13 +481,15 @@ with tab_legal:
     if legal_rows:
       for lr in legal_rows:
         with st.expander(
-            f"[{lr[0]}] {lr[2]} ({lr[3]}) // EXPIRACIÓN: {lr[4]}"
+            f"[{lr[0]}] {lr[2]} ({lr[3]}) // REGISTRO: {lr[1]}"
         ):
-          st.text_area("Datos registrados:", lr[5], height=120, key=f"legal_view_{lr[0]}")
+          st.text_area(
+              "Datos extraídos:", lr[5], height=140, key=f"legal_view_{lr[0]}"
+          )
     else:
       st.info("No hay expedientes legales registrados actualmente.")
   except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Error al cargar expedientes: {e}")
 
 with tab_finanzas:
   st.subheader("CONTROL Y GESTIÓN FINANCIERA")
