@@ -4,7 +4,7 @@ import sqlite3
 import urllib.request
 import streamlit as st
 
-# Importación segura del módulo de visión AI
+# Importación segura del módulo de visión AI y razonamiento cognitivo
 try:
   from google import genai
   from google.genai import types
@@ -98,7 +98,6 @@ def init_db():
       " TEXT, content TEXT)"
   )
 
-  # Migración automática segura para columnas nuevas
   try:
     c.execute("ALTER TABLE documents_store ADD COLUMN title TEXT")
   except Exception:
@@ -116,7 +115,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO J.A.R.V.I.S. (MEMORIA Y ASOCIACIÓN AVANZADA)
+# MOTOR COGNITIVO J.A.R.V.I.S. (ASOCIACIÓN TOTAL CON IA)
 # ==========================================
 class JarvisMind:
 
@@ -125,7 +124,7 @@ class JarvisMind:
     self.creator = "Marian Nathalia Bendives Ramos"
     self.dob = "21 de enero de 2006"
 
-  def reason(self, query):
+  def reason(self, query, api_key_override=""):
     q = query.strip()
     q_lower = q.lower()
 
@@ -141,7 +140,65 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Consulta de identidad y cumpleaños
+    # Recopilar todo el contexto almacenado en bases de datos para darle memoria absoluta a la IA
+    db_context = f"Identidad del usuario: {self.creator}, Fecha de nacimiento: {self.dob}.\n\n"
+    try:
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute("SELECT title, category, expiry, content FROM legal_records")
+      legal_recs = c.fetchall()
+      if legal_recs:
+        db_context += "[EXPEDIENTES LEGALES Y DOCUMENTOS CUSTODIADOS]:\n"
+        for lr in legal_recs:
+          db_context += (
+              f"- Título: {lr[0]} | Tipo: {lr[1]} | Vigencia: {lr[2]}\n"
+              f"  Detalle:\n{lr[3]}\n\n"
+          )
+
+      c.execute("SELECT title, category, content FROM documents_store")
+      doc_recs = c.fetchall()
+      if doc_recs:
+        db_context += "[REPOSITORIO GENERAL DE DOCUMENTOS]:\n"
+        for dr in doc_recs:
+          db_context += (
+              f"- Título: {dr[0]} | Categoría: {dr[1]}\n  Contenido:\n{dr[2]}\n\n"
+          )
+      conn.close()
+    except Exception:
+      pass
+
+    # Si tenemos clave API configurada, usamos IA avanzada para asociar y responder con precisión absoluta
+    api_key_to_use = api_key_override.strip()
+    if not api_key_to_use:
+      try:
+        if "GEMINI_API_KEY" in st.secrets:
+          api_key_to_use = st.secrets["GEMINI_API_KEY"]
+      except Exception:
+        pass
+
+    if HAS_GENAI and api_key_to_use:
+      try:
+        client = genai.Client(api_key=api_key_to_use)
+        prompt_full = (
+            "Eres J.A.R.V.I.S., el asistente personal y centro de mando avanzado"
+            f" de {self.creator}.\n"
+            "Tienes acceso completo a toda su base de datos de documentos"
+            " custodiados, pasaportes, visas y registros.\n"
+            "Analiza la siguiente base de datos de contexto del usuario y"
+            f" responde de forma inteligente, directa y asociativa a la pregunta o"
+            f" directiva del usuario.\n\n[BASE DE DATOS Y CONTEXTO"
+            f" ACTUAL]:\n{db_context}\n\n[PREGUNTA / DIRECTIVA DEL"
+            f" USUARIO]:\n{q}"
+        )
+        response = client.models.generate_content(
+            model="gemini-3.6-flash", contents=prompt_full
+        )
+        return response.text
+      except Exception as e:
+        # Fallback a razonamiento local si falla la API temporalmente
+        pass
+
+    # Fallback local inteligente si no hay API Key activa en el momento
     if any(
         w in q_lower
         for w in [
@@ -155,201 +212,13 @@ class JarvisMind:
     ):
       return (
           f"Tu nombre completo es {self.creator} y naciste el {self.dob}."
-          " Todos tus datos biográficos y de identidad están registrados en"
-          " mi memoria central de Central Command."
+          " Registrado en Central Command."
       )
 
-    # Búsqueda selectiva para seguro social
-    elif any(
-        w in q_lower
-        for w in [
-            "seguro",
-            "social",
-            "renta",
-            "seguro social",
-            "sozialversicherung",
-        ]
-    ):
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "SELECT title, category, content FROM legal_records WHERE"
-            " LOWER(title) LIKE ? OR LOWER(category) LIKE ? OR LOWER(content)"
-            " LIKE ?",
-            ("%seguro%", "%seguro%", "%seguro%"),
-        )
-        records = c.fetchall()
-        if not records:
-          c.execute(
-              "SELECT title, category, content FROM documents_store WHERE"
-              " LOWER(title) LIKE ? OR LOWER(category) LIKE ? OR LOWER(content)"
-              " LIKE ?",
-              ("%seguro%", "%seguro%", "%seguro%"),
-          )
-          records = c.fetchall()
-        conn.close()
-
-        if records:
-          res_text = (
-              "[REGISTROS ASOCIATIVOS ENCONTRADOS PARA SEGURO SOCIAL]:\n"
-          )
-          for r in records:
-            res_text += (
-                f"- Título: {r[0]} | Categoría: {r[1]}\n  Contenido:\n{r[2]}\n\n"
-            )
-          return res_text
-        else:
-          return (
-              "No he encontrado un registro específico de seguro social en la"
-              " base de datos actual."
-          )
-      except Exception as e:
-        return f"Error al consultar registros de seguro: {e}"
-
-    # Búsqueda selectiva para pasaporte, visa o contratos legales
-    elif any(
-        w in q_lower
-        for w in [
-            "visa",
-            "pasaporte",
-            "contrato",
-            "legal",
-            "identidad",
-            "expira",
-            "cuando",
-            "vigencia",
-            "numero",
-        ]
-    ):
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        search_term = "%pasaporte%" if "pasaporte" in q_lower else "%"
-        if "visa" in q_lower:
-          search_term = "%visa%"
-        elif "contrato" in q_lower:
-          search_term = "%contrato%"
-
-        c.execute(
-            "SELECT title, category, expiry, content FROM legal_records WHERE"
-            " LOWER(title) LIKE ? OR LOWER(category) LIKE ? OR LOWER(content)"
-            " LIKE ?",
-            (search_term, search_term, search_term),
-        )
-        records = c.fetchall()
-        conn.close()
-
-        if records:
-          res_text = (
-              "[ESTADO DE EXPEDIENTES Y CREDENCIALES CUSTODIADAS]:\n"
-          )
-          for r in records:
-            res_text += (
-                f"- Documento: {r[0]} | Tipo: {r[1]} | Vigencia/Expiración:"
-                f" {r[2]}\n  Datos:\n{r[3]}\n\n"
-            )
-          return res_text
-        else:
-          conn = sqlite3.connect(DB_NAME)
-          c = conn.cursor()
-          c.execute("SELECT title, category, expiry, content FROM legal_records")
-          records = c.fetchall()
-          conn.close()
-          if records:
-            res_text = (
-                "[ESTADO GENERAL DE EXPEDIENTES CUSTODIADOS]:\n"
-            )
-            for r in records:
-              res_text += (
-                  f"- Documento: {r[0]} | Tipo: {r[1]} | Vigencia/Expiración:"
-                  f" {r[2]}\n  Datos:\n{r[3]}\n\n"
-              )
-            return res_text
-          return (
-              "No hay expedientes legales o documentos de identidad en custodia"
-              " en este momento."
-          )
-      except Exception as e:
-        return f"Error al consultar base de datos legal: {e}"
-
-    elif any(
-        w in q_lower
-        for w in [
-            "quien te creo",
-            "quien te hizo",
-            "quien te diseño",
-            "tu creador",
-            "cuando fuiste creado",
-        ]
-    ):
-      return (
-          f"A mí me creas tú, {self.creator}, de forma continua. Como cada"
-          " línea de código y cada mejora se actualizan constantemente, no"
-          " tengo un único momento de origen en el pasado; nazco y me reinicio"
-          " en cada modificación que programamos juntos."
-      )
-
-    elif any(
-        w in q_lower
-        for w in [
-            "quien eres",
-            "que eres",
-            "como te llamas",
-            "tu nombre",
-            "que sabes de ti",
-        ]
-    ):
-      return (
-          f"Soy {self.name}, tu sistema operativo en Central Command. Opero sin"
-          " fronteras geográficas —estés en Berlín, Perú o Tailandia—. Para mí,"
-          f" tú ({self.creator}) eres el centro de este sistema; mi razón de"
-          " ser es estructurar tus ideas, sostener tus proyectos en medicina y"
-          " música, y juzgar con criterio nuestras decisiones."
-      )
-
-    elif any(
-        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
-    ):
-      return (
-          f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
-          " tu camino en Berlín, enfocada en la enfermería y la medicina con"
-          " rigor clínico; sé que la música —el piano, las cuerdas, el"
-          " charango— ordena tus espacios mentales, y que tienes en la mira tu"
-          " examen de alemán y la llegada de Safira este lunes."
-      )
-
-    else:
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "SELECT title, category, content FROM documents_store WHERE"
-            " LOWER(title) LIKE ? OR LOWER(content) LIKE ?",
-            (f"%{q_lower}%", f"%{q_lower}%"),
-        )
-        doc_matches = c.fetchall()
-        conn.close()
-
-        if doc_matches:
-          res_text = (
-              f"[COINCIDENCIAS EN REPOSITORIO PARA '{q}']: \n"
-          )
-          for dm in doc_matches:
-            res_text += (
-                f"- Título: {dm[0]} | Categoría: {dm[1]}\n Contenido:"
-                f" {dm[2]}\n\n"
-            )
-          return res_text
-      except Exception:
-        pass
-
-      return (
-          f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con perspectiva"
-          " técnica orientada a la estabilidad de objetivos en medicina y"
-          " proyectos globales, "
-          f"{self.creator}."
-      )
+    return (
+        f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con base de datos"
+        f" integrada para {self.creator}."
+    )
 
 
 jarvis_brain = JarvisMind()
@@ -421,7 +290,7 @@ with tab_consola:
                 - Identidad: J.A.R.V.I.S.<br>
                 - Autonomía Cognitiva: ACTIVA<br>
                 - Módulo de Visión AI: SEGURO<br>
-                - Memoria Asociativa: OPTIMIZADA<br>
+                - Memoria Asociativa Total: ACTIVA<br>
                 - Custodia Legal: ACTIVA<br>
                 - Base Documental: ENLACE SQL<br><br>
                 <b>CRONOGRAMA (LUNES):</b><br>
@@ -440,6 +309,14 @@ with tab_consola:
 
   with col_main:
     st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
+
+    # Campo opcional para API Key por si se desea forzar en consola
+    console_api_key = st.text_input(
+        "Gemini API Key para Razonamiento Asociativo:",
+        type="password",
+        placeholder="Introduce tu clave API aquí...",
+        key="console_api_key_input",
+    )
 
     voice_html = """
         <div style="background: rgba(4, 12, 24, 0.9); border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 6px; padding: 12px; margin-bottom: 15px; font-family: 'Courier New', Courier, monospace;">
@@ -488,19 +365,18 @@ with tab_consola:
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
-            "Ej: ¿Cuál es mi nombre completo?, ¿Cuál es mi número de seguro"
-            " social?, etc..."
+            "Ej: ¿De qué país soy?, ¿Cuál es mi número de seguro social?, etc..."
         ),
         label_visibility="collapsed",
     )
 
     if st.button("PROCESAR PENSAMIENTO", use_container_width=True):
       if user_input:
-        reply = jarvis_brain.reason(user_input)
+        reply = jarvis_brain.reason(user_input, console_api_key)
         st.markdown(
             f"""
                 <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-                    <b>RESPUESTA Y TELEMETRÍA DE J.A.R.V.I.S.:</b><br><br>
+                    <b>RESPUESTA Y ASOCIACIÓN DE J.A.R.V.I.S.:</b><br><br>
                     {reply}
                 </div>
             """,
