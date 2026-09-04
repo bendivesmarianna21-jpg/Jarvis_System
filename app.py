@@ -96,7 +96,7 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO J.A.R.V.I.S. (BÚSQUEDA INTELIGENTE)
+# MOTOR COGNITIVO J.A.R.V.I.S.
 # ==========================================
 class JarvisMind:
 
@@ -108,7 +108,6 @@ class JarvisMind:
     q = query.strip()
     q_lower = q.lower()
 
-    # Registro de la consulta
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -121,8 +120,11 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Búsqueda inteligente en expedientes legales si preguntas por visa, pasaporte o contrato
-    if any(w in q_lower for w in ["visa", "pasaporte", "contrato", "legal", "identidad"]):
+    # Búsqueda inteligente en expedientes legales
+    if any(
+        w in q_lower
+        for w in ["visa", "pasaporte", "contrato", "legal", "identidad"]
+    ):
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
@@ -131,11 +133,11 @@ class JarvisMind:
         conn.close()
 
         if records:
-          res_text = f"[EXPEDIENTES LEGALES RECUPERADOS]:\n"
+          res_text = "[EXPEDIENTES LEGALES RECUPERADOS]:\n"
           for r in records:
             res_text += (
-                f"- Título: {r[0]} | Categoría: {r[1]} | Vigencia: {r[2]}\n  Detalles:"
-                f" {r[3]}\n"
+                f"- Título: {r[0]} | Categoría: {r[1]} | Vigencia: {r[2]}\n"
+                f"  Detalles: {r[3]}\n"
             )
           return res_text
         else:
@@ -148,7 +150,7 @@ class JarvisMind:
 
     if any(
         w in q_lower
-        for w:=[
+        for w in [
             "quien te creo",
             "quien te hizo",
             "quien te diseño",
@@ -165,7 +167,7 @@ class JarvisMind:
 
     elif any(
         w in q_lower
-        for w:=[
+        for w in [
             "quien eres",
             "que eres",
             "como te llamas",
@@ -182,7 +184,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w:=[fn for fn in ["sabes de mi", "quien soy"]]
+        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
     ):
       return (
           f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
@@ -338,7 +340,9 @@ with tab_docs:
       conn.close()
       if uploaded_file.type.startswith("image/"):
         st.image(file_bytes, caption=f"Imagen cargada: {file_name}")
-      st.success(f"Archivo '{file_name}' indexado permanentemente en base de datos.")
+      st.success(
+          f"Archivo '{file_name}' indexado permanentemente en base de datos."
+      )
     except Exception as e:
       st.error(f"Error de almacenamiento: {e}")
 
@@ -354,7 +358,12 @@ with tab_docs:
     if docs:
       for doc in docs:
         with st.expander(f"[{doc[0]}] {doc[2]} // REGISTRO: {doc[1]}"):
-          st.text_area("Contenido / Estado:", doc[3], height=100, key=f"doc_view_{doc[0]}")
+          st.text_area(
+              "Contenido / Estado:",
+              doc[3],
+              height=100,
+              key=f"doc_view_{doc[0]}",
+          )
     else:
       st.info("El repositorio documental se encuentra vacío.")
   except Exception as e:
@@ -364,7 +373,9 @@ with tab_legal:
   st.subheader("CUSTODIA DE EXPEDIENTES LEGALES Y CREDENCIALES")
 
   with st.form("legal_form"):
-    l_title = st.text_input("Título del Registro (Ej: Pasaporte Alemán, Visa Au Pair, Contrato)")
+    l_title = st.text_input(
+        "Título del Registro (Ej: Pasaporte Alemán, Visa Au Pair, Contrato)"
+    )
     l_category = st.selectbox(
         "Categoría Legal",
         [
@@ -376,23 +387,36 @@ with tab_legal:
     )
     l_expiry = st.text_input("Fecha de Expiración / Vigencia (Ej: 2028-12-31)")
     l_content = st.text_area(
-        "Datos clave extraídos o cláusulas (Escribe aquí los datos de la foto/documento):",
+        "Datos clave extraídos o cláusulas (Escribe aquí los datos de la"
+        " foto/documento):",
         height=100,
     )
 
-    l_submit = st.form_submit_button("REGISTRAR Y GUARDAR EXPEDIENTE", use_container_width=True)
+    l_submit = st.form_submit_button(
+        "REGISTRAR Y GUARDAR EXPEDIENTE", use_container_width=True
+    )
 
     if l_submit and l_title:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO legal_records (timestamp, title, category, expiry, content) VALUES (?, ?, ?, ?, ?)",
-            (str(datetime.datetime.now()), l_title, l_category, l_expiry, l_content),
+            "INSERT INTO legal_records (timestamp, title, category, expiry,"
+            " content) VALUES (?, ?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                l_title,
+                l_category,
+                l_expiry,
+                l_content,
+            ),
         )
         conn.commit()
         conn.close()
-        st.success(f"Expediente legal '{l_title}' registrado y guardado permanentemente.")
+        st.success(
+            f"Expediente legal '{l_title}' registrado y guardado"
+            " permanentemente."
+        )
       except Exception as e:
         st.error(f"Error: {e}")
 
@@ -401,7 +425,10 @@ with tab_legal:
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT id, timestamp, title, category, expiry, content FROM legal_records")
+    c.execute(
+        "SELECT id, timestamp, title, category, expiry, content FROM"
+        " legal_records"
+    )
     legal_rows = c.fetchall()
     conn.close()
 
@@ -426,19 +453,24 @@ with tab_finanzas:
     with col_f3:
       f_type = st.selectbox("Tipo", ["Gasto", "Ingreso"])
 
-    f_submit = st.form_submit_button("REGISTRAR MOVIMIENTO", use_container_width=True)
+    f_submit = st.form_submit_button(
+        "REGISTRAR MOVIMIENTO", use_container_width=True
+    )
 
     if f_submit and f_concept:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO finances (timestamp, concept, amount, type) VALUES (?, ?, ?, ?)",
+            "INSERT INTO finances (timestamp, concept, amount, type) VALUES"
+            " (?, ?, ?, ?)",
             (str(datetime.datetime.now()), f_concept, f_amount, f_type),
         )
         conn.commit()
         conn.close()
-        st.success(f"Transacción '{f_concept}' registrada en el libro contable.")
+        st.success(
+            f"Transacción '{f_concept}' registrada en el libro contable."
+        )
       except Exception as e:
         st.error(f"Error: {e}")
 
@@ -464,7 +496,9 @@ with tab_finanzas:
       st.markdown("<br>", unsafe_allow_html=True)
       for r in fin_rows:
         tag_type = "[INGRESO]" if r[4] == "Ingreso" else "[GASTO]"
-        st.info(f"{tag_type} [{r[0]}] {r[2]} — {r[3]} € | Timestamp: {r[1]}")
+        st.info(
+            f"{tag_type} [{r[0]}] {r[2]} — {r[3]} € | Timestamp: {r[1]}"
+        )
     else:
       st.info("No se registran movimientos en el libro contable.")
   except Exception as e:
@@ -480,7 +514,10 @@ with tab_memoria:
       rows = c.fetchall()
       conn.close()
       if rows:
-        st.write(f"Se han recuperado **{len(rows)}** registros de auditoría en el sistema:")
+        st.write(
+            f"Se han recuperado **{len(rows)}** registros de auditoría en el"
+            " sistema:"
+        )
         for row in rows:
           st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
       else:
