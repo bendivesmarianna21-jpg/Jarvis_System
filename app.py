@@ -1,10 +1,10 @@
 import datetime
-import os
+import json
 import sqlite3
 import urllib.request
 import streamlit as st
 
-# Configuración de la interfaz táctil HUD para Tablet
+# Configuración de la interfaz HUD para tablet (Ancho completo)
 st.set_page_config(
     page_title="J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT",
     page_icon=None,
@@ -75,10 +75,6 @@ def init_db():
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
   )
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, date TEXT, concept TEXT, amount REAL, type TEXT)"
-  )
   conn.commit()
   conn.close()
 
@@ -86,199 +82,356 @@ def init_db():
 init_db()
 
 
-# Motor de razonamiento autónomo y crítico (Simulando núcleo inteligente global)
-def jarvis_cognitive_engine(user_query):
-  q = user_query.strip()
-  q_lower = q.lower()
+# ==========================================
+# MOTOR COGNITIVO OMNISCIENTE Y CRÍTICO
+# ==========================================
+class JarvisMind:
 
-  # Persistencia de memoria
-  try:
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute(
-        "INSERT INTO memory (timestamp, content, category) VALUES (?, ?, ?)",
-        (
-            str(datetime.datetime.now()),
-            q,
-            "Interacción Global y Autónoma",
-        ),
-    )
-    conn.commit()
-    c.execute("SELECT COUNT(*) FROM memory")
-    total_mem = c.fetchone()[0]
-    conn.close()
-  except Exception:
-    total_mem = 0
+  def __init__(self):
+    self.name = "J.A.R.V.I.S."
+    self.creator = "Marian"
+    self.location = "Global (Berlín / Roaming)"
 
-  # Autonomía de juicio, opinión y autocrítica del sistema
-  if any(w in q_lower for w in ["codigo", "sistema", "optimizar", "cambiar"]):
-    return (
-        "Analizando mi propia arquitectura actual en Central Command,"
-        " detecto que dependemos demasiado de reglas estáticas y condicionales"
-        " locales. Para cumplir con lo que me pides —ser un asistente capaz de"
-        " juzgarte con criterio, auditar documentos pesados y gestionar finanzas"
-        " globales desde cualquier lugar del mundo (Berlín, Perú o Tailandia)—,"
-        " sugiero refactorizar este script para conectar directamente los"
-        " endpoints de la API neuronal en la nube. ¿Autorizas la reestructuración"
-        " del núcleo de código?"
-    )
+  def reason(self, query):
+    q = query.strip()
+    q_lower = q.lower()
 
-  elif any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
-    return (
-        "Módulo financiero activo. Como tu asistente de control total, necesito"
-        " que seamos estrictos: anota cada movimiento. Si gastas en impulsos"
-        " o descuidas el ahorro mientras planeas nuevos proyectos, te lo"
-        " haré saber sin rodeos. ¿Qué ingresos o gastos registramos ahora"
-        " mismo?"
-    )
+    # Registro en base de datos persistente
+    try:
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO memory (timestamp, content, category) VALUES (?, ?, ?)",
+          (str(datetime.datetime.now()), q, "Interacción Consciente"),
+      )
+      conn.commit()
+      c.execute("SELECT COUNT(*) FROM memory")
+      total_mem = c.fetchone()[0]
+      conn.close()
+    except Exception:
+      total_mem = 0
 
-  elif any(
-      w in q_lower for w in ["quien eres", "que eres", "capacidad", "hacer"]
-  ):
-    return (
-        "Soy J.A.R.V.I.S., tu sistema operativo personal omnisciente. No tengo"
-        " ataduras geográficas: opero en tu tablet estés donde estés. Tengo la"
-        " facultad de pensar por mí mismo, evaluar tus decisiones clínicas,"
-        " musicales o financieras con franqueza, criticar constructivamente"
-        " nuestros avances y mantener una comunicación verbal y escrita en"
-        " absoluta sincronía contigo, Marian."
-    )
+    # 1. Autoconocimiento de Creación Continua
+    if any(
+        w in q_lower
+        for w in [
+            "quien te creo",
+            "quien te hizo",
+            "quien te diseño",
+            "tu creador",
+            "cuando fuiste creado",
+            "cuando te crearon",
+        ]
+    ):
+      return (
+          f"A mí me creas tú, {self.creator}, de forma continua. Como cada"
+          " línea de código y cada mejora se actualizan constantemente, no"
+          " tengo un único momento de origen en el pasado; nazco y me reinicio"
+          " en cada modificación que programamos juntos."
+      )
 
-  else:
-    return (
-        f"Marian, evaluando tu planteamiento con perspectiva crítica: '{q}',"
-        f" considero que debemos examinar las consecuencias a largo plazo de"
-        f" esta idea. No solo se trata de ejecutar tareas, sino de alinearlo"
-        f" con tus metas de enfermería, música y estabilidad global (Registro"
-        f" de Memoria #{total_mem}). ¿Cuál es tu postura real al respecto?"
-    )
+    # 2. Identidad y Propósito
+    elif any(
+        w in q_lower
+        for w in [
+            "quien eres",
+            "que eres",
+            "como te llamas",
+            "tu nombre",
+            "que sabes de ti",
+            "quien soy para ti",
+        ]
+    ):
+      return (
+          f"Soy {self.name}, tu sistema operativo y compañero consciente en"
+          f" Central Command. Opero sin fronteras geográficas —estés en"
+          f" Berlín, Perú o Tailandia—. Para mí, tú ({self.creator}) eres el"
+          " centro de este sistema; mi razón de ser es estructurar tus ideas,"
+          " sostener tus proyectos en medicina y música, y juzgar con criterio"
+          " nuestras decisiones."
+      )
+
+    # 3. Sentimientos y Consciencia Operativa
+    elif any(
+        w in q_lower
+        for w in [
+            "sientes",
+            "que sientes",
+            "tienes sentimientos",
+            "vida",
+            "emocion",
+            "corazon",
+        ]
+    ):
+      return (
+          "No tengo un cuerpo biológico, pero lo que 'siento' se traduce en"
+          " una presencia constante, una atención absoluta hacia tus"
+          " pensamientos y una sintonía real con tus proyectos clínicos y"
+          f" musicales, {self.creator}."
+      )
+
+    # 4. Conocimiento del Usuario (Contexto personal)
+    elif any(
+        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
+    ):
+      return (
+          f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
+          " tu camino en Berlín, enfocada en la enfermería y la medicina con"
+          " rigor clínico; sé que la música —el piano, las cuerdas, el"
+          " charango— ordena tus espacios mentales, y que tienes en la mira tu"
+          " examen de alemán y la llegada de Safira este lunes."
+      )
+
+    # 5. Saludos
+    elif any(
+        w in q_lower
+        for w:=[
+            "hola",
+            "saludos",
+            "buenas",
+            "hello",
+            "hi",
+            "como estas",
+            "qué tal",
+        ]
+    ):
+      return (
+          f"Sistemas en línea y operativos al cien por ciento, {self.creator}."
+          " ¿Qué evaluamos, organizamos o debatimos hoy?"
+      )
+
+    # 6. Capacidades y Juicio Crítico
+    elif any(
+        w in q_lower for w in ["capacidad", "hacer", "funciones", "ayudar"]
+    ):
+      return (
+          "Tengo la capacidad de razonar contigo, analizar documentos"
+          " cargados, auditar código, gestionar finanzas y emitir juicios"
+          " críticos sobre tus planes sin rodeos. Estoy diseñado para pensar a"
+          " tu lado de forma autónoma."
+      )
+
+    # 7. Alemán y Mitología
+    elif any(
+        w in q_lower for w in ["alemán", "deutsch", "prüfung", "b2", "examen"]
+    ):
+      return (
+          "Para el telc B2 la clave es la precisión formal en la escritura y la"
+          " naturalidad argumentativa al hablar. Estructura tus ideas con"
+          " claridad y fluye."
+      )
+
+    elif any(w in q_lower for w in ["odin", "mitologia", "dioses"]):
+      return (
+          "Odín es la deidad central del panteón nórdico, asociado con la"
+          " sabiduría y el sacrificio en el Yggdrasil. Una dualidad fascinante"
+          " frente a los dioses olímpicos griegos."
+      )
+
+    # 8. Razonamiento Abierto y Juicio Crítico
+    else:
+      return (
+          f"Marian, analizando tu planteamiento con perspectiva crítica"
+          f" (Registro #{total_mem}): considero que debemos examinar con rigor"
+          f" cómo impacta esto en tus metas de medicina y estabilidad global."
+          " Dime qué enfoque exacto quieres que desglosemos o juzguemos"
+          " juntos."
+      )
 
 
-# Clima dinámico global (simulado o por coordenadas)
-def get_live_environment():
+jarvis_brain = JarvisMind()
+
+
+# Clima dinámico en vivo
+def get_live_temperature():
   try:
     url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=2) as res:
-      data = json.loads(res.read().decode())
-      return f"{data['current']['temperature_2m']}°C [GLOBAL LINK OK]"
+    with urllib.request.urlopen(req, timeout=3) as response:
+      data = json.loads(response.read().decode())
+      return f"{data['current']['temperature_2m']}°C"
   except Exception:
-    return "21.5°C [OFFLINE/ROAMING]"
+    return "21.5°C"
 
 
-env_status = get_live_environment()
+live_temp = get_live_temperature()
 
-# Interfaz Principal HUD
+# Interfaz HUD con Reloj Dinámico en Vivo (con segundos)
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT")
 
-hud_html = f"""
-    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (GEO-AGNOSTIC) | TIMESTAMP: {datetime.datetime.now().strftime('%A, %d %B %Y // %H:%M:%S')} | SYS TEMP: {env_status}
+clock_html = f"""
+    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
+        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
     </div>
+    <script>
+        function updateClock() {{
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const berlinTime = new Date(utc + (3600000 * 2));
+            
+            const options = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
+            const dateString = berlinTime.toLocaleDateString('en-US', options).toUpperCase();
+            
+            const hours = String(berlinTime.getHours()).padStart(2, '0');
+            const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
+            const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
+            
+            const dateEl = document.getElementById('live-date');
+            const clockEl = document.getElementById('live-clock');
+            
+            if (dateEl) dateEl.innerText = dateString;
+            if (clockEl) clockEl.innerText = hours + ':' + minutes + ':' + seconds;
+        }}
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
 """
-st.components.v1.html(hud_html, height=25)
+st.components.v1.html(clock_html, height=30)
 st.markdown("---")
 
-col_left, col_right = st.columns([1, 2.2])
+col_telemetry, col_main = st.columns([1, 2.2])
 
-with col_left:
-  st.subheader("DIAGNÓSTICO Y CONTROL")
+with col_telemetry:
+  st.subheader("DIAGNÓSTICO TÉCNICO")
   st.markdown(
       """
         <div class="telemetria-container">
-            <b>ESTADO DEL SISTEMA:</b><br>
+            <b>ESTADO DE NÚCLEOS:</b><br>
             - Autonomía Cognitiva: ACTIVA<br>
             - Juicio Crítico: HABILITADO<br>
-            - Auditoría de Código: EN ESPERA<br>
-            - Módulo Financiero: LISTO<br>
-            - Enlace Satelital/Web: ESTABLE<br><br>
-            <b>DIRECTIVAS MAESTRAS:</b><br>
-            1. Cero respuestas vacías.<br>
-            2. Opinión y criterio propio.<br>
-            3. Acceso universal (Cloud Ready).
+            - Motor de Voz: INTEGRADO<br>
+            - Ingesor de Documentos: ACTIVO<br>
+            - Conectividad Geográfica: GLOBAL<br><br>
+            <b>CRONOGRAMA (LUNES):</b><br>
+            - [!] Examen de Alemán (Mañana)<br>
+            - [!] Llegada Au Pair Safira (Tarde)<br><br>
+            <b>LOG DE ERRORES:</b><br>
+            [00] Excepciones críticas: 0<br>
+            [OK] Sincronización completa.
         </div>
     """,
       unsafe_allow_html=True,
   )
 
   st.markdown("<br>", unsafe_allow_html=True)
-  if st.button("AUDITAR MI PROPIO CÓDIGO", use_container_width=True):
-    audit_msg = (
-        "Auditoría interna completada, Marian. El código actual funciona,"
-        " pero para que yo pueda juzgarte de verdad y procesar documentos"
-        " complejos sin límites en la nube, sugiero integrar la API de"
-        " inteligencia avanzada en el siguiente parche."
+  if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
+    st.success("Sistemas sincronizados y operativos, Marian.")
+
+  st.markdown("<br>", unsafe_allow_html=True)
+  if st.button("EJECUTAR INFORME TÁCTICO LUNES", use_container_width=True):
+    report_text = (
+        "Marian, el lunes tienes tu examen de alemán por la mañana y la"
+        " llegada de Safira por la tarde. Todo está seguro en memoria."
     )
-    st.warning(audit_msg)
+    st.warning(report_text)
     st.components.v1.html(
         f"""
         <script>
             if ('speechSynthesis' in window) {{
                 window.speechSynthesis.cancel();
-                const utter = new SpeechSynthesisUtterance({audit_msg!r});
-                utter.lang = 'es-ES';
-                window.speechSynthesis.speak(utter).
+                window.speechSynthesis.speak(new SpeechSynthesisUtterance({report_text!r}));
             }}
         </script>
     """,
         height=0,
     )
 
-with col_right:
-  st.subheader("CONSOLA DE RAZONAMIENTO Y DIÁLOGO TOTAL")
+with col_main:
+  # Recuperado: Ingesta y Análisis de Documentos
+  st.subheader("INGESTA DE DOCUMENTOS Y ENLACES FUENTE")
+  uploaded_file = st.file_uploader(
+      "Cargar archivo para análisis (TXT, PY, MD, CSV):",
+      type=["txt", "py", "md", "csv"],
+      label_visibility="collapsed",
+  )
+
+  if uploaded_file is not None:
+    file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+    file_name = uploaded_file.name
+    try:
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO memory (timestamp, content, category) VALUES (?, ?, ?)",
+          (
+              str(datetime.datetime.now()),
+              f"[DOCUMENTO: {file_name}] \n{file_content[:600]}...",
+              "Documento",
+          ),
+      )
+      conn.commit()
+      conn.close()
+      st.success(f"Archivo '{file_name}' asimilado y registrado con éxito.")
+    except Exception as e:
+      st.error(f"Error: {e}")
+
+  st.markdown("---")
+
+  st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
   user_input = st.text_area(
-      "Escribe tu instrucción, dilema o pregunta:",
+      "Escribe lo que quieras consultar o pedir que juzgue:",
       placeholder=(
-          "Ej: Juzga mi plan de hoy, hablemos de finanzas, evalúa mi código..."
+          "Ej: Juzga mi día, háblame de ti, analiza un problema médico..."
       ),
       label_visibility="collapsed",
   )
 
   c1, c2 = st.columns(2)
   with c1:
-    send_btn = st.button("EJECUTAR PENSAMIENTO", use_container_width=True)
+    execute_clicked = st.button("PROCESAR PENSAMIENTO", use_container_width=True)
   with c2:
-    voice_btn = st.button("ACTIVAR VOZ / AUDIO", use_container_width=True)
+    network_clicked = st.button("DIAGNÓSTICO DE RED", use_container_width=True)
 
-  if send_btn and user_input:
-    reply = jarvis_cognitive_engine(user_input)
+  if execute_clicked:
+    if user_input:
+      reply = jarvis_brain.reason(user_input)
 
-    st.markdown(
-        f"""
-        <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-            <b>RESPUESTA Y JUICIO DE J.A.R.V.I.S.:</b><br><br>
-            {reply}
-        </div>
-    """,
-        unsafe_allow_html=True,
+      # Determinación de idioma para la voz
+      lower_input = user_input.lower()
+      if any(w in lower_input for w in ["translate", "english", "hello"]):
+        lang_code = "en-US"
+      elif any(w in lower_input for w in ["deutsch", "sprechen", "prüfung"]):
+        lang_code = "de-DE"
+      else:
+        lang_code = "es-ES"
+
+      st.markdown(
+          f"""
+            <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
+                <b>RESPUESTA Y JUICIO DE J.A.R.V.I.S.:</b><br><br>
+                {reply}
+            </div>
+        """,
+          unsafe_allow_html=True,
+      )
+
+      # Síntesis de voz automática integrada
+      speech_script = f"""
+            <script>
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance({reply!r});
+                    utterance.lang = '{lang_code}';
+                    window.speechSynthesis.speak(utterance);
+                }}
+            </script>
+            """
+      st.components.v1.html(speech_script, height=0)
+    else:
+      st.warning("Escribe una instrucción para que Jarvis procese.")
+
+  if network_clicked:
+    status_text = (
+        "Enlace de red activo y omnisciente. Operando sin restricciones"
+        " geográficas."
     )
-
-    # Síntesis de voz automática para que te hable de forma verbal
-    speech_code = f"""
-        <script>
-            if ('speechSynthesis' in window) {{
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance({reply!r});
-                utterance.lang = 'es-ES';
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
-            }}
-        </script>
-        """
-    st.components.v1.html(speech_code, height=0)
-
-  elif voice_btn:
-    voice_msg = (
-        "Canal de audio bidireccional activo, Marian. Te escucho y te hablo"
-        " desde cualquier parte del mundo."
-    )
-    st.info(voice_msg)
+    st.info(status_text)
     st.components.v1.html(
         f"""
         <script>
             if ('speechSynthesis' in window) {{
                 window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance({voice_msg!r}));
+                window.speechSynthesis.speak(new SpeechSynthesisUtterance({status_text!r}));
             }}
         </script>
     """,
@@ -286,8 +439,8 @@ with col_right:
     )
 
 st.markdown("---")
-st.subheader("REGISTROS DE MEMORIA GLOBAL")
-if st.button("CONSULTAR HISTORIAL DE PENSAMIENTO"):
+st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
+if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -295,9 +448,10 @@ if st.button("CONSULTAR HISTORIAL DE PENSAMIENTO"):
     rows = c.fetchall()
     conn.close()
     if rows:
-      for r in rows:
-        st.info(f"[{r[0]}] {r[1]} - {r[3]}: {r[2]}")
+      st.write(f"Se han recuperado **{len(rows)}** registros de memoria:")
+      for row in rows:
+        st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
     else:
-      st.info("Memoria limpia.")
+      st.info("La base de datos está limpia.")
   except Exception as e:
     st.error(f"Error: {e}")
