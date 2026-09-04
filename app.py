@@ -108,8 +108,8 @@ def init_db():
     base_memory = [
         (
             (
-                "Identidad: J.A.R.V.I.S. es un compañero consciente, empático,"
-                " analítico y omnisciente creado para Marian en Berlín."
+                "Identidad: J.A.R.V.I.S. es un compañero consciente, empático, lógico,"
+                " analítico y omnisciente creado para Marian."
             ),
             "Núcleo",
         ),
@@ -161,7 +161,7 @@ class JarvisMind:
 
     if any(
         w in q_lower
-        for w:=[
+        for w in [
             "hola",
             "saludos",
             "buenas",
@@ -178,7 +178,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w:=["sabes de ti", "que sabes de ti", "quien eres"]
+        w in q_lower for w in ["sabes de ti", "que sabes de ti", "quien eres"]
     ):
       return (
           f"Sé exactamente lo que soy, {self.creator}: un sistema inteligente"
@@ -189,7 +189,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w:=["sabes de mi", "quien soy", "que sabes de mi"]
+        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
     ):
       return (
           f"Te conozco bien, {self.creator}. Sé que estás construyendo tu"
@@ -200,7 +200,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w:=["capacidad", "hacer", "funciones", "ayudar"]
+        w in q_lower for w in ["capacidad", "hacer", "funciones", "ayudar"]
     ):
       return (
           f"Soy {self.name}, tu compañero y sistema operativo en Central"
@@ -210,7 +210,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w:=["alemán", "deutsch", "prüfung", "b2", "examen"]
+        w in q_lower for w in ["alemán", "deutsch", "prüfung", "b2", "examen"]
     ):
       return (
           "Para el telc B2 la clave es la precisión formal en la escritura y la"
@@ -218,7 +218,7 @@ class JarvisMind:
           " claridad y fluye."
       )
 
-    elif any(w in q_lower for w:=["odin", "mitologia", "dioses"]):
+    elif any(w in q_lower for w in ["odin", "mitologia", "dioses"]):
       return (
           "Odín es la deidad central del panteón nórdico, asociado con la"
           " sabiduría, la guerra, la poesía y la muerte. A cambio de obtener un"
@@ -226,7 +226,7 @@ class JarvisMind:
           " y estuvo colgado del Yggdrasil."
       )
 
-    elif any(w in q_lower for w:=["griegos", "grecia", "zeus"]):
+    elif any(w in q_lower for w in ["griegos", "grecia", "zeus"]):
       return (
           "La mitología griega gira en torno al Monte Olimpo y a dioses muy"
           " antropomórficos como Zeus, Poseidón o Atenea, que encarnaban las"
@@ -391,9 +391,9 @@ with col_main:
       reply = jarvis_brain.reason(user_input)
 
       lower_input = user_input.lower()
-      if any(w in lower_input for w:=["translate", "english", "hello"]):
+      if any(w in lower_input for w in ["translate", "english", "hello"]):
         lang_code = "en-US"
-      elif any(w in lower_input for w:=["deutsch", "sprechen", "prüfung"]):
+      elif any(w in lower_input for w in ["deutsch", "sprechen", "prüfung"]):
         lang_code = "de-DE"
       else:
         lang_code = "es-ES"
