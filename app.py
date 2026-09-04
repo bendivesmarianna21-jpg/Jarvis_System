@@ -4,7 +4,7 @@ import sqlite3
 import urllib.request
 import streamlit as st
 
-# Importación segura del módulo de visión AI para evitar errores de entorno
+# Importación segura del módulo de visión AI
 try:
   from google import genai
   from google.genai import types
@@ -131,7 +131,7 @@ class JarvisMind:
 
     if any(
         w in q_lower
-        for w in [
+        for w:=[
             "visa",
             "pasaporte",
             "contrato",
@@ -168,7 +168,7 @@ class JarvisMind:
 
     if any(
         w in q_lower
-        for w in [
+        for w:=[
             "quien te creo",
             "quien te hizo",
             "quien te diseño",
@@ -185,7 +185,7 @@ class JarvisMind:
 
     elif any(
         w in q_lower
-        for w in [
+        for w:=[
             "quien eres",
             "que eres",
             "como te llamas",
@@ -202,7 +202,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
+        w in q_lower for w:=[fn for fn in ["sabes de mi", "quien soy"]]
     ):
       return (
           f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
@@ -420,14 +420,26 @@ with tab_legal:
       if not HAS_GENAI:
         st.error(
             "El módulo de visión AI requiere que 'google-genai' esté instalado"
-            " en el entorno o en requirements.txt."
+            " en requirements.txt."
         )
       else:
         with st.spinner(
             "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
         ):
           try:
-            client = genai.Client()
+            # Extracción segura de API Key desde st.secrets si existe
+            api_key = None
+            try:
+              if "GEMINI_API_KEY" in st.secrets:
+                api_key = st.secrets["GEMINI_API_KEY"]
+            except Exception:
+              pass
+
+            client = (
+                genai.Client(api_key=api_key)
+                if api_key
+                else genai.Client()
+            )
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[
@@ -474,7 +486,10 @@ with tab_legal:
                 unsafe_allow_html=True,
             )
           except Exception as e:
-            st.error(f"Error al conectar con el núcleo de visión AI: {e}")
+            st.error(
+                f"Error al conectar con el núcleo de visión AI: {e}. Asegúrate"
+                " de configurar tu API Key en los secretos de Streamlit Cloud."
+            )
 
   st.markdown("---")
   st.subheader("EXPEDIENTES CUSTODIADOS")
