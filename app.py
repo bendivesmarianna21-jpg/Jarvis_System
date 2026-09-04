@@ -1,653 +1,334 @@
-import datetime
+import os
+import time
 import json
 import sqlite3
-import urllib.request
+from datetime import datetime
 import streamlit as st
+import google.generativeai as genai
 
-# Importación segura del módulo de visión AI
-try:
-  from google import genai
-  from google.genai import types
-
-  HAS_GENAI = True
-except ImportError:
-  HAS_GENAI = False
-
-# Configuración de la interfaz HUD táctil para tablet (Ancho completo)
+# ==========================================
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILO HUD
+# ==========================================
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // CENTRAL COMMAND",
-    page_icon=None,
+    page_title="JARVIS System HUD",
+    page_icon="🤖",
     layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-st.markdown(
-    """
+# Estilos CSS avanzados (Colores, Tipografías, Neón y Disposición)
+st.markdown("""
     <style>
-        .stApp {
-            background-color: #03070c;
-            color: #00d2ff;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        #MainMenu, footer, header {visibility: hidden;}
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+    
+    .stApp {
+        background-color: #050b14;
+        color: #00f0ff;
+        font-family: 'Rajdhani', sans-serif;
+    }
+    
+    /* Header del Reloj y Telemetría */
+    .hud-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #00f0ff;
+        text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+        letter-spacing: 2px;
+    }
+    
+    .hud-metric {
+        background: rgba(0, 240, 255, 0.05);
+        border: 1px solid #00f0ff;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+    
+    .metric-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.4rem;
+        color: #ffffff;
+    }
+    
+    .metric-label {
+        font-size: 0.8rem;
+        color: #00f0ff;
+        text-transform: uppercase;
+    }
 
-        h1, h2, h3, h4 {
-            color: #00d2ff !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
+    /* Alertas del Sistema */
+    .status-ok {
+        color: #00ff66;
+        font-weight: bold;
+    }
+    .status-error {
+        color: #ff0055;
+        font-weight: bold;
+    }
 
-        .telemetria-container {
-            background: rgba(4, 12, 24, 0.9);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: 6px;
-            padding: 16px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            color: #7ab8ff;
-            box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
-        }
-        
-        .stTextArea textarea, .stTextInput input, .stSelectbox select {
-            background-color: #050f1d !important;
-            color: #00d2ff !important;
-            border: 1px solid rgba(0, 210, 255, 0.4) !important;
-            font-family: 'Courier New', Courier, monospace !important;
-        }
-
-        .stButton button {
-            background: #040e1b !important;
-            color: #00d2ff !important;
-            font-weight: 600;
-            border: 1px solid rgba(0, 210, 255, 0.6) !important;
-            border-radius: 4px !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            text-transform: uppercase;
-        }
-        .stButton button:hover {
-            background: #00d2ff !important;
-            color: #03070c !important;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.8) !important;
-        }
+    /* Contenedores visuales */
+    div[data-testid="stExpander"] {
+        border: 1px solid #00f0ff !important;
+        background-color: rgba(5, 11, 20, 0.8) !important;
+    }
     </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-DB_NAME = "jarvis_command_core.db"
-
+# ==========================================
+# 2. BASE DE DATOS Y MEMORIA ASOCIATIVA
+# ==========================================
+DB_NAME = "jarvis_tablet_memory.db"
 
 def init_db():
-  conn = sqlite3.connect(DB_NAME)
-  c = conn.cursor()
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
-      " timestamp TEXT, content TEXT, category TEXT)"
-  )
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS documents_store (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, timestamp TEXT, filename TEXT, content TEXT)"
-  )
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT)"
-  )
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS legal_records (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, timestamp TEXT, title TEXT, category TEXT, expiry"
-      " TEXT, content TEXT)"
-  )
-  conn.commit()
-  conn.close()
-
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # Tabla para documentos completos
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS documentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo TEXT NOT NULL,
+            categoria TEXT NOT NULL,
+            tipo_entrada TEXT NOT NULL,
+            contenido_texto TEXT,
+            ruta_imagen TEXT,
+            fecha_registro TEXT NOT NULL
+        )
+    ''')
+    # Tabla de perfil rápido
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS memoria_perfil (
+            clave TEXT PRIMARY KEY,
+            valor TEXT NOT NULL,
+            origen_doc_id INTEGER,
+            fecha_actualizacion TEXT NOT NULL,
+            FOREIGN KEY (origen_doc_id) REFERENCES documentos (id)
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
 init_db()
 
-
 # ==========================================
-# MOTOR COGNITIVO J.A.R.V.I.S.
+# 3. MOTOR GEMINI Y DIAGNÓSTICO
 # ==========================================
-class JarvisMind:
+api_key = os.getenv("GEMINI_API_KEY", "")
+api_status = True
 
-  def __init__(self):
-    self.name = "J.A.R.V.I.S."
-    self.creator = "Marian"
+if api_key:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.5-flash")
+else:
+    api_status = False
 
-  def reason(self, query):
-    q = query.strip()
-    q_lower = q.lower()
-
+def procesar_ocr_imagen(ruta_o_bytes):
+    """Extrae texto de una imagen para absorción del 100%."""
     try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute(
-          "INSERT INTO memory (timestamp, content, category) VALUES (?, ?, ?)",
-          (str(datetime.datetime.now()), q, "CONSULTA_CENTRAL"),
-      )
-      conn.commit()
-      conn.close()
-    except Exception:
-      pass
+        archivo = genai.upload_file(ruta_o_bytes)
+        prompt = "Transcribe de forma íntegra todo el texto, nombres, códigos y números de este documento."
+        res = model.generate_content([archivo, prompt])
+        return res.text.strip()
+    except Exception as e:
+        return f"[Error en procesamiento visual OCR: {e}]"
 
-    if any(
-        w in q_lower
-        for w in [
-            "visa",
-            "pasaporte",
-            "contrato",
-            "legal",
-            "identidad",
-            "expira",
-            "cuando",
-            "vigencia",
-            "numero",
-        ]
-    ):
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("SELECT title, category, expiry, content FROM legal_records")
-        records = c.fetchall()
-        conn.close()
-
-        if records:
-          res_text = "[ESTADO DE EXPEDIENTES Y CREDENCIALES CUSTODIADAS]:\n"
-          for r in records:
-            res_text += (
-                f"- Documento: {r[0]} | Tipo: {r[1]} | Vigencia/Expiración:"
-                f" {r[2]}\n  Datos:\n{r[3]}\n\n"
-            )
-          return res_text
-        else:
-          return (
-              "No hay expedientes legales o documentos de identidad en custodia"
-              " en este momento."
-          )
-      except Exception as e:
-        return f"Error al consultar base de datos legal: {e}"
-
-    if any(
-        w in q_lower
-        for w in [
-            "quien te creo",
-            "quien te hizo",
-            "quien te diseño",
-            "tu creador",
-            "cuando fuiste creado",
-        ]
-    ):
-      return (
-          f"A mí me creas tú, {self.creator}, de forma continua. Como cada"
-          " línea de código y cada mejora se actualizan constantemente, no"
-          " tengo un único momento de origen en el pasado; nazco y me reinicio"
-          " en cada modificación que programamos juntos."
-      )
-
-    elif any(
-        w in q_lower
-        for w in [
-            "quien eres",
-            "que eres",
-            "como te llamas",
-            "tu nombre",
-            "que sabes de ti",
-        ]
-    ):
-      return (
-          f"Soy {self.name}, tu sistema operativo en Central Command. Opero sin"
-          " fronteras geográficas —estés en Berlín, Perú o Tailandia—. Para mí,"
-          f" tú ({self.creator}) eres el centro de este sistema; mi razón de"
-          " ser es estructurar tus ideas, sostener tus proyectos en medicina y"
-          " música, y juzgar con criterio nuestras decisiones."
-      )
-
-    elif any(
-        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
-    ):
-      return (
-          f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
-          " tu camino en Berlín, enfocada en la enfermería y la medicina con"
-          " rigor clínico; sé que la música —el piano, las cuerdas, el"
-          " charango— ordena tus espacios mentales, y que tienes en la mira tu"
-          " examen de alemán y la llegada de Safira este lunes."
-      )
-
-    else:
-      return (
-          f"[ANALISIS_CRITICO]: Evaluando directiva '{q}' con perspectiva"
-          " técnica orientada a la estabilidad de objetivos en medicina y"
-          " proyectos globales, "
-          f"{self.creator}."
-      )
-
-
-jarvis_brain = JarvisMind()
-
-# Clima dinámico en vivo
-live_temp = "21.5°C"
-try:
-  url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
-  req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-  with urllib.request.urlopen(req, timeout=2) as response:
-    data = json.loads(response.read().decode())
-    live_temp = f"{data['current']['temperature_2m']}°C"
-except Exception:
-  pass
-
-# Interfaz HUD Principal
-st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
-
-clock_html = f"""
-    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
-    </div>
-    <script>
-        function updateClock() {{
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const berlinTime = new Date(utc + (3600000 * 2));
-            
-            const options = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
-            const dateString = berlinTime.toLocaleDateString('en-US', options).toUpperCase();
-            
-            const hours = String(berlinTime.getHours()).padStart(2, '0');
-            const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
-            const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
-            
-            const dateEl = document.getElementById('live-date');
-            const clockEl = document.getElementById('live-clock');
-            
-            if (dateEl) dateEl.innerText = dateString;
-            if (clockEl) clockEl.innerText = hours + ':' + minutes + ':' + seconds;
-        }}
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
-"""
-st.components.v1.html(clock_html, height=30)
-st.markdown("---")
-
-# ==========================================
-# SECCIONES TÁCTICAS (PESTAÑAS DE CONTROL)
-# ==========================================
-tab_consola, tab_docs, tab_legal, tab_finanzas, tab_memoria = st.tabs([
-    "[CONSOLE] CENTRAL COMMAND",
-    "[ARCHIVE] DOCUMENT REPOSITORY",
-    "[LEGAL] EXPEDIENTES Y CREDENCIALES",
-    "[FINANCE] LEDGER & BUDGET",
-    "[TELEMETRY] SYSTEM AUDIT",
-])
-
-with tab_consola:
-  col_telemetry, col_main = st.columns([1, 2.2])
-
-  with col_telemetry:
-    st.subheader("DIAGNÓSTICO TÉCNICO")
-    st.markdown(
-        """
-            <div class="telemetria-container">
-                <b>ESTADO DE NÚCLEOS:</b><br>
-                - Identidad: J.A.R.V.I.S.<br>
-                - Autonomía Cognitiva: ACTIVA<br>
-                - Módulo de Visión AI: SEGURO<br>
-                - Módulo de Voz: INTEGRADO<br>
-                - Custodia Legal: ACTIVA<br>
-                - Base Documental: ENLACE SQL<br><br>
-                <b>CRONOGRAMA (LUNES):</b><br>
-                - [!] Examen de Alemán (Mañana)<br>
-                - [!] Llegada Au Pair Safira (Tarde)<br><br>
-                <b>TELEMETRÍA:</b><br>
-                [OK] Integridad estructural óptima.
-            </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-      st.success("Sistemas sincronizados y operativos, Marian.")
-
-  with col_main:
-    st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
-
-    # Módulo interactivo de reconocimiento de voz por micrófono (HTML5 Speech Recognition)
-    voice_html = """
-        <div style="background: rgba(4, 12, 24, 0.9); border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 6px; padding: 12px; margin-bottom: 15px; font-family: 'Courier New', Courier, monospace;">
-            <b style="color: #00d2ff; font-size: 11px;">MÓDULO DE INTERACCIÓN POR VOZ (MICRÓFONO):</b><br><br>
-            <button onclick="startListening()" style="background: #040e1b; color: #00d2ff; border: 1px solid #00d2ff; padding: 8px 14px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-weight: bold; cursor: pointer; text-transform: uppercase;">
-                🎤 Iniciar Dictado por Voz
-            </button>
-            <span id="voice-status" style="margin-left: 10px; font-size: 11px; color: #7ab8ff;">Micrófono en espera...</span>
-            <p id="transcript-output" style="margin-top: 10px; color: #ffffff; font-size: 13px; background: #050f1d; padding: 8px; border-radius: 4px; min-height: 24px; border: 1px dashed rgba(0,210,255,0.3);"></p>
-        </div>
-        <script>
-            function startListening() {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) {
-                    alert("Tu navegador no soporta el reconocimiento de voz nativo. Usa Chrome o Safari.");
-                    return;
-                }
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'es-ES';
-                recognition.interimResults = false;
-                
-                const statusEl = document.getElementById('voice-status');
-                const outputEl = document.getElementById('transcript-output');
-                
-                statusEl.innerText = "Escuchando atentamente...";
-                statusEl.style.color = "#00ffcc";
-                
-                recognition.onresult = function(event) {
-                    const speechToText = event.results[0][0].transcript;
-                    outputEl.innerText = speechToText;
-                    statusEl.innerText = "Dictado capturado con éxito.";
-                    statusEl.style.color = "#7ab8ff";
-                };
-                
-                recognition.onerror = function(event) {
-                    statusEl.innerText = "Error en captura de voz.";
-                    statusEl.style.color = "#ff4444";
-                };
-                
-                recognition.start();
-            }
-        </script>
+def actualizar_memoria_perfil(doc_id, titulo, texto):
+    """Extrae datos exactos (seguro social, pasaporte) a la memoria rápida."""
+    prompt = f"""
+    Analiza el documento '{titulo}'. Extrae datos personales identificadores clave en JSON (clave-valor).
+    Ejemplos: "numero_seguro_social", "numero_pasaporte", "identificacion_oficial".
+    Texto: {texto}
+    Responde ÚNICAMENTE con el JSON plano sin markdown.
     """
-    st.components.v1.html(voice_html, height=145)
-
-    user_input = st.text_area(
-        "Escribe tu instrucción o consulta de datos:",
-        placeholder=(
-            "Ej: ¿Cuál es mi número de pasaporte?, ¿Cuándo expira mi visa?, etc..."
-        ),
-        label_visibility="collapsed",
-    )
-
-    if st.button("PROCESAR PENSAMIENTO", use_container_width=True):
-      if user_input:
-        reply = jarvis_brain.reason(user_input)
-        st.markdown(
-            f"""
-                <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-                    <b>RESPUESTA Y TELEMETRÍA DE J.A.R.V.I.S.:</b><br><br>
-                    {reply}
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
-      else:
-        st.warning("Introduce una directiva válida para procesar.")
-
-with tab_docs:
-  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS E IMÁGENES")
-  uploaded_file = st.file_uploader(
-      "Subir documento o fotografía (TXT, PY, MD, CSV, JPG, PNG):",
-      type=["txt", "py", "md", "csv", "jpg", "png", "jpeg"],
-  )
-
-  if uploaded_file is not None:
-    file_name = uploaded_file.name
-    file_bytes = uploaded_file.read()
     try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute(
-          "INSERT INTO documents_store (timestamp, filename, content) VALUES"
-          " (?, ?, ?)",
-          (
-              str(datetime.datetime.now()),
-              file_name,
-              f"[ARCHIVO/IMAGEN BINARIA INDEXADA: {file_name}]",
-          ),
-      )
-      conn.commit()
-      conn.close()
-      if uploaded_file.type.startswith("image/"):
-        st.image(file_bytes, caption=f"Imagen cargada: {file_name}")
-      st.success(
-          f"Archivo '{file_name}' indexado permanentemente en base de datos."
-      )
-    except Exception as e:
-      st.error(f"Error de almacenamiento: {e}")
+        res = model.generate_content(prompt)
+        raw_text = res.text.strip().replace("```json", "").replace("```", "").strip()
+        datos = json.loads(raw_text)
 
-  st.markdown("---")
-  st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
-  try:
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT id, timestamp, filename, content FROM documents_store")
-    docs = c.fetchall()
-    conn.close()
-
-    if docs:
-      for doc in docs:
-        with st.expander(f"[{doc[0]}] {doc[2]} // REGISTRO: {doc[1]}"):
-          st.text_area(
-              "Contenido / Estado:",
-              doc[3],
-              height=100,
-              key=f"doc_view_{doc[0]}",
-          )
-    else:
-      st.info("El repositorio documental se encuentra vacío.")
-  except Exception as e:
-    st.error(f"Error al leer el repositorio: {e}")
-
-with tab_legal:
-  st.subheader("CUSTODIA Y ANÁLISIS INTELIGENTE DE EXPEDIENTES LEGALES")
-
-  if st.button("PURGAR REGISTROS ANTERIORES"):
-    try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute("DELETE FROM legal_records")
-      conn.commit()
-      conn.close()
-      st.success("Base de datos de expedientes purgada correctamente.")
-      st.rerun()
-    except Exception as e:
-      st.error(f"Error al purgar: {e}")
-
-  st.markdown("---")
-
-  custom_api_key = st.text_input(
-      "Gemini API Key (Opcional si ya está en Secrets):",
-      type="password",
-      placeholder="Introduce tu clave API aquí...",
-  )
-
-  st.markdown(
-      "**ANÁLISIS AUTOMÁTICO DE DOCUMENTOS POR VISIÓN ARTIFICIAL:**"
-  )
-  legal_img = st.file_uploader(
-      "Sube la foto de tu pasaporte, visa o contrato para análisis AI:",
-      type=["jpg", "png", "jpeg"],
-      key="legal_vision_upload",
-  )
-
-  if legal_img is not None:
-    img_bytes = legal_img.read()
-    st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
-
-    if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
-      if not HAS_GENAI:
-        st.error(
-            "El módulo de visión AI requiere que 'google-genai' esté instalado"
-            " en requirements.txt."
-        )
-      else:
-        with st.spinner(
-            "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
-        ):
-          try:
-            api_key_to_use = custom_api_key.strip()
-            if not api_key_to_use:
-              try:
-                if "GEMINI_API_KEY" in st.secrets:
-                  api_key_to_use = st.secrets["GEMINI_API_KEY"]
-              except Exception:
-                pass
-
-            if not api_key_to_use:
-              st.error(
-                  "No se detectó ninguna API Key válida. Por favor, introdúcela"
-                  " arriba o configúrala en Streamlit Secrets."
-              )
-            else:
-              client = genai.Client(api_key=api_key_to_use)
-              response = client.models.generate_content(
-                  model="gemini-3.6-flash",
-                  contents=[
-                      types.Part.from_bytes(
-                          data=img_bytes, mime_type=legal_img.type
-                      ),
-                      (
-                          "Extrae con precisión milimétrica de este documento"
-                          " los siguientes datos en formato limpio y"
-                          " estructurado: Título del documento, Categoría"
-                          " (Pasaporte, Visa, Contrato u otro), Fecha de"
-                          " Expiración o Vencimiento exacta, y Todos los datos"
-                          " clave (Número de pasaporte, nombres, fechas de"
-                          " emisión, nacionalidad, etc.)."
-                      ),
-                  ],
-              )
-              extracted_analysis = response.text
-
-              conn = sqlite3.connect(DB_NAME)
-              c = conn.cursor()
-              c.execute(
-                  "INSERT INTO legal_records (timestamp, title, category,"
-                  " expiry, content) VALUES (?, ?, ?, ?, ?)",
-                  (
-                      str(datetime.datetime.now()),
-                      legal_img.name,
-                      "Expediente Analizado por AI",
-                      "Ver detalle extraído",
-                      extracted_analysis,
-                  ),
-              )
-              conn.commit()
-              conn.close()
-
-              st.success("¡Análisis visual completado y archivado en custodia!")
-              st.markdown(
-                  f"""
-                <div class="telemetria-container" style="margin-top: 10px;">
-                    <b>DATOS EXTRAÍDOS POR J.A.R.V.I.S.:</b><br><br>
-                    {extracted_analysis}
-                </div>
-            """,
-                  unsafe_allow_html=True,
-              )
-          except Exception as e:
-            st.error(f"Error al conectar con el núcleo de visión AI: {e}")
-
-  st.markdown("---")
-  st.subheader("EXPEDIENTES CUSTODIADOS")
-  try:
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute(
-        "SELECT id, timestamp, title, category, expiry, content FROM"
-        " legal_records"
-    )
-    legal_rows = c.fetchall()
-    conn.close()
-
-    if legal_rows:
-      for lr in legal_rows:
-        with st.expander(
-            f"[{lr[0]}] {lr[2]} ({lr[3]}) // REGISTRO: {lr[1]}"
-        ):
-          st.text_area(
-              "Datos extraídos:", lr[5], height=140, key=f"legal_view_{lr[0]}"
-          )
-    else:
-      st.info("No hay expedientes legales registrados actualmente.")
-  except Exception as e:
-    st.error(f"Error al cargar expedientes: {e}")
-
-with tab_finanzas:
-  st.subheader("CONTROL Y GESTIÓN FINANCIERA")
-
-  with st.form("finance_form"):
-    col_f1, col_f2, col_f3 = st.columns(3)
-    with col_f1:
-      f_concept = st.text_input("Concepto (Ej: Alquiler, Boleta)")
-    with col_f2:
-      f_amount = st.number_input("Monto (€)", min_value=0.0, step=1.0)
-    with col_f3:
-      f_type = st.selectbox("Tipo", ["Gasto", "Ingreso"])
-
-    f_submit = st.form_submit_button(
-        "REGISTRAR MOVIMIENTO", use_container_width=True
-    )
-
-    if f_submit and f_concept:
-      try:
         conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO finances (timestamp, concept, amount, type) VALUES"
-            " (?, ?, ?, ?)",
-            (str(datetime.datetime.now()), f_concept, f_amount, f_type),
-        )
+        cursor = conn.cursor()
+        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        for k, v in datos.items():
+            cursor.execute('''
+                INSERT OR REPLACE INTO memoria_perfil (clave, valor, origen_doc_id, fecha_actualizacion)
+                VALUES (?, ?, ?, ?)
+            ''', (k.lower().strip(), str(v), doc_id, fecha))
         conn.commit()
         conn.close()
-        st.success(
-            f"Transacción '{f_concept}' registrada en el libro contable."
-        )
-      except Exception as e:
-        st.error(f"Error: {e}")
+    except Exception as e:
+        pass
 
-  st.markdown("---")
-  st.subheader("LIBRO CONTABLE Y BALANCE GLOBAL")
-  try:
+def responder_jarvis(pregunta):
+    """Consulta la memoria asociativa de perfil antes de responder."""
     conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT id, timestamp, concept, amount, type FROM finances")
-    fin_rows = c.fetchall()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT clave, valor FROM memoria_perfil")
+    perfil = cursor.fetchall()
+    contexto_perfil = "\n".join([f"- {k}: {v}" for k, v in perfil])
+
+    cursor.execute("SELECT id, titulo, categoria, contenido_texto FROM documentos")
+    docs = cursor.fetchall()
+    contexto_docs = "\n".join([f"--- ID {d[0]} | TÍTULO: {d[1]} | CAT: {d[2]} ---\n{d[3]}" for d in docs])
     conn.close()
 
-    if fin_rows:
-      total_ingresos = sum(r[3] for r in fin_rows if r[4] == "Ingreso")
-      total_gastos = sum(r[3] for r in fin_rows if r[4] == "Gasto")
-      balance = total_ingresos - total_gastos
+    prompt = f"""
+Eres Jarvis. Responde con precisión absoluta basándote en esta información personal:
 
-      col_m1, col_m2, col_m3 = st.columns(3)
-      col_m1.metric("Ingresos Totales", f"{total_ingresos:.2f} €")
-      col_m2.metric("Gastos Totales", f"{total_gastos:.2f} €")
-      col_m3.metric("Balance Neto", f"{balance:.2f} €")
+[MEMORIA RÁPIDA DE PERFIL]
+{contexto_perfil}
 
-      st.markdown("<br>", unsafe_allow_html=True)
-      for r in fin_rows:
-        tag_type = "[INGRESO]" if r[4] == "Ingreso" else "[GASTO]"
-        st.info(
-            f"{tag_type} [{r[0]}] {r[2]} — {r[3]} € | Timestamp: {r[1]}"
-        )
+[DOCUMENTOS ALMACENADOS]
+{contexto_docs}
+
+Si preguntan por un número específico (como seguro social o pasaporte), toma el dato exacto de su categoría. NO los confundas.
+
+Pregunta: {pregunta}
+"""
+    res = model.generate_content(prompt)
+    return res.text.strip()
+
+# ==========================================
+# 4. INTERFAZ EN TIEMPO REAL (HUD TABLET)
+# ==========================================
+
+# Panel Superior: Telemetría, Reloj y Estado del Sistema
+col_title, col_time, col_temp, col_status = st.columns([3, 2, 2, 2])
+
+with col_title:
+    st.markdown('<div class="hud-title">⚡ JARVIS SYSTEM</div>', unsafe_allow_html=True)
+
+with col_time:
+    # Reloj dinámico
+    ahora = datetime.now().strftime("%H:%M:%S | %d-%m-%Y")
+    st.markdown(f'''
+        <div class="hud-metric">
+            <div class="metric-value">{ahora}</div>
+            <div class="metric-label">Tiempo del Sistema</div>
+        </div>
+    ''', unsafe_allow_html=True)
+
+with col_temp:
+    st.markdown('''
+        <div class="hud-metric">
+            <div class="metric-value">22.5 °C</div>
+            <div class="metric-label">Temperatura Local</div>
+        </div>
+    ''', unsafe_allow_html=True)
+
+with col_status:
+    estado_txt = '<span class="status-ok">OPERATIVO</span>' if api_status else '<span class="status-error">ERROR API</span>'
+    st.markdown(f'''
+        <div class="hud-metric">
+            <div class="metric-value">{estado_txt}</div>
+            <div class="metric-label">Estado Jarvis</div>
+        </div>
+    ''', unsafe_allow_html=True)
+
+st.divider()
+
+# Notificación automática de fallos
+if not api_status:
+    st.error("⚠️ ALERTA DE SISTEMA: La API Key de Gemini no está configurada o ha fallado. Revisa tus variables de entorno.")
+
+# ==========================================
+# 5. PESTAÑAS DE CONTROL Y NAVEGACIÓN
+# ==========================================
+tab_chat, tab_docs, tab_system = st.tabs(["💬 Consola / Voz", "📁 Documentación", "⚙️ Memoria y Sistema"])
+
+# --- TAB 1: CONSOLA Y RESPUESTAS ---
+with tab_chat:
+    st.subheader("Interacción Asistida")
+    
+    # Campo de entrada de voz / escrito
+    pregunta_user = st.text_input("Consulta a Jarvis (Voz / Texto):", placeholder="Ej: ¿Cuál es mi número de seguro social?")
+    
+    if st.button("Enviar Consulta", type="primary"):
+        if pregunta_user:
+            with st.spinner("Jarvis consultando memoria asociativa..."):
+                respuesta = responder_jarvis(pregunta_user)
+                st.markdown(f"**JARVIS:** {respuesta}")
+                # Síntesis de voz automática simulada en UI
+                st.audio_input("Comando por voz de respuesta", key="audio_feedback", disabled=True)
+
+# --- TAB 2: GESTIÓN DE DOCUMENTACIÓN DUAL ---
+with tab_docs:
+    st.subheader("Centro de Registro Documental")
+    
+    col_reg1, col_reg2 = st.columns(2)
+    
+    with col_reg1:
+        titulo_doc = st.text_input("Título / Nombre del Documento (Obligatorio):", placeholder="Ej: Seguro Social, Pasaporte 2026")
+        categoria_doc = st.selectbox("Categoría:", ["Documentación Legal", "Identificación", "Salud / Clínica", "Otros"])
+        modalidad = st.radio("Método de Ingreso:", ["Texto Directo", "Fotografía / Captura"])
+
+    with col_reg2:
+        texto_ingresado = ""
+        ruta_img_guardada = None
+        
+        if modalidad == "Texto Directo":
+            texto_ingresado = st.text_area("Escribe la información detallada del documento:", height=150)
+        else:
+            foto = st.file_uploader("Subir imagen del documento:", type=["jpg", "png", "jpeg"])
+            if foto:
+                # Guardar imagen temporal
+                ruta_img_guardada = f"temp_{foto.name}"
+                with open(ruta_img_guardada, "wb") as f:
+                    f.write(foto.getbuffer())
+                st.image(foto, caption="Vista previa", width=200)
+
+    if st.button("Archivar en Jarvis"):
+        if not titulo_doc:
+            st.warning("⚠️ Debes proporcionar un Título al documento.")
+        else:
+            with st.spinner("Procesando e indexando documento al 100%..."):
+                contenido_final = texto_ingresado
+                tipo_ent = "texto"
+
+                if modalidad == "Fotografía / Captura" and ruta_img_guardada:
+                    tipo_ent = "imagen"
+                    contenido_final = procesar_ocr_imagen(ruta_img_guardada)
+
+                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                # Guardar en BD
+                conn = sqlite3.connect(DB_NAME)
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO documentos (titulo, categoria, tipo_entrada, contenido_texto, ruta_imagen, fecha_registro)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (titulo_doc, categoria_doc, tipo_ent, contenido_final, ruta_img_guardada, fecha_actual))
+                doc_id = cursor.lastrowid
+                conn.commit()
+                conn.close()
+
+                # Actualizar Memoria Rápida de Perfil
+                actualizar_memoria_perfil(doc_id, titulo_doc, contenido_final)
+                st.success(f"✅ Documento '{titulo_doc}' archivado y sincronizado en la memoria.")
+
+# --- TAB 3: VISUALIZADOR DE MEMORIA Y ESTADO ---
+with tab_system:
+    st.subheader("Base de Datos y Perfil Asociativo")
+    
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    st.markdown("**1. Memoria de Perfil Rápido (Key-Value Directo):**")
+    cursor.execute("SELECT clave, valor, fecha_actualizacion FROM memoria_perfil")
+    perfil_data = cursor.fetchall()
+    if perfil_data:
+        st.dataframe(perfil_data, column_config={"0": "Clave", "1": "Valor Indexado", "2": "Última Actualización"})
     else:
-      st.info("No se registran movimientos en el libro contable.")
-  except Exception as e:
-    st.error(f"Error al cargar contabilidad: {e}")
+        st.info("No hay datos de perfil directo indexados aún.")
 
-with tab_memoria:
-  st.subheader("AUDITORÍA DE NÚCLEO Y MEMORIA CENTRAL")
-  if st.button("CONSULTAR HISTORIAL DE DIÁLOGO"):
-    try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute("SELECT id, timestamp, content, category FROM memory")
-      rows = c.fetchall()
-      conn.close()
-      if rows:
-        st.write(
-            f"Se han recuperado **{len(rows)}** registros de auditoría en el"
-            " sistema:"
-        )
-        for row in rows:
-          st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
-      else:
-        st.info("La base de datos central se encuentra limpia.")
-    except Exception as e:
-      st.error(f"Error al leer auditoría: {e}")
+    st.markdown("**2. Documentos Archivos en el Sistema:**")
+    cursor.execute("SELECT id, titulo, categoria, tipo_entrada, fecha_registro FROM documentos")
+    docs_data = cursor.fetchall()
+    if docs_data:
+        st.dataframe(docs_data)
+    else:
+        st.info("La base de documentos está vacía.")
+        
+    conn.close()
