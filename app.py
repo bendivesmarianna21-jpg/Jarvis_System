@@ -6,7 +6,7 @@ import streamlit as st
 
 # Configuración de la interfaz para tablet
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // CORE ASSISTANT", page_icon=None, layout="wide"
+    page_title="J.A.R.V.I.S. // CORE", page_icon=None, layout="wide"
 )
 
 # Estilo visual HUD profesional (Oscuro, neón cian, tipografía técnica)
@@ -90,18 +90,36 @@ def get_live_temperature():
     return "21.5°C"
 
 
-# Fecha y hora actual en Berlín
-now = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
-current_date = now.strftime("%A, %d %B %Y").upper()
-current_time = now.strftime("%H:%M:%S")
 live_temp = get_live_temperature()
 
-# Cabecera
+# Cabecera con Reloj en Vivo (JavaScript actualizándose segundo a segundo)
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
-st.markdown(
-    f"<p style='color: #0088cc; font-size: 12px; letter-spacing: 1px;'>LOC: BERLIN | DATE: {current_date} | TIME: {current_time} | TEMP: {live_temp} | STATUS: ONLINE</p>",
-    unsafe_allow_html=True,
-)
+
+clock_html = f"""
+    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
+        LOC: BERLIN | DATE: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> | TIME: <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp} | STATUS: ONLINE
+    </div>
+    <script>
+        function updateClock() {{
+            const now = new Date();
+            // Ajustar a zona horaria de Berlin (UTC+2 / CEST)
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const berlinTime = new Date(utc + (3600000 * 2));
+            
+            const hours = String(berlinTime.getHours()).padStart(2, '0');
+            const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
+            const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
+            
+            const clockElement = document.getElementById('live-clock');
+            if (clockElement) {{
+                clockElement.innerText = hours + ':' + minutes + ':' + seconds;
+            }}
+        }}
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+"""
+st.components.v1.html(clock_html, height=30)
 st.markdown("---")
 
 # Columnas principales
@@ -197,7 +215,6 @@ st.markdown("---")
 st.subheader("PROTOCOLOS ACTIVOS // AGENDA CRÍTICA")
 
 if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True):
-  # Guardar los eventos en la base de datos de memoria de forma permanente
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
   c.execute(
@@ -221,7 +238,6 @@ if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True
   )
   st.warning(report_text)
 
-  # Síntesis de voz del informe completo
   voice_report = f"""
         <script>
             if ('speechSynthesis' in window) {{
