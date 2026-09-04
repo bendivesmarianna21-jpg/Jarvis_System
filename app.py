@@ -129,7 +129,7 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Búsqueda selectiva y asociativa para evitar confusiones de documentos
+    # Búsqueda selectiva y asociativa para seguro social
     if any(
         w in q_lower
         for w in [
@@ -150,7 +150,6 @@ class JarvisMind:
             ("%seguro%", "%seguro%", "%seguro%"),
         )
         records = c.fetchall()
-        # Si no hay match estricto, buscamos en el repositorio general de documentos
         if not records:
           c.execute(
               "SELECT title, category, content FROM documents_store WHERE"
@@ -174,11 +173,12 @@ class JarvisMind:
           return (
               "No he encontrado un registro específico de seguro social en la"
               " base de datos actual. Asegúrate de haberlo archivado o"
-              " escaneado en la sección correspondiente."
+              " escaneado."
           )
       except Exception as e:
         return f"Error al consultar registros de seguro: {e}"
 
+    # Búsqueda selectiva para pasaporte, visa o contratos legales
     elif any(
         w in q_lower
         for w in [
@@ -196,7 +196,6 @@ class JarvisMind:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        # Filtrado inteligente según la palabra clave exacta en la consulta
         search_term = "%pasaporte%" if "pasaporte" in q_lower else "%"
         if "visa" in q_lower:
           search_term = "%visa%"
@@ -223,7 +222,6 @@ class JarvisMind:
             )
           return res_text
         else:
-          # Búsqueda general si el filtro estricto no arrojó resultados
           conn = sqlite3.connect(DB_NAME)
           c = conn.cursor()
           c.execute("SELECT title, category, expiry, content FROM legal_records")
@@ -248,8 +246,7 @@ class JarvisMind:
 
     elif any(
         w in q_lower
-        for w:
-        in [
+        for w in [
             "quien te creo",
             "quien te hizo",
             "quien te diseño",
@@ -294,7 +291,6 @@ class JarvisMind:
       )
 
     else:
-      # Búsqueda asociativa general en documentos y memoria ante cualquier otra consulta
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
@@ -486,7 +482,6 @@ with tab_consola:
 with tab_docs:
   st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS (FOTO O ESCRITO)")
 
-  # Campos para asignar título personalizado y seleccionar categoría o método de ingreso
   doc_title_input = st.text_input(
       "Título o Nombre del Documento:",
       placeholder="Ej: Seguro Social, Contrato de Trabajo, Nota médica...",
