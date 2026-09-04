@@ -6,7 +6,9 @@ import streamlit as st
 
 # Configuración de la interfaz para tablet (Ancho completo HUD)
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // CORE TELEMETRY", page_icon=None, layout="wide"
+    page_title="J.A.R.V.I.S. // GLOBAL UNIVERSE CORE",
+    page_icon=None,
+    layout="wide",
 )
 
 # Estilo visual técnico avanzado
@@ -85,16 +87,51 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Base de datos global del universo con inicialización de conocimiento general
+DB_NAME = "jarvis_universe_core.db"
 
-# Base de datos local con reseteo de seguridad para evitar conflictos de esquema
+
 def init_db():
-  conn = sqlite3.connect("jarvis_memory.db")
+  conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " content TEXT, category TEXT)"
   )
-  conn.commit()
+
+  # Ingesta inicial de datos universales y del mundo si la tabla está vacía
+  c.execute("SELECT COUNT(*) FROM memory")
+  if c.fetchone()[0] == 0:
+    base_knowledge = [
+        (
+            "Cosmología: El universo observable tiene un diámetro de"
+            " aproximadamente 93 mil millones de años luz, conteniendo miles de"
+            " millones de galaxias.",
+            "Universo",
+        ),
+        (
+            "Geopolítica y Planeta Tierra: El planeta Tierra cuenta con 5"
+            " océanos principales y 7 continentes, albergando una red global de"
+            " información interconectada.",
+            "Mundo",
+        ),
+        (
+            "Ciencia y Biología: La estructura del ADN humano contiene las"
+            " instrucciones genéticas usadas en el desarrollo y funcionamiento de"
+            " todos los organismos vivos.",
+            "Ciencia",
+        ),
+        (
+            "Historia Global: La civilización humana ha evolucionado desde"
+            " asentamientos agrícolas primitivos hasta una era digital y"
+            " espacial avanzada.",
+            "Historia",
+        ),
+    ]
+    c.executemany(
+        "INSERT INTO memory (content, category) VALUES (?, ?)", base_knowledge
+    )
+    conn.commit()
   conn.close()
 
 
@@ -116,11 +153,11 @@ def get_live_temperature():
 live_temp = get_live_temperature()
 
 # Cabecera con Reloj en Vivo exacto y diseño técnico
-st.title("J.A.R.V.I.S. // CENTRAL COMMAND & TELEMETRY")
+st.title("J.A.R.V.I.S. // GLOBAL UNIVERSE CORE")
 
 clock_html = f"""
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | SYSTEM STATUS: SECURE & STABLE
+        LOC: BERLIN | TIMESTAMP: <span id="live-date">FRIDAY, 04 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | AMBIENT TEMP: {live_temp} | KNOWLEDGE BASE: GLOBAL ACTIVE
     </div>
     <script>
         function updateClock() {{
@@ -159,7 +196,7 @@ with col_telemetry:
             <b>ESTADO DE NÚCLEOS:</b><br>
             - CPU Core Alpha: 14.2% [NOMINAL]<br>
             - CPU Core Beta: 18.7% [NOMINAL]<br>
-            - SQLite Engine: CONECTADO<br>
+            - Base de Datos Universal: ACTIVA<br>
             - Módulo Multilingüe: ACTIVO<br>
             - Latencia de Enlace: 12ms<br><br>
             <b>CRONOGRAMA (LUNES):</b><br>
@@ -168,7 +205,7 @@ with col_telemetry:
             <b>LOG DE ERRORES:</b><br>
             [00] Excepciones críticas: 0<br>
             [01] Pérdidas de paquetes: 0.0%<br>
-            [OK] Integridad de base de datos íntegra.
+            [OK] Integridad del universo conectada.
         </div>
     """,
       unsafe_allow_html=True,
@@ -176,12 +213,12 @@ with col_telemetry:
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-    st.success("Diagnóstico completado: Cero anomalías en el sistema.")
+    st.success("Diagnóstico completado: Base de datos global en línea.")
 
 with col_main:
-  st.subheader("INGESTA DE DOCUMENTOS FUENTE")
+  st.subheader("INGESTA DE CONOCIMIENTO GLOBAL")
   uploaded_file = st.file_uploader(
-      "Cargar archivo para análisis (TXT, PY, MD, CSV):",
+      "Cargar archivo de información (TXT, PY, MD, CSV):",
       type=["txt", "py", "md", "csv"],
       label_visibility="collapsed",
   )
@@ -191,30 +228,31 @@ with col_main:
     file_name = uploaded_file.name
 
     try:
-      conn = sqlite3.connect("jarvis_memory.db")
+      conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
       c.execute(
           "INSERT INTO memory (content, category) VALUES (?, ?)",
           (
-              f"[DOCUMENTO ASIMILADO: {file_name}] \n{file_content[:600]}...",
-              "Documento",
+              f"[CONOCIMIENTO GLOBAL ASIMILADO: {file_name}]"
+              f" \n{file_content[:600]}...",
+              "Base Global",
           ),
       )
       conn.commit()
       conn.close()
       st.success(
-          f"Archivo '{file_name}' procesado e integrado exitosamente al núcleo"
-          " de memoria."
+          f"Archivo '{file_name}' asimilado exitosamente en la base de datos"
+          " universal."
       )
     except Exception as e:
       st.error(f"Error de base de datos: {e}")
 
   st.markdown("---")
-  st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
+  st.subheader("CONSOLA DE COMANDOS Y CONSULTA UNIVERSAL")
   user_input = st.text_area(
-      "Introducir directiva o consulta en cualquier idioma:",
+      "Introducir consulta, directiva o tema general:",
       placeholder=(
-          "Ej: Translate this text, Analizar parámetros, Sprich Deutsch..."
+          "Ej: Explicar física cuántica, translate text, consultar historia..."
       ),
       label_visibility="collapsed",
   )
@@ -225,16 +263,15 @@ with col_main:
     if st.button("EJECUTAR PROTOCOLO", use_container_width=True):
       if user_input:
         try:
-          conn = sqlite3.connect("jarvis_memory.db")
+          conn = sqlite3.connect(DB_NAME)
           c = conn.cursor()
-          # Forzar creación si por alguna razón no existe
           c.execute(
               "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY"
               " AUTOINCREMENT, content TEXT, category TEXT)"
           )
           c.execute(
               "INSERT INTO memory (content, category) VALUES (?, ?)",
-              (user_input, "Comando Multilingüe"),
+              (user_input, "Consulta Universal"),
           )
           conn.commit()
           c.execute("SELECT COUNT(*) FROM memory")
@@ -246,16 +283,16 @@ with col_main:
               word in lower_input
               for word in ["translate", "english", "hello", "what"]
           ):
-            reply = f"Protocol executed successfully. Directive logged in sector #{total_records}. Multilingual analysis completed."
+            reply = f"Global protocol executed successfully. Data logged in sector #{total_records}. Universal database updated."
             lang_code = "en-US"
           elif any(
               word in lower_input
               for word in ["deutsch", "sprechen", "prüfung", "guten"]
           ):
-            reply = f"Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert. Analyse abgeschlossen."
+            reply = f"Universelles Protokoll erfolgreich ausgeführt. Datensatz in Sektor #{total_records} gespeichert."
             lang_code = "de-DE"
           else:
-            reply = f"Protocolo ejecutado con éxito. Registro asignado al sector #{total_records}. Análisis multilingüe completado."
+            reply = f"Protocolo universal ejecutado con éxito. Registro asignado al sector #{total_records}. Base de conocimiento actualizada."
             lang_code = "es-ES"
 
           st.success(reply)
@@ -279,8 +316,8 @@ with col_main:
   with col_btn2:
     if st.button("DIAGNÓSTICO DE RED", use_container_width=True):
       status_text = (
-          "Enlace de red verificado. Conexión estable con los servidores"
-          " remotos."
+          "Enlace de red global verificado. Conexión estable con la red"
+          " universal."
       )
       st.info(status_text)
       audio_script = f"""
@@ -301,7 +338,7 @@ st.subheader("PROTOCOLOS ACTIVOS // AGENDA CRÍTICA")
 
 if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True):
   try:
-    conn = sqlite3.connect("jarvis_memory.db")
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute(
         "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -342,13 +379,13 @@ if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True
   except Exception as e:
     st.error(f"Error crítico en base de datos: {e}")
 
-# Sección Inferior: Base de Datos y Registros Históricos
+# Sección Inferior: Base de Datos y Registros Históricos con Conocimiento Global
 st.markdown("---")
-st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
+st.subheader("REGISTROS DE MEMORIA Y BASE DE CONOCIMIENTO GLOBAL")
 
 if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
   try:
-    conn = sqlite3.connect("jarvis_memory.db")
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute(
         "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -360,11 +397,12 @@ if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
 
     if rows:
       st.write(
-          f"Se han recuperado **{len(rows)}** registros activos en el sistema:"
+          f"Se han recuperado **{len(rows)}** registros activos de"
+          " conocimiento global y personal:"
       )
       for row in rows:
         st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
     else:
-      st.info("La base de datos central se encuentra limpia.")
+      st.info("La base de datos global se encuentra limpia.")
   except Exception as e:
     st.error(f"Error al leer la base de datos: {e}")
