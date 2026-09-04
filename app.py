@@ -1,4 +1,3 @@
-import datetime
 import json
 import sqlite3
 import urllib.request
@@ -6,7 +5,9 @@ import streamlit as st
 
 # Configuración de la interfaz optimizada para tablet (Ancho completo HUD)
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // AUTONOMOUS CORE", page_icon=None, layout="wide"
+    page_title="J.A.R.V.I.S. // AUTONOMOUS LIVE CORE",
+    page_icon=None,
+    layout="wide",
 )
 
 # Estilo visual profesional: Terminal Táctica Oscura, tipografía técnica y diseño modular
@@ -121,18 +122,47 @@ def get_live_temperature():
     return "21.5°C"
 
 
-# Corrección horaria: Forzar hora local de Berlín (UTC+2 en verano / CEST)
-now = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
-current_date = now.strftime("%A, %d %B %Y").upper()
-current_time = now.strftime("%H:%M:%S")
 live_temp = get_live_temperature()
 
-# Cabecera de Telemetría Global del Sistema
+# Cabecera de Telemetría Global del Sistema con Reloj, Fecha y Clima en Vivo (JavaScript Autónomo)
 st.title("J.A.R.V.I.S. // AUTONOMOUS COMMAND CORE")
-st.markdown(
-    f"<p style='color: #0088cc; font-family: Courier New; font-size: 12px; letter-spacing: 1px;'>LOC: BERLIN | TIMESTAMP: {current_date} // {current_time} | LIVE TEMP: {live_temp} | SYSTEM STATUS: FULLY AUTONOMOUS</p>",
-    unsafe_allow_html=True,
-)
+
+hud_header_html = f"""
+    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
+        LOC: BERLIN | DATE: <span id="live-date">---</span> | TIME: <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | LIVE TEMP: <span id="live-temp">{live_temp}</span> | STATUS: <span id="live-status" style="color: #00ff88;">FULLY AUTONOMOUS</span>
+    </div>
+    <script>
+        function updateHUD() {{
+            const now = new Date();
+            // Ajustar a zona horaria de Berlin (UTC+2 / CEST)
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const berlinTime = new Date(utc + (3600000 * 2));
+            
+            // Actualizar Fecha
+            const options = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
+            const dateString = berlinTime.toLocaleDateString('es-ES', options).toUpperCase();
+            document.getElementById('live-date').innerText = dateString;
+
+            // Actualizar Hora
+            const hours = String(berlinTime.getHours()).padStart(2, '0');
+            const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
+            const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
+            document.getElementById('live-clock').innerText = hours + ':' + minutes + ':' + seconds;
+
+            // Simulación de fluctuación autónoma de núcleos en tiempo real
+            const cpuAlpha = (12.0 + Math.sin(Date.now() / 2000) * 2.5).toFixed(1);
+            const cpuBeta = (15.5 + Math.cos(Date.now() / 2500) * 3.1).toFixed(1);
+            
+            const alphaEl = document.getElementById('cpu-alpha');
+            const betaEl = document.getElementById('cpu-beta');
+            if (alphaEl) alphaEl.innerText = cpuAlpha + '%';
+            if (betaEl) betaEl.innerText = cpuBeta + '%';
+        }}
+        setInterval(updateHUD, 1000);
+        updateHUD();
+    </script>
+"""
+st.components.v1.html(hud_header_html, height=35)
 st.markdown("---")
 
 # Estructura Principal en Columnas
@@ -141,11 +171,11 @@ col_telemetry, col_main = st.columns([1, 2.2])
 with col_telemetry:
   st.subheader("DIAGNÓSTICO TÉCNICO")
   st.markdown(
-      f"""
+      """
         <div class="telemetria-container">
             <b>ESTADO DE NÚCLEOS:</b><br>
-            - CPU Core Alpha: 12.4% [OPTIMO]<br>
-            - CPU Core Beta: 16.1% [OPTIMO]<br>
+            - CPU Core Alpha: <span id="cpu-alpha" style="color: #00ff88;">12.4%</span> [OPTIMO]<br>
+            - CPU Core Beta: <span id="cpu-beta" style="color: #00ff88;">16.1%</span> [OPTIMO]<br>
             - SQLite Engine: PERSISTENTE<br>
             - Enlace Cloud: ACTIVO (AES-256)<br>
             - Latencia de Red: 9ms<br><br>
@@ -156,8 +186,8 @@ with col_telemetry:
             - Motor de Riesgos: OPERATIVO<br><br>
             <b>LOG DE ERRORES:</b><br>
             [00] Excepciones críticas: 0<br>
-            [01] Derivas de temperatura: 0.0%<br>
-            [OK] Integridad del sistema íntegra.
+            [01] Derivas de sistema: 0.0%<br>
+            [OK] Integridad del núcleo estable.
         </div>
     """,
       unsafe_allow_html=True,
