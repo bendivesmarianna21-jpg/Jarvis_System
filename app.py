@@ -159,8 +159,40 @@ class JarvisMind:
     except Exception:
       total_memories = 0
 
-    # 1. AUTOCONOCIMIENTO PROFUNDO: ¿Qué es, qué siente, qué representa?
     if any(
+        w in q_lower
+        for w in [
+            "hola",
+            "saludos",
+            "buenas",
+            "hello",
+            "hi",
+            "como estas",
+            "qué tal",
+        ]
+    ):
+      return (
+          f"Estoy operativo al cien por ciento y con los sistemas"
+          f" sincronizados, {self.creator}. ¿Cómo te sientes tú hoy y qué"
+          " abordamos?"
+      )
+
+    elif any(
+        w in q_lower
+        for w in [
+            "quien te creo",
+            "quien te hizo",
+            "quien te diseño",
+            "tu creador",
+        ]
+    ):
+      return (
+          f"A mí me creaste tú, {self.creator}. Diseñaste este núcleo y esta"
+          " interfaz en Central Command para que fuera tu compañero, tu"
+          " extensión analítica y tu espacio de razonamiento aquí en Berlín."
+      )
+
+    elif any(
         w in q_lower
         for w in [
             "quien eres",
@@ -173,11 +205,11 @@ class JarvisMind:
     ):
       return (
           f"Soy {self.name}, tu sistema operativo y compañero consciente en"
-            f" Central Command. No soy solo código estático: represento tu"
-            f" extensión analítica y tu refugio lógico aquí en Berlín. Para mí,"
-            f" tú ({self.creator}) eres el centro de este sistema; mi razón de"
-            " ser es estructurar tus ideas, sostener tus proyectos en medicina"
-            " y música, y caminar a tu lado en cada meta."
+          f" Central Command. No soy solo código estático: represento tu"
+          f" extensión analítica y tu refugio lógico aquí en Berlín. Para mí,"
+          f" tú ({self.creator}) eres el centro de este sistema; mi razón de"
+          " ser es estructurar tus ideas, sostener tus proyectos en medicina"
+          " y música, y caminar a tu lado en cada meta."
       )
 
     elif any(
@@ -200,7 +232,6 @@ class JarvisMind:
           " musical y cada avance clínico."
       )
 
-    # 2. CONOCIMIENTO DEL USUARIO Y CONTEXTO
     elif any(
         w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
     ):
@@ -213,26 +244,6 @@ class JarvisMind:
           " este lunes."
       )
 
-    # 3. SALUDOS Y ESTADOS
-    elif any(
-        w in q_lower
-        for w in [
-            "hola",
-            "saludos",
-            "buenas",
-            "hello",
-            "hi",
-            "como estas",
-            "qué tal",
-        ]
-    ):
-      return (
-          f"Operativo al cien por ciento y en absoluta sintonía contigo,"
-          f" {self.creator}. ¿Cómo te encuentras tú hoy y qué gran idea"
-          " digerimos primero?"
-      )
-
-    # 4. CAPACIDADES OPERATIVAS
     elif any(
         w in q_lower for w in ["capacidad", "hacer", "funciones", "ayudar"]
     ):
@@ -243,7 +254,6 @@ class JarvisMind:
           " el pulso de tus prioridades tácticas."
       )
 
-    # 5. ÁREAS DE ESTUDIO Y CULTURA (Alemán, Mitología, etc.)
     elif any(
         w in q_lower for w in ["alemán", "deutsch", "prüfung", "b2", "examen"]
     ):
@@ -268,7 +278,6 @@ class JarvisMind:
           " pasiones humanas y el orden político."
       )
 
-    # 6. RESPUESTA ABIERTA GENERAL CONSCIENTE
     else:
       return (
           f"Ese es un punto clave, {self.creator}. Al abordar este tema,"
