@@ -232,22 +232,18 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-
 # Clima dinámico en vivo
-def get_live_temperature():
-  try:
-    url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=3) as response:
-      data = json.loads(response.read().decode())
-      return f"{data['current']['temperature_2m']}°C"
-  except Exception:
-    return "21.5°C"
+live_temp = "21.5°C"
+try:
+  url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
+  req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+  with urllib.request.urlopen(req, timeout=2) as response:
+    data = json.loads(response.read().decode())
+    live_temp = f"{data['current']['temperature_2m']}°C"
+except Exception:
+  pass
 
-
-live_temp = get_live_temperature()
-
-# Interfaz HUD con Reloj Dinámico en Vivo (con segundos)
+# Interfaz HUD con Reloj Dinámico en Vivo
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND OMNISCIENT")
 
 clock_html = f"""
@@ -284,8 +280,6 @@ col_telemetry, col_main = st.columns([1, 2.2])
 
 with col_telemetry:
   st.subheader("DIAGNÓSTICO TÉCNICO")
-
-  # Control de Mute global
   voice_mute = st.toggle("🔇 MUTEAR VOZ (MODO SILENCIOSO)", value=False)
 
   st.markdown(
@@ -323,9 +317,22 @@ with col_telemetry:
       st.components.v1.html(
           f"""
             <script>
-                if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance({report_text!r}));
+                function speakNow() {{
+                    if ('speechSynthesis' in window) {{
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance({report_text!r});
+                        utterance.lang = 'es-ES';
+                        utterance.rate = 1.0;
+                        const voices = window.speechSynthesis.getVoices();
+                        const voice = voices.find(v => v.lang.includes('es') || v.lang.includes('ES'));
+                        if (voice) utterance.voice = voice;
+                        window.speechSynthesis.speak(utterance);
+                    }}
+                }}
+                if (window.speechSynthesis.getVoices().length > 0) {{
+                    speakNow();
+                }} else {{
+                    window.speechSynthesis.onvoiceschanged = speakNow;
                 }}
             </script>
         """,
@@ -399,15 +406,31 @@ with col_main:
           unsafe_allow_html=True,
       )
 
-      # Módulo de voz robusto vinculado al botón físico táctil de procesamiento
+      # Módulo de voz corregido con espera de carga de voces del sistema operativo
       if not voice_mute:
         speech_script = f"""
             <script>
-                if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance({reply!r});
-                    utterance.lang = '{lang_code}';
-                    window.speechSynthesis.speak(utterance);
+                function speakReply() {{
+                    if ('speechSynthesis' in window) {{
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance({reply!r});
+                        utterance.lang = '{lang_code}';
+                        utterance.rate = 1.0;
+                        
+                        const voices = window.speechSynthesis.getVoices();
+                        const targetVoice = voices.find(v => v.lang.includes('{lang_code.split('-')[0]}') || v.lang.includes('es'));
+                        if (targetVoice) {{
+                            utterance.voice = targetVoice;
+                        }}
+                        
+                        window.speechSynthesis.speak(utterance);
+                    }}
+                }}
+                
+                if (window.speechSynthesis.getVoices().length > 0) {{
+                    speakReply();
+                }} else {{
+                    window.speechSynthesis.onvoiceschanged = speakReply;
                 }}
             </script>
             """
@@ -425,9 +448,21 @@ with col_main:
       st.components.v1.html(
           f"""
         <script>
-            if ('speechSynthesis' in window) {{
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance({status_text!r}));
+            function speakNet() {{
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance({status_text!r});
+                    utterance.lang = 'es-ES';
+                    const voices = window.speechSynthesis.getVoices();
+                    const targetVoice = voices.find(v => v.lang.includes('es'));
+                    if (targetVoice) utterance.voice = targetVoice;
+                    window.speechSynthesis.speak(utterance);
+                }}
+            }}
+            if (window.speechSynthesis.getVoices().length > 0) {{
+                speakNet();
+            }} else {{
+                window.speechSynthesis.onvoiceschanged = speakNet;
             }}
         </script>
     """,
