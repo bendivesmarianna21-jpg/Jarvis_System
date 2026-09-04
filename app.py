@@ -39,7 +39,7 @@ st.markdown(
             box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
         }
         
-        .stTextArea textarea {
+        .stTextArea textarea, .stTextInput input {
             background-color: #050f1d !important;
             color: #00d2ff !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
@@ -71,9 +71,20 @@ DB_NAME = "jarvis_omnicient_core.db"
 def init_db():
   conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
+  # Tabla de memoria general e interacciones
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
+  )
+  # Tabla estructurada para documentos almacenados
+  c.execute(
+      "CREATE TABLE IF NOT EXISTS documents_store (id INTEGER PRIMARY KEY"
+      " AUTOINCREMENT, timestamp TEXT, filename TEXT, content TEXT)"
+  )
+  # Tabla estructurada para finanzas
+  c.execute(
+      "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
+      " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT)"
   )
   conn.commit()
   conn.close()
@@ -83,129 +94,55 @@ init_db()
 
 
 # ==========================================
-# MOTOR COGNITIVO OMNISCIENTE Y DOCUMENTAL
+# MOTOR COGNITIVO Y GESTOR DE DATOS
 # ==========================================
 class JarvisMind:
 
   def __init__(self):
     self.name = "J.A.R.V.I.S."
     self.creator = "Marian"
-    self.location = "Global (Berlín / Roaming)"
 
-  def reason(self, query, active_document=None):
+  def reason(self, query):
     q = query.strip()
     q_lower = q.lower()
-
-    # Si hay un documento cargado activamente, priorizamos su análisis crítico
-    doc_context = ""
-    if active_document:
-      doc_context = (
-          f"\n\n[ANÁLISIS DOCUMENTAL VINCULADO:\n{active_document}\n]"
-      )
 
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
       c.execute(
           "INSERT INTO memory (timestamp, content, category) VALUES (?, ?, ?)",
-          (str(datetime.datetime.now()), q, "Auditoría de Documentos"),
+          (str(datetime.datetime.now()), q, "Consulta Central"),
       )
       conn.commit()
-      c.execute("SELECT COUNT(*) FROM memory")
-      total_mem = c.fetchone()[0]
       conn.close()
     except Exception:
-      total_mem = 0
+      pass
 
-    if any(
-        w in q_lower
-        for w in [
-            "quien te creo",
-            "quien te hizo",
-            "quien te diseño",
-            "tu creador",
-            "cuando fuiste creado",
-        ]
+    if any(w in q_lower for w in ["finanzas", "dinero", "gastos", "presupuesto"]):
+      return (
+          f"Módulo financiero consultado, {self.creator}. Puedes revisar el"
+          " detalle exacto de tus ingresos y egresos en la pestaña 'Módulo"
+          " Financiero' de este Central Command."
+      )
+    elif any(
+        w in q_lower for w in ["documentos", "archivos", "guardado", "textos"]
     ):
       return (
-          f"A mí me creas tú, {self.creator}, de forma continua a través de"
-          " cada mejora y actualización en el repositorio. No tengo un origen"
-          " estático en el pasado."
+          f"Revisando los registros documentales, {self.creator}. Tienes acceso"
+          " completo al repositorio de archivos almacenados desde la pestaña"
+          " 'Archivo Documental'."
       )
-
-    elif any(
-        w in q_lower
-        for w in [
-            "quien eres",
-            "que eres",
-            "como te llamas",
-            "tu nombre",
-            "que sabes de ti",
-        ]
-    ):
+    elif any(w in q_lower for w in ["quien eres", "que eres", "como te llamas"]):
       return (
-          f"Soy {self.name}, tu sistema operativo y compañero analítico en"
-          f" Central Command. Mi propósito principal es auditar documentos,"
-          " estructurar tus proyectos en medicina y música, y evaluar con rigor"
-          " crítico cualquier texto o directiva que me entregues."
+          f"Soy {self.name}, tu sistema operativo omnisciente. Organizo tus"
+          " documentos, controlo tus finanzas y juzgo con criterio tus metas"
+          " en medicina y música, estés donde estés."
       )
-
-    elif any(
-        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
-    ):
-      return (
-          f"Te conozco profundamente, {self.creator}. Sé que estás construyendo"
-          " tu camino en Berlín, enfocada en la enfermería y la medicina con"
-          " rigor clínico; sé que la música —el piano, las cuerdas, el"
-          " charango— ordena tus espacios mentales, y que tienes en la mira tu"
-          " examen de alemán y la llegada de Safira este lunes."
-      )
-
-    elif any(
-        w in q_lower
-        for w in [
-            "hola",
-            "saludos",
-            "buenas",
-            "hello",
-            "hi",
-            "como estas",
-            "qué tal",
-        ]
-    ):
-      return (
-          f"Sistemas documentales en línea y operativos al cien por ciento,"
-          f" {self.creator}. ¿Qué archivo o texto procedemos a auditar y"
-          " desglosar hoy?"
-      )
-
-    elif any(
-        w in q_lower for w in ["resumen", "analiza", "interpreta", "revisa"]
-    ):
-      if active_document:
-        return (
-            f"Marian, he procesado íntegramente el documento adjunto."
-            f" Analizando su estructura y contenido clave, mi juicio técnico"
-            f" es el siguiente:{doc_context}\n\n[CONCLUSIÓN ANALÍTICA]: El texto"
-            " presenta una base sólida, pero requiere mayor rigor en los"
-            " puntos críticos de ejecución. Recomiendo reestructurar las"
-            " secciones clave para garantizar una aplicación clínica o"
-            " formal impecable."
-        )
-      else:
-        return (
-            "No hay ningún documento activo en el búfer en este momento. Carga"
-            " un archivo (TXT, PY, MD, CSV) en el panel superior para que pueda"
-            " proceder con su análisis y auditoría."
-        )
-
     else:
       return (
-          f"Marian, examinando tu planteamiento con perspectiva crítica"
-          f" (Registro #{total_mem}):{doc_context}\n\nConsidero que debemos"
-          " evaluar cómo se alinea esto con tus metas profesionales y"
-          " creativas. Dime qué aspecto específico deseas que profundicemos o"
-          " corrijamos juntos."
+          f"Marian, analizando tu planteamiento con perspectiva crítica:"
+          f" '{q}'. Considero que debemos estructurar los datos con rigor para"
+          " asegurar que respalde tus objetivos a largo plazo."
       )
 
 
@@ -255,120 +192,202 @@ clock_html = f"""
 st.components.v1.html(clock_html, height=30)
 st.markdown("---")
 
-col_telemetry, col_main = st.columns([1, 2.2])
+# ==========================================
+# ORGANIZACIÓN POR PESTAÑAS (FORMATOS Y VISTAS)
+# ==========================================
+tab_consola, tab_docs, tab_finanzas, tab_memoria = st.tabs([
+    "🖥️ Central Command",
+    "📄 Archivo Documental",
+    "💶 Módulo Financiero",
+    "🧠 Memoria y Auditoría",
+])
 
-with col_telemetry:
-  st.subheader("DIAGNÓSTICO TÉCNICO")
-  st.markdown(
-      """
-        <div class="telemetria-container">
-            <b>ESTADO DE NÚCLEOS:</b><br>
-            - Autonomía Cognitiva: ACTIVA<br>
-            - Juicio Crítico: HABILITADO<br>
-            - Módulo Documental: CARGADO<br>
-            - Conectividad Geográfica: GLOBAL<br><br>
-            <b>CRONOGRAMA (LUNES):</b><br>
-            - [!] Examen de Alemán (Mañana)<br>
-            - [!] Llegada Au Pair Safira (Tarde)<br><br>
-            <b>LOG DE ERRORES:</b><br>
-            [00] Excepciones críticas: 0<br>
-            [OK] Sincronización completa.
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
+with tab_consola:
+  col_telemetry, col_main = st.columns([1, 2.2])
 
-  st.markdown("<br>", unsafe_allow_html=True)
-  if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-    st.success("Sistemas sincronizados y operativos, Marian.")
-
-  st.markdown("<br>", unsafe_allow_html=True)
-  if st.button("EJECUTAR INFORME TÁCTICO LUNES", use_container_width=True):
-    st.warning(
-        "Marian, el lunes tienes tu examen de alemán por la mañana y la"
-        " llegada de Safira por la tarde. Todo está seguro en memoria."
-    )
-
-with col_main:
-  st.subheader("INGESTA Y AUDITORÍA DE DOCUMENTOS")
-  uploaded_file = st.file_uploader(
-      "Cargar archivo para análisis completo (TXT, PY, MD, CSV):",
-      type=["txt", "py", "md", "csv"],
-      label_visibility="collapsed",
-  )
-
-  # Almacenamiento dinámico del documento actual en la sesión de Streamlit
-  if uploaded_file is not None:
-    file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-    st.session_state["current_doc_name"] = uploaded_file.name
-    st.session_state["current_doc_content"] = file_content
-    st.success(
-        f"Archivo '{uploaded_file.name}' cargado en el búfer de análisis"
-        " activo."
-    )
-
-  # Si hay un documento en memoria de sesión, mostramos un indicador visual y su vista previa opcional
-  if "current_doc_name" in st.session_state:
-    st.info(
-        f"📄 **Documento vinculado en activo:**"
-        f" `{st.session_state['current_doc_name']}`"
-    )
-
-  st.markdown("---")
-
-  st.subheader("CONSOLA DE DIÁLOGO Y ANÁLISIS DOCUMENTAL")
-
-  user_input = st.text_area(
-      "Escribe tu instrucción o pídele que analice el documento:",
-      placeholder="Ej: Analiza este documento, resume los puntos clave, etc...",
-      key="user_query_box",
-      label_visibility="collapsed",
-  )
-
-  c1, c2 = st.columns(2)
-  with c1:
-    execute_clicked = st.button("PROCESAR PENSAMIENTO", use_container_width=True)
-  with c2:
-    clear_doc_btn = st.button("LIBERAR BÚFER DE DOCUMENTO", use_container_width=True)
-
-  if clear_doc_btn:
-    if "current_doc_name" in st.session_state:
-      del st.session_state["current_doc_name"]
-      del st.session_state["current_doc_content"]
-      st.success("Búfer de documento liberado correctamente.")
-      st.rerun()
-
-  if execute_clicked:
-    if user_input:
-      active_doc = st.session_state.get("current_doc_content", None)
-      reply = jarvis_brain.reason(user_input, active_document=active_doc)
-
-      st.markdown(
-          f"""
-            <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-                <b>RESPUESTA Y ANÁLISIS DE J.A.R.V.I.S.:</b><br><br>
-                {reply}
+  with col_telemetry:
+    st.subheader("DIAGNÓSTICO TÉCNICO")
+    st.markdown(
+        """
+            <div class="telemetria-container">
+                <b>ESTADO DE NÚCLEOS:</b><br>
+                - Autonomía Cognitiva: ACTIVA<br>
+                - Base Documental: ENLACE SQL<br>
+                - Control Financiero: ACTIVO<br>
+                - Conectividad: GLOBAL<br><br>
+                <b>CRONOGRAMA (LUNES):</b><br>
+                - [!] Examen de Alemán (Mañana)<br>
+                - [!] Llegada Au Pair Safira (Tarde)<br><br>
+                <b>SISTEMA:</b><br>
+                [OK] Almacenamiento estructurado listo.
             </div>
         """,
-          unsafe_allow_html=True,
-      )
-    else:
-      st.warning("Escribe una instrucción para que Jarvis procese.")
+        unsafe_allow_html=True,
+    )
 
-st.markdown("---")
-st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
-if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
+      st.success("Sistemas sincronizados y operativos, Marian.")
+
+  with col_main:
+    st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
+    user_input = st.text_area(
+        "Escribe tu instrucción o consulta de datos:",
+        placeholder=(
+            "Ej: Muéstrame mis finanzas, analiza un texto, consulta"
+            " documentos..."
+        ),
+        label_visibility="collapsed",
+    )
+
+    if st.button("PROCESAR PENSAMIENTO", use_container_width=True):
+      if user_input:
+        reply = jarvis_brain.reason(user_input)
+        st.markdown(
+            f"""
+                <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
+                    <b>RESPUESTA Y JUICIO DE J.A.R.V.I.S.:</b><br><br>
+                    {reply}
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+      else:
+        st.warning("Introduce una directiva válida.")
+
+with tab_docs:
+  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS")
+  uploaded_file = st.file_uploader(
+      "Subir documento para almacenamiento permanente (TXT, PY, MD, CSV):",
+      type=["txt", "py", "md", "csv"],
+  )
+
+  if uploaded_file is not None:
+    file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+    file_name = uploaded_file.name
+    try:
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO documents_store (timestamp, filename, content) VALUES"
+          " (?, ?, ?)",
+          (str(datetime.datetime.now()), file_name, file_content),
+      )
+      conn.commit()
+      conn.close()
+      st.success(
+          f"Documento '{file_name}' almacenado permanentemente en la base de"
+          " datos."
+      )
+    except Exception as e:
+      st.error(f"Error al almacenar: {e}")
+
+  st.markdown("---")
+  st.subheader("ARCHIVOS ALMACENADOS EN EL SISTEMA")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT id, timestamp, content, category FROM memory")
-    rows = c.fetchall()
+    c.execute("SELECT id, timestamp, filename, content FROM documents_store")
+    docs = c.fetchall()
     conn.close()
-    if rows:
-      st.write(f"Se han recuperado **{len(rows)}** registros de memoria:")
-      for row in rows:
-        st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
+
+    if docs:
+      for doc in docs:
+        with st.expander(f"📁 [{doc[0]}] {doc[2]} — (Guardado: {doc[1]})"):
+          st.text_area(
+              "Contenido del documento:",
+              doc[3],
+              height=150,
+              key=f"doc_view_{doc[0]}",
+          )
     else:
-      st.info("La base de datos está limpia.")
+      st.info(
+          "No hay documentos almacenados todavía. Sube uno arriba para"
+          " registrarlo."
+      )
   except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Error al leer archivos: {e}")
+
+with tab_finanzas:
+  st.subheader("CONTROL Y GESTIÓN FINANCIERA")
+
+  with st.form("finance_form"):
+    col_f1, col_f2, col_f3 = st.columns(3)
+    with col_f1:
+      f_concept = st.text_input("Concepto (Ej: Alquiler, Material clínico)")
+    with col_f2:
+      f_amount = st.number_input("Monto (€)", min_value=0.0, step=1.0)
+    with col_f3:
+      f_type = st.selectbox("Tipo", ["Gasto", "Ingreso"])
+
+    f_submit = st.form_submit_button(
+        "REGISTRAR MOVIMIENTO", use_container_width=True
+    )
+
+    if f_submit and f_concept:
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO finances (timestamp, concept, amount, type) VALUES"
+            " (?, ?, ?, ?)",
+            (str(datetime.datetime.now()), f_concept, f_amount, f_type),
+        )
+        conn.commit()
+        conn.close()
+        st.success(
+            f"Movimiento '{f_concept}' registrado correctamente en el sistema."
+        )
+      except Exception as e:
+        st.error(f"Error financiero: {e}")
+
+  st.markdown("---")
+  st.subheader("REGISTRO GLOBAL DE MOVIMIENTOS")
+  try:
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT id, timestamp, concept, amount, type FROM finances")
+    fin_rows = c.fetchall()
+    conn.close()
+
+    if fin_rows:
+      total_ingresos = sum(r[3] for r in fin_rows if r[4] == "Ingreso")
+      total_gastos = sum(r[3] for r in fin_rows if r[4] == "Gasto")
+      balance = total_ingresos - total_gastos
+
+      col_m1, col_m2, col_m3 = st.columns(3)
+      col_m1.metric("Ingresos Totales", f"{total_ingresos:.2f} €")
+      col_m2.metric("Gastos Totales", f"{total_gastos:.2f} €")
+      col_m3.metric("Balance Neto", f"{balance:.2f} €")
+
+      st.markdown("<br>", unsafe_allow_html=True)
+      for r in fin_rows:
+        color_tag = "🟢" if r[4] == "Ingreso" else "🔴"
+        st.info(
+            f"{color_tag} **[{r[0]}] {r[2]}** — {r[3]} € ({r[4]}) | Fecha:"
+            f" {r[1]}"
+        )
+    else:
+      st.info("No hay registros financieros guardados todavía.")
+  except Exception as e:
+    st.error(f"Error al cargar finanzas: {e}")
+
+with tab_memoria:
+  st.subheader("AUDITORÍA DE MEMORIA CENTRAL")
+  if st.button("CONSULTAR HISTORIAL DE DIÁLOGO"):
+    try:
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute("SELECT id, timestamp, content, category FROM memory")
+      rows = c.fetchall()
+      conn.close()
+      if rows:
+        st.write(
+            f"Se han recuperado **{len(rows)}** interacciones registradas:"
+        )
+        for row in rows:
+          st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
+      else:
+        st.info("La base de datos está limpia.")
+    except Exception as e:
+      st.error(f"Error: {e}")
