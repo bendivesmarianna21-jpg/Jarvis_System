@@ -403,7 +403,6 @@ with tab_legal:
 
   st.markdown("---")
 
-  # Campo de respaldo para introducir la API Key directamente si en secrets falla
   custom_api_key = st.text_input(
       "Gemini API Key (Opcional si ya está en Secrets):",
       type="password",
@@ -434,7 +433,6 @@ with tab_legal:
             "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
         ):
           try:
-            # Determinación prioritaria de la API Key (campo manual o secrets)
             api_key_to_use = custom_api_key.strip()
             if not api_key_to_use:
               try:
@@ -451,7 +449,7 @@ with tab_legal:
             else:
               client = genai.Client(api_key=api_key_to_use)
               response = client.models.generate_content(
-                  model="gemini-2.5-flash",
+                  model="gemini-3.6-flash",
                   contents=[
                       types.Part.from_bytes(
                           data=img_bytes, mime_type=legal_img.type
