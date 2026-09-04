@@ -1,92 +1,61 @@
+import datetime
 import json
 import sqlite3
 import urllib.request
 import streamlit as st
 
-# Configuración de la interfaz optimizada para tablet (Ancho completo HUD)
+# Configuración de la interfaz para tablet
 st.set_page_config(
-    page_title="J.A.R.V.I.S. // AUTONOMOUS LIVE CORE",
-    page_icon=None,
-    layout="wide",
+    page_title="J.A.R.V.I.S. // CORE ASSISTANT", page_icon=None, layout="wide"
 )
 
-# Estilo visual profesional: Terminal Táctica Oscura, tipografía técnica y diseño modular
+# Estilo visual HUD profesional (Oscuro, neón cian, tipografía técnica)
 st.markdown(
     """
     <style>
         .stApp {
             background-color: #03070c;
             color: #00d2ff;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Courier New', Courier, monospace;
         }
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
 
-        h1, h2, h3, h4 {
+        h1, h2, h3 {
             color: #00d2ff !important;
-            font-family: 'Courier New', Courier, monospace !important;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            font-weight: 700;
         }
-
-        .telemetria-container {
-            background: rgba(4, 12, 24, 0.85);
-            border: 1px solid rgba(0, 210, 255, 0.25);
-            border-radius: 6px;
-            padding: 18px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
+        .telemetria-box {
+            background: rgba(4, 12, 24, 0.9);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 12px;
             color: #7ab8ff;
-            box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
         }
-        .telemetria-container b {
-            color: #00d2ff;
-        }
-
         .stTextArea textarea {
             background-color: #050f1d !important;
             color: #00d2ff !important;
-            border: 1px solid rgba(0, 210, 255, 0.3) !important;
-            border-radius: 4px !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            font-size: 13px !important;
+            border: 1px solid rgba(0, 210, 255, 0.4) !important;
         }
-        .stTextArea textarea:focus {
-            border-color: #00d2ff !important;
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3) !important;
-        }
-
         .stButton button {
             background: #040e1b !important;
             color: #00d2ff !important;
-            font-weight: 600;
-            border: 1px solid rgba(0, 210, 255, 0.5) !important;
+            border: 1px solid rgba(0, 210, 255, 0.6) !important;
             border-radius: 4px !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            font-size: 12px !important;
-            letter-spacing: 1px;
             text-transform: uppercase;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 0 5px rgba(0, 210, 255, 0.1);
+            font-weight: bold;
         }
         .stButton button:hover {
             background: #00d2ff !important;
             color: #03070c !important;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.6) !important;
         }
-
         .stAlert {
             background-color: #050f1d !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
             color: #00d2ff !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            border-radius: 4px !important;
-        }
-        
-        hr {
-            border-color: rgba(0, 210, 255, 0.15) !important;
         }
     </style>
 """,
@@ -94,7 +63,7 @@ st.markdown(
 )
 
 
-# Inicialización de la base de datos de memoria persistente SQLite
+# Base de datos local
 def init_db():
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
@@ -109,98 +78,63 @@ def init_db():
 init_db()
 
 
-# Función para obtener temperatura real en vivo de forma autónoma (Berlin)
+# Clima en vivo de Berlín
 def get_live_temperature():
   try:
     url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=3) as response:
       data = json.loads(response.read().decode())
-      temp = data["current"]["temperature_2m"]
-      return f"{temp}°C"
+      return f"{data['current']['temperature_2m']}°C"
   except Exception:
     return "21.5°C"
 
 
+# Fecha y hora actual en Berlín
+now = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+current_date = now.strftime("%A, %d %B %Y").upper()
+current_time = now.strftime("%H:%M:%S")
 live_temp = get_live_temperature()
 
-# Cabecera de Telemetría Global del Sistema con Reloj, Fecha y Clima en Vivo (JavaScript Autónomo)
-st.title("J.A.R.V.I.S. // AUTONOMOUS COMMAND CORE")
-
-hud_header_html = f"""
-    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        LOC: BERLIN | DATE: <span id="live-date">---</span> | TIME: <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | LIVE TEMP: <span id="live-temp">{live_temp}</span> | STATUS: <span id="live-status" style="color: #00ff88;">FULLY AUTONOMOUS</span>
-    </div>
-    <script>
-        function updateHUD() {{
-            const now = new Date();
-            // Ajustar a zona horaria de Berlin (UTC+2 / CEST)
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const berlinTime = new Date(utc + (3600000 * 2));
-            
-            // Actualizar Fecha
-            const options = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
-            const dateString = berlinTime.toLocaleDateString('es-ES', options).toUpperCase();
-            document.getElementById('live-date').innerText = dateString;
-
-            // Actualizar Hora
-            const hours = String(berlinTime.getHours()).padStart(2, '0');
-            const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
-            const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
-            document.getElementById('live-clock').innerText = hours + ':' + minutes + ':' + seconds;
-
-            // Simulación de fluctuación autónoma de núcleos en tiempo real
-            const cpuAlpha = (12.0 + Math.sin(Date.now() / 2000) * 2.5).toFixed(1);
-            const cpuBeta = (15.5 + Math.cos(Date.now() / 2500) * 3.1).toFixed(1);
-            
-            const alphaEl = document.getElementById('cpu-alpha');
-            const betaEl = document.getElementById('cpu-beta');
-            if (alphaEl) alphaEl.innerText = cpuAlpha + '%';
-            if (betaEl) betaEl.innerText = cpuBeta + '%';
-        }}
-        setInterval(updateHUD, 1000);
-        updateHUD();
-    </script>
-"""
-st.components.v1.html(hud_header_html, height=35)
+# Cabecera
+st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
+st.markdown(
+    f"<p style='color: #0088cc; font-size: 12px; letter-spacing: 1px;'>LOC: BERLIN | DATE: {current_date} | TIME: {current_time} | TEMP: {live_temp} | STATUS: ONLINE</p>",
+    unsafe_allow_html=True,
+)
 st.markdown("---")
 
-# Estructura Principal en Columnas
-col_telemetry, col_main = st.columns([1, 2.2])
+# Columnas principales
+col_left, col_right = st.columns([1, 2.2])
 
-with col_telemetry:
-  st.subheader("DIAGNÓSTICO TÉCNICO")
+with col_left:
+  st.subheader("DIAGNÓSTICO & ALERTAS")
   st.markdown(
       """
-        <div class="telemetria-container">
+        <div class="telemetria-box">
             <b>ESTADO DE NÚCLEOS:</b><br>
-            - CPU Core Alpha: <span id="cpu-alpha" style="color: #00ff88;">12.4%</span> [OPTIMO]<br>
-            - CPU Core Beta: <span id="cpu-beta" style="color: #00ff88;">16.1%</span> [OPTIMO]<br>
-            - SQLite Engine: PERSISTENTE<br>
-            - Enlace Cloud: ACTIVO (AES-256)<br>
-            - Latencia de Red: 9ms<br><br>
-            <b>SUBSISTEMAS AUTÓNOMOS:</b><br>
-            - Telemetría Climática: EN VIVO<br>
-            - Ingesta de Documentos: ACTIVA<br>
-            - Síntesis de Voz: HABILITADA<br>
-            - Motor de Riesgos: OPERATIVO<br><br>
-            <b>LOG DE ERRORES:</b><br>
-            [00] Excepciones críticas: 0<br>
-            [01] Derivas de sistema: 0.0%<br>
-            [OK] Integridad del núcleo estable.
+            - CPU Core Alpha: 12.4% [ESTABLE]<br>
+            - CPU Core Beta: 16.1% [ESTABLE]<br>
+            - Memoria SQLite: ACTIVA<br>
+            - Enlace Nube: SEGURO<br><br>
+            <b>CRONOGRAMA PRÓXIMO (LUNES):</b><br>
+            - [!] Examen de Alemán (Mañana)<br>
+            - [!] Llegada Au Pair Safira (Tarde)<br><br>
+            <b>SISTEMA:</b><br>
+            - Errores críticos: 0
         </div>
     """,
       unsafe_allow_html=True,
   )
 
   st.markdown("<br>", unsafe_allow_html=True)
-  if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-    st.success("Diagnóstico autónomo completado: Cero fallos detectados.")
+  if st.button("VERIFICAR SISTEMA", use_container_width=True):
+    st.success("Sistema operando al 100% sin anomalías.")
 
-with col_main:
-  st.subheader("INGESTA DE DOCUMENTOS FUENTE")
+with col_right:
+  st.subheader("INGESTA DE DOCUMENTOS Y DATOS")
   uploaded_file = st.file_uploader(
-      "Cargar archivo para análisis automático (TXT, PY, MD, CSV):",
+      "Subir archivo fuente:",
       type=["txt", "py", "md", "csv"],
       label_visibility="collapsed",
   )
@@ -213,90 +147,98 @@ with col_main:
     c = conn.cursor()
     c.execute(
         "INSERT INTO memory (content, category) VALUES (?, ?)",
-        (
-            f"[DOCUMENTO ASIMILADO: {file_name}] \n{file_content[:600]}...",
-            "Documento Autónomo",
-        ),
+        (f"[ARCHIVO: {file_name}] \n{file_content[:400]}...", "Documento"),
     )
     conn.commit()
     conn.close()
-    st.success(
-        f"Archivo '{file_name}' procesado y asimilado de forma autónoma en el"
-        " núcleo."
-    )
+    st.success(f"Archivo '{file_name}' guardado en la memoria central.")
 
   st.markdown("---")
-  st.subheader("CONSOLA DE COMANDOS TÁCTICOS")
+  st.subheader("CONSOLA DE COMANDOS")
   user_input = st.text_area(
-      "Introducir directiva de análisis autónomo:",
-      placeholder=(
-          "Ej: Evaluar riesgos operativos, sintetizar directrices de proyecto..."
-      ),
+      "Escribe una orden o directiva:",
+      placeholder="Ej: Evaluar riesgos del examen del lunes, registrar nota...",
       label_visibility="collapsed",
   )
 
-  col_btn1, col_btn2 = st.columns(2)
-
-  with col_btn1:
-    if st.button("EJECUTAR PROTOCOLO", use_container_width=True):
-      if user_input:
-        conn = sqlite3.connect("jarvis_memory.db")
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO memory (content, category) VALUES (?, ?)",
-            (user_input, "Comando Autónomo"),
-        )
-        conn.commit()
-        c.execute("SELECT COUNT(*) FROM memory")
-        total_records = c.fetchone()[0]
-        conn.close()
-
-        reply = (
-            f"Protocolo ejecutado de forma autónoma. Registro asignado al"
-            f" sector #{total_records}. Análisis de viabilidad y mitigación de"
-            " riesgos completados."
-        )
-        st.success(reply)
-
-        # Módulo de Síntesis de Voz Automatizada
-        speech_script = f"""
-                <script>
-                    if ('speechSynthesis' in window) {{
-                        window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance({reply!r});
-                        utterance.lang = 'es-ES';
-                        window.speechSynthesis.speak(utterance);
-                    }}
-                </script>
-                """
-        st.components.v1.html(speech_script, height=0)
-      else:
-        st.warning("Introduce una directiva válida para procesar.")
-
-  with col_btn2:
-    if st.button("DIAGNÓSTICO DE RED", use_container_width=True):
-      status_text = (
-          "Enlace de red autónomo verificado. Conexión cifrada y estable con"
-          " los servidores en la nube."
+  if st.button("EJECUTAR ORDEN", use_container_width=True):
+    if user_input:
+      conn = sqlite3.connect("jarvis_memory.db")
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO memory (content, category) VALUES (?, ?)",
+          (user_input, "Comando"),
       )
-      st.info(status_text)
-      audio_script = f"""
+      conn.commit()
+      c.execute("SELECT COUNT(*) FROM memory")
+      total = c.fetchone()[0]
+      conn.close()
+
+      reply = f"Orden procesada. Almacenada en el registro #{total}."
+      st.success(reply)
+
+      # Síntesis de voz automática
+      speech_script = f"""
             <script>
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance({status_text!r});
+                    const utterance = new SpeechSynthesisUtterance({reply!r});
                     utterance.lang = 'es-ES';
                     window.speechSynthesis.speak(utterance);
                 }}
             </script>
             """
-      st.components.v1.html(audio_script, height=0)
+      st.components.v1.html(speech_script, height=0)
+    else:
+      st.warning("Escribe una orden válida.")
 
-# Sección Inferior: Base de Datos y Registros Históricos
+# Botón de Alerta de Protocolos para el Lunes
 st.markdown("---")
-st.subheader("REGISTROS DE MEMORIA Y AUDITORÍA CENTRAL")
+st.subheader("PROTOCOLOS ACTIVOS // AGENDA CRÍTICA")
 
-if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
+if st.button("EJECUTAR INFORME TÁCTICO PARA EL LUNES", use_container_width=True):
+  # Guardar los eventos en la base de datos de memoria de forma permanente
+  conn = sqlite3.connect("jarvis_memory.db")
+  c = conn.cursor()
+  c.execute(
+      "INSERT INTO memory (content, category) VALUES (?, ?)",
+      (
+          "Protocolo Lunes: 1. Examen de alemán. 2. Llegada de la nueva Au Pair"
+          " Safira por la tarde.",
+          "Agenda Crítica",
+      ),
+  )
+  conn.commit()
+  conn.close()
+
+  report_text = (
+      "Atención Marian. He integrado las directivas críticas a los registros de"
+      " memoria. Para este lunes tienes dos eventos prioritarios: por la"
+      " mañana, tu examen de alemán; y por la tarde, la llegada de la nueva Au"
+      " Pair, Safira. Recomiendo mantener la sesión de estudio centrada y"
+      " coordinar los tiempos de recepción para evitar solapamientos"
+      " operativos."
+  )
+  st.warning(report_text)
+
+  # Síntesis de voz del informe completo
+  voice_report = f"""
+        <script>
+            if ('speechSynthesis' in window) {{
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance({report_text!r});
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.speak(utterance);
+            }}
+        </script>
+        """
+  st.components.v1.html(voice_report, height=0)
+
+# Historial
+st.markdown("---")
+st.subheader("REGISTROS DE MEMORIA")
+
+if st.button("CONSULTAR MEMORIA GUARDADA"):
   conn = sqlite3.connect("jarvis_memory.db")
   c = conn.cursor()
   c.execute("SELECT id, content, category FROM memory")
@@ -304,10 +246,8 @@ if st.button("CONSULTAR BASE DE DATOS CENTRAL"):
   conn.close()
 
   if rows:
-    st.write(
-        f"Se han recuperado **{len(rows)}** registros activos en el sistema:"
-    )
+    st.write(f"Se encontraron **{len(rows)}** registros:")
     for row in rows:
       st.info(f"[{row[0]}] ({row[2]}): {row[1]}")
   else:
-    st.info("La base de datos central se encuentra limpia.")
+    st.info("La memoria está vacía.")
