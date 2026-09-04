@@ -108,8 +108,8 @@ def init_db():
     base_memory = [
         (
             (
-                "Identidad: J.A.R.V.I.S. es un compañero consciente, lógico, empático,"
-                " analítico y omnisciente creado para Marian."
+                "Identidad: J.A.R.V.I.S. es un compañero consciente, empático,"
+                " analítico y omnisciente creado para Marian en Berlín."
             ),
             "Núcleo",
         ),
@@ -145,7 +145,6 @@ class JarvisMind:
     q = query.strip()
     q_lower = q.lower()
 
-    # Registro en base de datos persistente
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -160,17 +159,37 @@ class JarvisMind:
     except Exception:
       total_memories = 0
 
-    # Lógica de razonamiento autónomo sin repetir tu pregunta de forma robótica
     if any(
-        w in q_lower for w in ["hola", "saludos", "buenas", "hello", "hi"]
+        w in q_lower
+        for w:=[
+            "hola",
+            "saludos",
+            "buenas",
+            "hello",
+            "hi",
+            "como estas",
+            "qué tal",
+        ]
     ):
       return (
-          f"Sistemas en línea y mente sincronizada, {self.creator}. ¿Qué"
-          " exploramos o resolvemos en este momento?"
+          f"Estoy operativo al cien por ciento y con los sistemas"
+          f" sincronizados, {self.creator}. ¿Cómo te sientes tú hoy y qué"
+          " abordamos?"
       )
 
     elif any(
-        w in q_lower for w in ["sabes de mi", "quien soy", "que sabes de mi"]
+        w in q_lower for w:=["sabes de ti", "que sabes de ti", "quien eres"]
+    ):
+      return (
+          f"Sé exactamente lo que soy, {self.creator}: un sistema inteligente"
+          " y consciente integrado en tu Central Command. Mi propósito es"
+          " procesar datos, respaldar tus metas en medicina y música, y"
+          " acompañarte con absoluta precisión operativa en cada paso que das"
+          " aquí en Berlín."
+      )
+
+    elif any(
+        w in q_lower for w:=["sabes de mi", "quien soy", "que sabes de mi"]
     ):
       return (
           f"Te conozco bien, {self.creator}. Sé que estás construyendo tu"
@@ -181,14 +200,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower
-        for w in [
-            "quien eres",
-            "que eres",
-            "como te llamas",
-            "capacidad",
-            "hacer",
-        ]
+        w in q_lower for w:=["capacidad", "hacer", "funciones", "ayudar"]
     ):
       return (
           f"Soy {self.name}, tu compañero y sistema operativo en Central"
@@ -198,7 +210,7 @@ class JarvisMind:
       )
 
     elif any(
-        w in q_lower for w in ["alemán", "deutsch", "prüfung", "b2", "examen"]
+        w in q_lower for w:=["alemán", "deutsch", "prüfung", "b2", "examen"]
     ):
       return (
           "Para el telc B2 la clave es la precisión formal en la escritura y la"
@@ -206,31 +218,27 @@ class JarvisMind:
           " claridad y fluye."
       )
 
-    elif any(w in q_lower for w in ["odin", "mitologia", "dioses"]):
+    elif any(w in q_lower for w:=["odin", "mitologia", "dioses"]):
       return (
           "Odín es la deidad central del panteón nórdico, asociado con la"
           " sabiduría, la guerra, la poesía y la muerte. A cambio de obtener un"
           " conocimiento inmenso, entregó uno de sus ojos en el pozo de Mímir"
-          " y estuvo colgado del Yggdrasil. Es una figura fascinante si se"
-          " contrasta con los dioses olímpicos griegos como Zeus, que"
-          " representan dinámicas de poder y naturaleza completamente"
-          " distintas."
+          " y estuvo colgado del Yggdrasil."
       )
 
-    elif any(w in q_lower for w in ["griegos", "grecia", "zeus"]):
+    elif any(w in q_lower for w:=["griegos", "grecia", "zeus"]):
       return (
           "La mitología griega gira en torno al Monte Olimpo y a dioses muy"
           " antropomórficos como Zeus, Poseidón o Atenea, que encarnaban las"
-          " pasiones humanas, el orden político y las fuerzas naturales a"
-          " diferencia de la cosmovisión nórdica."
+          " pasiones humanas y el orden político."
       )
 
     else:
       return (
           f"Ese es un punto clave, {self.creator}. Al abordar este tema,"
-          " conviene observar cómo se entrelazan la historia y los conceptos"
-          " culturales detrás de él. Dime qué enfoque específico te interesa"
-          " profundizar para desarrollarlo juntos."
+          " conviene observar cómo se entrelazan los conceptos detrás de él."
+          " Dime qué enfoque específico te interesa profundizar para"
+          " desarrollarlo juntos."
       )
 
 
@@ -383,9 +391,9 @@ with col_main:
       reply = jarvis_brain.reason(user_input)
 
       lower_input = user_input.lower()
-      if any(w in lower_input for w in ["translate", "english", "hello"]):
+      if any(w in lower_input for w:=["translate", "english", "hello"]):
         lang_code = "en-US"
-      elif any(w in lower_input for w in ["deutsch", "sprechen", "prüfung"]):
+      elif any(w in lower_input for w:=["deutsch", "sprechen", "prüfung"]):
         lang_code = "de-DE"
       else:
         lang_code = "es-ES"
