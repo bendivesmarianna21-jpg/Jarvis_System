@@ -134,12 +134,10 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Saludos y respuestas conversacionales directas de JARVIS
     if any(w in q_lower for w in ["hola", "saludos", "buenos dias", "hey"]):
       return (
-          f"Hola, Marian. Es un placer asistirte. Todos los sistemas de Central"
-          " Command se encuentran operativos en Berlín. ¿En qué puedo"
-          " colaborar contigo en este momento?"
+          "Hola, Marian. Todos los sistemas están en línea y listos. ¿Qué"
+          " necesitas?"
       )
 
     if any(
@@ -178,7 +176,7 @@ class JarvisMind:
             )
           return res_text
         else:
-          return "No hay correos registrados en la bandeja en este momento."
+          return "No hay correos registrados en la bandeja."
       except Exception as e:
         return f"Error al consultar correo: {e}"
 
@@ -197,49 +195,54 @@ class JarvisMind:
             model="gemini-3.6-flash",
             contents=(
                 f"Eres J.A.R.V.I.S., el asistente personal de {self.creator}."
-                f" Responde de forma educada, profesional y directa a: {q}"
+                f" Responde directo a: {q}"
             ),
         )
         return response.text
       except Exception:
         pass
 
-    return (
-        f"Comando procesado con éxito para {self.creator}. Todos los registros"
-        " se encuentran actualizados."
-    )
+    return f"Procesada directiva '{q}' para {self.creator} con éxito."
 
 
 jarvis_brain = JarvisMind()
 
-# Reloj dinámico inicial en servidor para evitar parpadeos en 00:00:00
 ahora_berlin = datetime.datetime.now()
 fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
-hora_inicial = ahora_berlin.strftime("%H:%M:%S")
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Cabecera HUD con reloj en vivo por JavaScript sincronizado a Berlín
+# Barra superior con ID único para actualización nativa por JS con el color exacto del tema
 st.markdown(
     f"""
-    <div style='background: rgba(0, 210, 255, 0.05); border-left: 3px solid #00d2ff; padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> <span id="reloj-jarvis" style="color: #00ffcc; font-weight: bold;">{hora_inicial}</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+    <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> <span id="reloj-jarvis" style="color: #00d2ff;">--:--:--</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
-    if (typeof timerReloj === 'undefined') {{
-        const timerReloj = setInterval(function() {{
+    if (typeof window.jarvisClockInterval === 'undefined') {
+        window.jarvisClockInterval = setInterval(function() {
             const ahora = new Date();
-            try {{
-                const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
+            const opciones = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            try {
                 const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
                 const elem = document.getElementById('reloj-jarvis');
-                if (elem) {{
+                if (elem) {
                     elem.innerText = horaBerling;
-                }}
-            }} catch(e) {{}}
-        }}, 1000);
-    }}
+                }
+            } catch(e) {}
+        }, 1000);
+    }
+    // Ejecutar inmediatamente al cargar
+    (function() {
+        const ahora = new Date();
+        const opciones = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        try {
+            const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
+            const elem = document.getElementById('reloj-jarvis');
+            if (elem) { elem.innerText = horaBerling; }
+        } catch(e) {}
+    })();
     </script>
 """,
     unsafe_allow_html=True,
@@ -722,34 +725,69 @@ with tab_finanzas:
     st.error(f"Error al cargar contabilidad: {e}")
 
 with tab_alarmas:
-  st.subheader("CRONÓMETRO Y GESTIÓN DE TIEMPO")
+  st.subheader("CRONÓMETRO Y RELOJ TÁCTICO // HUD STARK")
   st.markdown(
       """
-        <div class="telemetria-container">
-            <b>MODO CRONÓMETRO TÁCTIL ACTIVADO:</b><br>
-            Utiliza este espacio para medir tiempos en turnos clínicos o laboratorios.
+        <div class="telemetria-container" style="text-align: center; padding: 25px;">
+            <div style="font-size: 11px; letter-spacing: 2px; color: #7ab8ff; margin-bottom: 10px;">TEMPORIZADOR DE MISIÓN EN DIRECTO</div>
+            <div id="stark-chronometer" style="font-size: 42px; font-weight: bold; color: #00ffcc; font-family: 'Courier New', Courier, monospace; text-shadow: 0 0 15px rgba(0,255,204,0.6);">00:00:00</div>
         </div>
     """,
       unsafe_allow_html=True,
   )
 
-  col_timer1, col_timer2 = st.columns(2)
-  with col_timer1:
-    minutos_alarma = st.number_input(
-        "Minutos para cuenta regresiva:", min_value=1, max_value=120, value=15
+  col_t1, col_t2, col_t3 = st.columns(3)
+  with col_t1:
+    h_input = st.number_input("Horas:", min_value=0, max_value=24, value=0, step=1)
+  with col_t2:
+    m_input = st.number_input(
+        "Minutos:", min_value=0, max_value=59, value=15, step=1
     )
-  with col_timer2:
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("INICIAR TEMPORIZADOR", use_container_width=True):
-      st.success(
-          f"¡Temporizador activado por {minutos_alarma} minutos, Marian!"
-      )
+  with col_t3:
+    s_input = st.number_input(
+        "Segundos:", min_value=0, max_value=59, value=0, step=1
+    )
 
-  st.markdown("---")
-  st.info(
-      "El reloj superior está sincronizado en tiempo real con la zona horaria"
-      " de Berlín (Europe/Berlin)."
-  )
+  st.markdown("<br>", unsafe_allow_html=True)
+  col_btn1, col_btn2 = st.columns(2)
+  with col_btn1:
+    if st.button("INICIAR CUENTA REGRESIVA", use_container_width=True):
+      total_segundos = int(h_input * 3600 + m_input * 60 + s_input)
+      st.markdown(
+          f"""
+            <script>
+            if (typeof window.starkTimerInterval !== 'undefined') {{ clearInterval(window.starkTimerInterval); }}
+            let tiempoRestante = {total_segundos};
+            window.starkTimerInterval = setInterval(function() {{
+                if (tiempoRestante <= 0) {{
+                    clearInterval(window.starkTimerInterval);
+                    document.getElementById('stark-chronometer').innerText = "00:00:00 - ¡TIEMPO CUMPLIDO!";
+                    return;
+                }}
+                let h = Math.floor(tiempoRestante / 3600);
+                let m = Math.floor((tiempoRestante % 3600) / 60);
+                let s = tiempoRestante % 60;
+                let fmt = (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+                document.getElementById('stark-chronometer').innerText = fmt;
+                tiempoRestante--;
+            }}, 1000);
+            </script>
+        """,
+          unsafe_allow_html=True,
+      )
+      st.success("¡Cuenta regresiva iniciada en el HUD Stark!")
+  with col_btn2:
+    if st.button("DETENER / RESETEAR", use_container_width=True):
+      st.markdown(
+          """
+            <script>
+            if (typeof window.starkTimerInterval !== 'undefined') { clearInterval(window.starkTimerInterval); }
+            document.getElementById('stark-chronometer').innerText = "00:00:00";
+            </script>
+        """,
+          unsafe_allow_html=True,
+      )
+      st.success("Cronómetro restablecido.")
 
 with tab_memoria:
   st.subheader("AUDITORÍA DE NÚCLEO Y MEMORIA CENTRAL")
