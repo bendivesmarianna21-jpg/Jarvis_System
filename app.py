@@ -2,6 +2,7 @@ import datetime
 import os
 import smtplib
 import sqlite3
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import streamlit as st
@@ -210,45 +211,46 @@ jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Reloj digital robusto con JavaScript nativo para evitar bloqueos en navegadores móviles
-st.markdown(
-    """
+# Contenedor dinámico para la barra superior HUD con la hora en tiempo real
+reloj_placeholder = st.empty()
+
+dias_es = {
+    "Monday": "LUNES",
+    "Tuesday": "MARTES",
+    "Wednesday": "MIÉRCOLES",
+    "Thursday": "JUEVES",
+    "Friday": "VIERNES",
+    "Saturday": "SÁBADO",
+    "Sunday": "DOMINGO",
+}
+meses_es = {
+    1: "ENERO",
+    2: "FEBRERO",
+    3: "MARZO",
+    4: "ABRIL",
+    5: "MAYO",
+    6: "JUNIO",
+    7: "JULIO",
+    8: "AGOSTO",
+    9: "SEPTIEMBRE",
+    10: "OCTUBRE",
+    11: "NOVIEMBRE",
+    12: "DICIEMBRE",
+}
+
+ahora = datetime.datetime.now()
+dia_str = dias_es.get(ahora.strftime("%A"), "")
+mes_str = meses_es.get(ahora.month, "")
+fecha_formateada = (
+    f"{dia_str}, {ahora.day:02d} DE {mes_str} DE {ahora.year} -"
+    f" {ahora.strftime('%H:%M:%S')}"
+)
+
+reloj_placeholder.markdown(
+    f"""
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">INICIANDO SISTEMA...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span style="color: #00ffcc; font-weight: bold;">{fecha_formateada}</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
-    
-    <script>
-    (function() {
-        if (window.jarvisClockTimer) {
-            clearInterval(window.jarvisClockTimer);
-        }
-        function startClock() {
-            const el = document.getElementById('reloj-jarvis-vivo');
-            if (!el) return;
-            
-            function pad(n) { return n < 10 ? '0' + n : n; }
-            
-            const days = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
-            const months = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-            
-            function update() {
-                const now = new Date();
-                const dName = days[now.getDay()];
-                const dNum = pad(now.getDate());
-                const mName = months[now.getMonth()];
-                const yNum = now.getFullYear();
-                const h = pad(now.getHours());
-                const m = pad(now.getMinutes());
-                const s = pad(now.getSeconds());
-                
-                el.innerText = dName + ", " + dNum + " DE " + mName + " DE " + yNum + " - " + h + ":" + m + ":" + s;
-            }
-            update();
-            window.jarvisClockTimer = setInterval(update, 1000);
-        }
-        startClock();
-    })();
-    </script>
 """,
     unsafe_allow_html=True,
 )
