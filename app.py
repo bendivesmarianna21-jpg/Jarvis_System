@@ -210,18 +210,15 @@ jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Barra HUD superior con Fecha y Hora 100% dinámicas y automáticas en tiempo real (Zona Berlín)
+# Barra HUD superior con Fecha y Hora 100% dinámicas, continuas y automáticas en tiempo real (Zona Berlín)
 st.markdown(
     """
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-hud-total" style="color: #00ffcc; font-weight: bold;">SINCRONIZANDO...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-hud-total" style="color: #00ffcc; font-weight: bold;">--/--/---- --:--:--</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
     (function() {
-        if (window.jarvisHudTimer) {
-            clearInterval(window.jarvisHudTimer);
-        }
         function updateHud() {
             const el = document.getElementById('reloj-hud-total');
             if (!el) return;
@@ -237,7 +234,12 @@ st.markdown(
             
             el.innerText = dateStr + " - " + timeStr;
         }
+        
+        // Ejecutar inmediatamente y luego cada segundo de forma continua
         updateHud();
+        if (window.jarvisHudTimer) {
+            clearInterval(window.jarvisHudTimer);
+        }
         window.jarvisHudTimer = setInterval(updateHud, 1000);
     })();
     </script>
