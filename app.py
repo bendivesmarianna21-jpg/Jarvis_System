@@ -135,7 +135,11 @@ class JarvisMind:
       pass
 
     if any(w in q_lower for w in ["hola", "saludos", "buenos dias", "hey"]):
-      return "Hola, Marian. Todos los sistemas operativos están listos."
+      return (
+          "Hola, Marian. Es un placer asistirte. Todos los sistemas de Central"
+          " Command se encuentran operativos. ¿En qué puedo colaborar contigo"
+          " en este momento?"
+      )
 
     if any(
         w in q_lower
@@ -206,38 +210,30 @@ jarvis_brain = JarvisMind()
 
 ahora_berlin = datetime.datetime.now()
 fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
+hora_inicial = ahora_berlin.strftime("%H:%M:%S")
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
+# Barra superior con reloj digital en tiempo real fluido y continuo
 st.markdown(
     f"""
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> <span id="reloj-jarvis" style="color: #00d2ff;">--:--:--</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> <span id="reloj-jarvis" style="color: #00ffcc; font-weight: bold;">{hora_inicial}</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
     if (typeof window.jarvisClockInterval === 'undefined') {{
         window.jarvisClockInterval = setInterval(function() {{
             const ahora = new Date();
-            const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
-            try {{
-                const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
-                const elem = document.getElementById('reloj-jarvis');
-                if (elem) {{
-                    elem.innerText = horaBerling;
-                }}
-            }} catch(e) {{}}
+            const h = String(ahora.getHours()).padStart(2, '0');
+            const m = String(ahora.getMinutes()).padStart(2, '0');
+            const s = String(ahora.getSeconds()).padStart(2, '0');
+            const elem = document.getElementById('reloj-jarvis');
+            if (elem) {{
+                elem.innerText = h + ":" + m + ":" + s;
+            }}
         }}, 1000);
     }}
-    (function() {{
-        const ahora = new Date();
-        const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
-        try {{
-            const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
-            const elem = document.getElementById('reloj-jarvis');
-            if (elem) {{ elem.innerText = horaBerling; }}
-        }} catch(e) {{}}
-    }})();
     </script>
 """,
     unsafe_allow_html=True,
