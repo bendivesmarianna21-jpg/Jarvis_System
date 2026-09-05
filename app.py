@@ -247,19 +247,19 @@ st.markdown(
     </div>
     
     <script>
-    if (typeof timerReloj === 'undefined') {
-        const timerReloj = setInterval(function() {
+    if (typeof timerReloj === 'undefined') {{
+        const timerReloj = setInterval(function() {{
             const ahora = new Date();
-            try {
-                const opciones = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            try {{
+                const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
                 const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
                 const elem = document.getElementById('reloj-jarvis');
-                if (elem) {
+                if (elem) {{
                     elem.innerText = horaBerling;
-                }
-            } catch(e) {}
-        }, 1000);
-    }
+                }}
+            }} catch(e) {{}}
+        }}, 1000);
+    }}
     </script>
 """,
     unsafe_allow_html=True,
