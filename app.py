@@ -210,29 +210,48 @@ jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Componente de reloj totalmente en vivo utilizando st.html para actualización continua
-st.html("""
+# Reloj digital robusto con JavaScript nativo para evitar bloqueos en navegadores móviles
+st.markdown(
+    """
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">CARGANDO...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">INICIANDO SISTEMA...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
-    if (window.jarvisRealtimeClock) {
-        clearInterval(window.jarvisRealtimeClock);
-    }
-    function updateClock() {
-        const now = new Date();
-        const options = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-        const formatter = new Intl.DateTimeFormat('es-ES', options);
-        const el = document.getElementById('reloj-jarvis-vivo');
-        if (el) {
-            el.innerText = formatter.format(now).toUpperCase();
+    (function() {
+        if (window.jarvisClockTimer) {
+            clearInterval(window.jarvisClockTimer);
         }
-    }
-    updateClock();
-    window.jarvisRealtimeClock = setInterval(updateClock, 1000);
+        function startClock() {
+            const el = document.getElementById('reloj-jarvis-vivo');
+            if (!el) return;
+            
+            function pad(n) { return n < 10 ? '0' + n : n; }
+            
+            const days = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+            const months = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+            
+            function update() {
+                const now = new Date();
+                const dName = days[now.getDay()];
+                const dNum = pad(now.getDate());
+                const mName = months[now.getMonth()];
+                const yNum = now.getFullYear();
+                const h = pad(now.getHours());
+                const m = pad(now.getMinutes());
+                const s = pad(now.getSeconds());
+                
+                el.innerText = dName + ", " + dNum + " DE " + mName + " DE " + yNum + " - " + h + ":" + m + ":" + s;
+            }
+            update();
+            window.jarvisClockTimer = setInterval(update, 1000);
+        }
+        startClock();
+    })();
     </script>
-""")
+""",
+    unsafe_allow_html=True,
+)
 
 tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_alarmas, tab_memoria = (
     st.tabs([
