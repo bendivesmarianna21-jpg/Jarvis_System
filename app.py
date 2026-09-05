@@ -2,7 +2,6 @@ import datetime
 import os
 import smtplib
 import sqlite3
-import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import streamlit as st
@@ -211,46 +210,37 @@ jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Contenedor dinámico para la barra superior HUD con la hora en tiempo real
-reloj_placeholder = st.empty()
-
-dias_es = {
-    "Monday": "LUNES",
-    "Tuesday": "MARTES",
-    "Wednesday": "MIÉRCOLES",
-    "Thursday": "JUEVES",
-    "Friday": "VIERNES",
-    "Saturday": "SÁBADO",
-    "Sunday": "DOMINGO",
-}
-meses_es = {
-    1: "ENERO",
-    2: "FEBRERO",
-    3: "MARZO",
-    4: "ABRIL",
-    5: "MAYO",
-    6: "JUNIO",
-    7: "JULIO",
-    8: "AGOSTO",
-    9: "SEPTIEMBRE",
-    10: "OCTUBRE",
-    11: "NOVIEMBRE",
-    12: "DICIEMBRE",
-}
-
-ahora = datetime.datetime.now()
-dia_str = dias_es.get(ahora.strftime("%A"), "")
-mes_str = meses_es.get(ahora.month, "")
-fecha_formateada = (
-    f"{dia_str}, {ahora.day:02d} DE {mes_str} DE {ahora.year} -"
-    f" {ahora.strftime('%H:%M:%S')}"
-)
-
-reloj_placeholder.markdown(
-    f"""
+# Barra HUD superior con Fecha y Hora 100% dinámicas y automáticas en tiempo real (Zona Berlín)
+st.markdown(
+    """
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span style="color: #00ffcc; font-weight: bold;">{fecha_formateada}</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-hud-total" style="color: #00ffcc; font-weight: bold;">SINCRONIZANDO...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
+    
+    <script>
+    (function() {
+        if (window.jarvisHudTimer) {
+            clearInterval(window.jarvisHudTimer);
+        }
+        function updateHud() {
+            const el = document.getElementById('reloj-hud-total');
+            if (!el) return;
+            
+            const now = new Date();
+            
+            // Opciones para Berlín con formato exacto en español
+            const optionsDate = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const optionsTime = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            
+            const dateStr = new Intl.DateTimeFormat('es-ES', optionsDate).format(now).toUpperCase();
+            const timeStr = new Intl.DateTimeFormat('de-DE', optionsTime).format(now);
+            
+            el.innerText = dateStr + " - " + timeStr;
+        }
+        updateHud();
+        window.jarvisHudTimer = setInterval(updateHud, 1000);
+    })();
+    </script>
 """,
     unsafe_allow_html=True,
 )
