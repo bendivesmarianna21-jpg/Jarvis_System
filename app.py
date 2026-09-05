@@ -79,16 +79,11 @@ st.markdown(
 )
 
 DB_NAME = "jarvis_command_core.db"
-BACKUP_JSON = "jarvis_universal_backup.json"
 
 
-# ==========================================
-# SISTEMA DE PERSISTENCIA UNIVERSAL AUTOMÁTICA
-# ==========================================
-def init_db_and_sync():
+def init_db():
   conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
-
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
@@ -111,142 +106,11 @@ def init_db_and_sync():
       " AUTOINCREMENT, timestamp TEXT, sender TEXT, subject TEXT, snippet"
       " TEXT)"
   )
-
-  # Restauración automática desde archivo JSON si la BD local está vacía
-  c.execute("SELECT COUNT(*) FROM documents_store")
-  doc_count = c.fetchone()[0]
-
-  if doc_count == 0 and os.path.exists(BACKUP_JSON):
-    try:
-      with open(BACKUP_JSON, "r", encoding="utf-8") as f:
-        backup_data = json.load(f)
-
-        for d in backup_data.get("documents", []):
-          c.execute(
-              "INSERT INTO documents_store (timestamp, title, category,"
-              " content) VALUES (?, ?, ?, ?)",
-              (d["timestamp"], d["title"], d["category"], d["content"]),
-          )
-
-        for l in backup_data.get("legal", []):
-          c.execute(
-              "INSERT INTO legal_records (timestamp, title, category, expiry,"
-              " content) VALUES (?, ?, ?, ?, ?)",
-              (l["timestamp"], l["title"], l["category"], l["expiry"], l["content"]),
-          )
-
-        for m in backup_data.get("gmail", []):
-          c.execute(
-              "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-              " VALUES (?, ?, ?, ?)",
-              (m["timestamp"], m["sender"], m["subject"], m["snippet"]),
-          )
-
-        for f_item in backup_data.get("finances", []):
-          c.execute(
-              "INSERT INTO finances (timestamp, concept, amount, type) VALUES"
-              " (?, ?, ?, ?)",
-              (
-                  f_item["timestamp"],
-                  f_item["concept"],
-                  f_item["amount"],
-                  f_item["type"],
-              ),
-          )
-
-        conn.commit()
-    except Exception:
-      pass
-
-  # Datos iniciales si todo está completamente vacío
-  c.execute("SELECT COUNT(*) FROM gmail_cache")
-  if c.fetchone()[0] == 0:
-    c.execute(
-        "INSERT INTO gmail_cache (timestamp, sender, subject, snippet) VALUES"
-        " (?, ?, ?, ?)",
-        (
-            str(datetime.datetime.now()),
-            "St. Joseph Krankenhaus Berlin",
-            "Confirmación de inicio de Ausbildung",
-            (
-                "Estimada Marian, le confirmamos la recepción de sus"
-                " documentos para el programa de enfermería."
-            ),
-        ),
-    )
-    conn.commit()
-
+  conn.commit()
   conn.close()
-  export_to_json_backup()
 
 
-def export_to_json_backup():
-  try:
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-
-    c.execute("SELECT timestamp, title, category, content FROM documents_store")
-    docs = [
-        {
-            "timestamp": r[0],
-            "title": r[1],
-            "category": r[2],
-            "content": r[3],
-        }
-        for r in c.fetchall()
-    ]
-
-    c.execute(
-        "SELECT timestamp, title, category, expiry, content FROM legal_records"
-    )
-    legal = [
-        {
-            "timestamp": r[0],
-            "title": r[1],
-            "category": r[2],
-            "expiry": r[3],
-            "content": r[4],
-        }
-        for r in c.fetchall()
-    ]
-
-    c.execute("SELECT timestamp, sender, subject, snippet FROM gmail_cache")
-    gmail = [
-        {
-            "timestamp": r[0],
-            "sender": r[1],
-            "subject": r[2],
-            "snippet": r[3],
-        }
-        for r in c.fetchall()
-    ]
-
-    c.execute("SELECT timestamp, concept, amount, type FROM finances")
-    finances = [
-        {
-            "timestamp": r[0],
-            "concept": r[1],
-            "amount": r[2],
-            "type": r[3],
-        }
-        for r in c.fetchall()
-    ]
-
-    conn.close()
-
-    backup_data = {
-        "documents": docs,
-        "legal": legal,
-        "gmail": gmail,
-        "finances": finances,
-    }
-    with open(BACKUP_JSON, "w", encoding="utf-8") as f:
-      json.dump(backup_data, f, ensure_ascii=False, indent=4)
-  except Exception:
-    pass
-
-
-init_db_and_sync()
+init_db()
 
 
 # ==========================================
@@ -303,7 +167,7 @@ class JarvisMind:
         mails = c.fetchall()
         conn.close()
         if mails:
-          res_text = "[CORREOS ELECTRÓNICOS EN MEMORIA PERMANENTE]:\n\n"
+          res_text = "[CORREOS ELECTRÓNICOS EN BANDEJA]:\n\n"
           for m in mails:
             res_text += (
                 f"- De/Para: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n"
@@ -311,9 +175,9 @@ class JarvisMind:
             )
           return res_text
         else:
-          return "No hay correos registrados en la memoria central."
+          return "No hay correos registrados en la bandeja."
       except Exception as e:
-        return f"Error al consultar memoria de correo: {e}"
+        return f"Error al consultar correo: {e}"
 
     try:
       conn = sqlite3.connect(DB_NAME)
@@ -333,7 +197,7 @@ class JarvisMind:
       conn.close()
 
       if legal_matches or doc_matches:
-        res_text = "[REGISTROS ENCONTRADOS EN CUSTODIA PERSISTENTE]:\n\n"
+        res_text = "[REGISTROS ENCONTRADOS EN CUSTODIA]:\n\n"
         for lm in legal_matches:
           res_text += (
               f"- [Legal] {lm[0]} ({lm[1]}) [Vigencia: {lm[2]}]\n"
@@ -440,7 +304,7 @@ with tab_consola:
             <div class="telemetria-container">
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
-                - Persistencia Universal: ACTIVA<br>
+                - Autonomía Cognitiva: ACTIVA<br>
                 - Módulo de Visión AI: SEGURO<br>
                 - Gestor de Comunicaciones: ACTIVO<br><br>
                 <b>CRONOGRAMA:</b><br>
@@ -489,7 +353,7 @@ with tab_consola:
         st.warning("Introduce una directiva válida para procesar.")
 
 with tab_docs:
-  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS (PERSISTENTE)")
+  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS")
   doc_title_input = st.text_input(
       "Título o Nombre del Documento:",
       placeholder="Ej: Seguro Social, Contrato de Trabajo, Nota médica...",
@@ -536,14 +400,12 @@ with tab_docs:
         )
         conn.commit()
         conn.close()
-        export_to_json_backup()
-
         if uploaded_file is not None and uploaded_file.type.startswith("image/"):
           st.image(
               uploaded_file, caption=f"Imagen archivada: {doc_title_input}"
           )
         st.success(
-            f"Documento '{doc_title_input}' archivado en memoria persistente."
+            f"Documento '{doc_title_input}' archivado e indexado con éxito."
         )
       except Exception as e:
         st.error(f"Error de almacenamiento: {e}")
@@ -551,7 +413,7 @@ with tab_docs:
       st.warning("Por favor, ingresa un título y proporciona el contenido.")
 
   st.markdown("---")
-  st.subheader("ARCHIVOS EN CUSTODIA PERSISTENTE")
+  st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -574,26 +436,20 @@ with tab_docs:
               key=f"doc_view_{doc[0]}",
           )
     else:
-      st.info("El repositorio documental persistente se encuentra vacío.")
+      st.info("El repositorio documental se encuentra vacío.")
   except Exception as e:
     st.error(f"Error al leer el repositorio: {e}")
 
 with tab_legal:
-  st.subheader("CUSTODIA Y ANÁLISIS DE EXPEDIENTES LEGALES")
-
-  if "processed_doc_sig" not in st.session_state:
-    st.session_state.processed_doc_sig = None
-
-  if st.button("PURGAR REGISTROS DUPLICADOS"):
+  st.subheader("CUSTODIA Y ANÁLISIS INTELIGENTE DE EXPEDIENTES LEGALES")
+  if st.button("PURGAR REGISTROS ANTERIORES"):
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
       c.execute("DELETE FROM legal_records")
       conn.commit()
       conn.close()
-      export_to_json_backup()
-      st.session_state.processed_doc_sig = None
-      st.success("Registros duplicados purgados correctamente.")
+      st.success("Base de datos de expedientes purgada correctamente.")
       st.rerun()
     except Exception as e:
       st.error(f"Error al purgar: {e}")
@@ -603,6 +459,7 @@ with tab_legal:
       "Gemini API Key (Opcional si ya está en Secrets):",
       type="password",
       placeholder="Introduce tu clave API aquí...",
+      key="legal_key",
   )
 
   st.markdown(
@@ -619,20 +476,15 @@ with tab_legal:
   )
 
   if legal_img is not None:
-    img_bytes = legal_img.getvalue()
-    doc_signature = f"{legal_img.name}_{len(img_bytes)}"
+    img_bytes = legal_img.read()
     st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
-
     if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
-      if st.session_state.processed_doc_sig == doc_signature:
-        st.warning(
-            "Este documento ya fue analizado y registrado en esta sesión."
-        )
-      elif not HAS_GENAI:
+      if not HAS_GENAI:
         st.error("El módulo de visión AI requiere 'google-genai'.")
       else:
         with st.spinner(
-            "J.A.R.V.I.S. analizando la estructura y extrayendo datos clave..."
+            "J.A.R.V.I.S. analizando con profundidad y extrayendo todos los"
+            " datos clave..."
         ):
           try:
             api_key_to_use = custom_api_key.strip()
@@ -654,10 +506,10 @@ with tab_legal:
                           data=img_bytes, mime_type=legal_img.type
                       ),
                       (
-                          "Extrae con precisión milimétrica de este documento"
-                          " los siguientes datos en formato limpio y"
-                          " estructurado: Título, Categoría, Vencimiento y Datos"
-                          " clave."
+                          "Extrae con absoluta precisión, detalle y abundancia"
+                          " toda la información, campos, números, fechas,"
+                          " nombres y datos clave de este documento. No"
+                          " omitas ningún detalle relevante."
                       ),
                   ],
               )
@@ -683,10 +535,7 @@ with tab_legal:
               )
               conn.commit()
               conn.close()
-              export_to_json_backup()
-
-              st.session_state.processed_doc_sig = doc_signature
-              st.success("¡Análisis completado y guardado sin duplicados!")
+              st.success("¡Análisis visual completado y archivado en custodia!")
               st.markdown(
                   f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
@@ -724,104 +573,40 @@ with tab_legal:
     st.error(f"Error al cargar expedientes: {e}")
 
 with tab_gmail:
-  st.subheader("GESTIÓN Y ENVÍO DE CORREOS")
+  st.subheader("GESTIÓN Y REGISTRO DE CORREOS")
+  with st.form("mail_form"):
+    mail_sender = st.text_input(
+        "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
+    )
+    mail_subject = st.text_input("Asunto del correo:")
+    mail_snippet = st.text_area("Contenido o extracto principal:")
+    mail_submit = st.form_submit_button(
+        "REGISTRAR CORREO EN BANDEJA", use_container_width=True
+    )
 
-  action_mode = st.radio(
-      "Selecciona la operación de correo:",
-      ["Registrar / Guardar Notificación", "Enviar Correo a Destinatario"],
-  )
-
-  if action_mode == "Registrar / Guardar Notificación":
-    st.markdown("Añade cualquier notificación o correo importante a la memoria:")
-    with st.form("mail_form"):
-      mail_sender = st.text_input(
-          "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
-      )
-      mail_subject = st.text_input("Asunto del correo:")
-      mail_snippet = st.text_area("Contenido o extracto principal:")
-      mail_submit = st.form_submit_button(
-          "REGISTRAR CORREO EN MEMORIA", use_container_width=True
-      )
-
-      if mail_submit and mail_sender and mail_subject:
-        try:
-          conn = sqlite3.connect(DB_NAME)
-          c = conn.cursor()
-          c.execute(
-              "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-              " VALUES (?, ?, ?, ?)",
-              (
-                  str(datetime.datetime.now()),
-                  mail_sender,
-                  mail_subject,
-                  mail_snippet,
-              ),
-          )
-          conn.commit()
-          conn.close()
-          export_to_json_backup()
-
-          st.success("¡Correo registrado con persistencia en bandeja!")
-          st.rerun()
-        except Exception as e:
-          st.error(f"Error al registrar correo: {e}")
-  else:
-    st.markdown("Envía un mensaje o correo electrónico a cualquier persona:")
-    with st.form("send_mail_form"):
-      smtp_sender = st.text_input(
-          "Tu Correo (Gmail remitente):",
-          placeholder="tucorreo@gmail.com",
-      )
-      smtp_password = st.text_input(
-          "Contraseña de aplicación de Gmail:",
-          type="password",
-          placeholder="Contraseña de 16 dígitos de Google",
-      )
-      mail_to = st.text_input(
-          "Destinatario:", placeholder="destinatario@correo.com"
-      )
-      mail_title = st.text_input("Asunto:")
-      mail_body = st.text_area("Mensaje:")
-      send_submit = st.form_submit_button(
-          "ENVIAR CORREO ELECTRÓNICO", use_container_width=True
-      )
-
-      if send_submit and smtp_sender and smtp_password and mail_to:
-        try:
-          msg = MIMEMultipart()
-          msg["From"] = smtp_sender
-          msg["To"] = mail_to
-          msg["Subject"] = mail_title
-          msg.attach(MIMEText(mail_body, "plain", "utf-8"))
-
-          server = smtplib.SMTP("smtp.gmail.com", 587)
-          server.starttls()
-          server.login(smtp_sender, smtp_password)
-          server.sendmail(smtp_sender, mail_to, msg.as_string())
-          server.quit()
-
-          st.success(f"¡Correo enviado con éxito a {mail_to}!")
-
-          conn = sqlite3.connect(DB_NAME)
-          c = conn.cursor()
-          c.execute(
-              "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-              " VALUES (?, ?, ?, ?)",
-              (
-                  str(datetime.datetime.now()),
-                  f"Enviado a: {mail_to}",
-                  mail_title,
-                  mail_body,
-              ),
-          )
-          conn.commit()
-          conn.close()
-          export_to_json_backup()
-        except Exception as e:
-          st.error(f"Error al enviar el correo (verifica tu contraseña de aplicación): {e}")
+    if mail_submit and mail_sender and mail_subject:
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
+            " VALUES (?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                mail_sender,
+                mail_subject,
+                mail_snippet,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        st.success("¡Correo registrado correctamente en la bandeja!")
+        st.rerun()
+      except Exception as e:
+        st.error(f"Error al registrar correo: {e}")
 
   st.markdown("---")
-  st.subheader("CORREOS EN MEMORIA CENTRAL")
+  st.subheader("CORREOS EN BANDEJA CENTRAL")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -831,9 +616,9 @@ with tab_gmail:
 
     if mail_rows:
       for mr in mail_rows:
-        with st.expander(f"[{mr[0]}] {mr[2]} — De/Para: {mr[1]}"):
+        with st.expander(f"[{mr[0]}] {mr[2]} — De: {mr[1]}"):
           st.write(f"**Fecha y Hora:** {mr[1]}")
-          st.write(f"**Contenido / Mensaje:** {mr[4]}")
+          st.write(f"**Contenido / Extracto:** {mr[4]}")
     else:
       st.info("No hay correos registrados actualmente.")
   except Exception as e:
@@ -864,8 +649,6 @@ with tab_finanzas:
         )
         conn.commit()
         conn.close()
-        export_to_json_backup()
-
         st.success(
             f"Transacción '{f_concept}' registrada en el libro contable."
         )
