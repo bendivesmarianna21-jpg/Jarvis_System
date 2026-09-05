@@ -52,7 +52,7 @@ st.markdown(
             box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
         }
         
-        .stTextArea textarea, .stTextInput input, .stSelectbox select {
+        .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
             background-color: #050f1d !important;
             color: #00d2ff !important;
             border: 1px solid rgba(0, 210, 255, 0.4) !important;
@@ -94,7 +94,8 @@ def init_db():
   )
   c.execute(
       "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT)"
+      " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT,"
+      " category TEXT, method TEXT)"
   )
   c.execute(
       "CREATE TABLE IF NOT EXISTS legal_records (id INTEGER PRIMARY KEY"
@@ -106,6 +107,17 @@ def init_db():
       " AUTOINCREMENT, timestamp TEXT, sender TEXT, subject TEXT, snippet"
       " TEXT)"
   )
+
+  # Migración segura por si la tabla de finanzas ya existía sin las nuevas columnas
+  try:
+    c.execute("ALTER TABLE finances ADD COLUMN category TEXT")
+  except Exception:
+    pass
+  try:
+    c.execute("ALTER TABLE finances ADD COLUMN method TEXT")
+  except Exception:
+    pass
+
   conn.commit()
   conn.close()
 
@@ -625,55 +637,201 @@ with tab_gmail:
     st.error(f"Error al cargar correos: {e}")
 
 with tab_finanzas:
-  st.subheader("CONTROL Y GESTIÓN FINANCIERA")
-  with st.form("finance_form"):
-    col_f1, col_f2, col_f3 = st.columns(3)
-    with col_f1:
-      f_concept = st.text_input("Concepto (Ej: Alquiler, Boleta)")
-    with col_f2:
-      f_amount = st.number_input("Monto (€)", min_value=0.0, step=1.0)
-    with col_f3:
-      f_type = st.selectbox("Tipo", ["Gasto", "Ingreso"])
+  st.subheader("CONTROL Y GESTIÓN FINANCIERA AVANZADA")
 
-    f_submit = st.form_submit_button(
-        "REGISTRAR MOVIMIENTO", use_container_width=True
-    )
-    if f_submit and f_concept:
+  # Sección 1: Capital Base / Dinero Inicial
+  with st.form("capital_form"):
+    st.markdown("**1. ESTABLECER CAPITAL / DINERO INICIAL**")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+      base_efectivo = st.number_input(
+          "Dinero Físico Inicial (€):", min_value=0.0, step=1.0, key="base_ef"
+      )
+    with col_c2:
+      base_tarjeta = st.number_input(
+          "Dinero en Tarjeta Inicial (€):", min_value=0.0, step=1.0, key="base_tj"
+      )
+    if st.form_submit_button("ACTUALIZAR CAPITAL BASE", use_container_width=True):
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO finances (timestamp, concept, amount, type) VALUES"
-            " (?, ?, ?, ?)",
-            (str(datetime.datetime.now()), f_concept, f_amount, f_type),
+            "INSERT INTO finances (timestamp, concept, amount, type, category,"
+            " method) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                "Capital Base - Efectivo",
+                base_efectivo,
+                "Ingreso",
+                "Capital Base",
+                "Efectivo",
+            ),
+        )
+        c.execute(
+            "INSERT INTO finances (timestamp, concept, amount, type, category,"
+            " method) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                "Capital Base - Tarjeta",
+                base_tarjeta,
+                "Ingreso",
+                "Capital Base",
+                "Tarjeta",
+            ),
         )
         conn.commit()
         conn.close()
-        st.success(
-            f"Transacción '{f_concept}' registrada en el libro contable."
-        )
+        st.success("¡Capital base actualizado con éxito!")
+        st.rerun()
       except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error al actualizar capital: {e}")
 
   st.markdown("---")
-  st.subheader("LIBRO CONTABLE Y BALANCE GLOBAL")
+
+  # Sección 2: Registro de Ingresos (Salario, Propinas, etc.)
+  col_ing, col_gas = st.columns(2)
+
+  with col_ing:
+    st.markdown("**2. REGISTRAR INGRESO**")
+    with st.form("income_form"):
+      i_concept = st.text_input(
+          "Concepto (Ej: Pago mensual, Propina turno)"
+      )
+      i_amount = st.number_input(
+          "Monto (€):", min_value=0.0, step=1.0, key="inc_amt"
+      )
+      i_category = st.selectbox(
+          "Fuente de Ingreso:", ["Salario", "Propinas", "Otro Ingreso"]
+      )
+      i_method = st.selectbox(
+          "Método:", ["Efectivo", "Tarjeta"], key="inc_meth"
+      )
+
+      if st.form_submit_button("REGISTRAR INGRESO", use_container_width=True):
+        if i_concept:
+          try:
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO finances (timestamp, concept, amount, type,"
+                " category, method) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    str(datetime.datetime.now()),
+                    i_concept,
+                    i_amount,
+                    "Ingreso",
+                    i_category,
+                    i_method,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.success(f"Ingreso '{i_concept}' registrado correctamente.")
+            st.rerun()
+          except Exception as e:
+            st.error(f"Error: {e}")
+        else:
+          st.warning("Introduce un concepto válido.")
+
+  # Sección 3: Registro de Gastos (Comida, Alquiler, etc.)
+  with col_gas:
+    st.markdown("**3. REGISTRAR GASTO**")
+    with st.form("expense_form"):
+      e_concept = st.text_input("Concepto (Ej: Supermercado, Compra ropa)")
+      e_amount = st.number_input(
+          "Monto (€):", min_value=0.0, step=1.0, key="exp_amt"
+      )
+      e_category = st.selectbox(
+          "Categoría de Gasto:",
+          [
+              "Alquiler",
+              "Comida",
+              "Seguro médico",
+              "Internet",
+              "Ropa",
+              "Salidas",
+              "Accidentes / Urgencias",
+              "Reserva / Ahorro",
+              "Otro Gasto",
+          ],
+      )
+      e_method = st.selectbox(
+          "Método de Pago:", ["Efectivo", "Tarjeta"], key="exp_meth"
+      )
+
+      if st.form_submit_button("REGISTRAR GASTO", use_container_width=True):
+        if e_concept:
+          try:
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO finances (timestamp, concept, amount, type,"
+                " category, method) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    str(datetime.datetime.now()),
+                    e_concept,
+                    e_amount,
+                    "Gasto",
+                    e_category,
+                    e_method,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.success(f"Gasto '{e_concept}' registrado correctamente.")
+            st.rerun()
+          except Exception as e:
+            st.error(f"Error: {e}")
+        else:
+          st.warning("Introduce un concepto válido.")
+
+  st.markdown("---")
+  st.subheader("BALANCE GLOBAL Y LIBRO CONTABLE")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT id, timestamp, concept, amount, type FROM finances")
+    c.execute(
+        "SELECT id, timestamp, concept, amount, type, category, method FROM"
+        " finances"
+    )
     fin_rows = c.fetchall()
     conn.close()
+
     if fin_rows:
       total_ingresos = sum(r[3] for r in fin_rows if r[4] == "Ingreso")
       total_gastos = sum(r[3] for r in fin_rows if r[4] == "Gasto")
-      balance = total_ingresos - total_gastos
+      balance_neto = total_ingresos - total_gastos
+
+      efectivo_ing = sum(
+          r[3] for r in fin_rows if r[4] == "Ingreso" and r[6] == "Efectivo"
+      )
+      efectivo_gas = sum(
+          r[3] for r in fin_rows if r[4] == "Gasto" and r[6] == "Efectivo"
+      )
+      balance_efectivo = efectivo_ing - efectivo_gas
+
+      tarjeta_ing = sum(
+          r[3] for r in fin_rows if r[4] == "Ingreso" and r[6] == "Tarjeta"
+      )
+      tarjeta_gas = sum(
+          r[3] for r in fin_rows if r[4] == "Gasto" and r[6] == "Tarjeta"
+      )
+      balance_tarjeta = tarjeta_ing - tarjeta_gas
 
       col_m1, col_m2, col_m3 = st.columns(3)
-      col_m1.metric("Ingresos Totales", f"{total_ingresos:.2f} €")
-      col_m2.metric("Gastos Totales", f"{total_gastos:.2f} €")
-      col_m3.metric("Balance Neto", f"{balance:.2f} €")
+      col_m1.metric("Dinero Físico (Efectivo)", f"{balance_efectivo:.2f} €")
+      col_m2.metric("Dinero en Tarjeta", f"{balance_tarjeta:.2f} €")
+      col_m3.metric("Balance Neto Total", f"{balance_neto:.2f} €")
+
+      st.markdown("<br>", unsafe_allow_html=True)
+      st.markdown("**HISTORIAL DE MOVIMIENTOS:**")
+      for fr in fin_rows:
+        st.info(
+            f"[{fr[4]}] {fr[2]} — **{fr[3]:.2f} €** | Categoría: {fr[5]} |"
+            f" Método: {fr[6]} ({fr[1]})"
+        )
     else:
-      st.info("No se registran movimientos en el libro contable.")
+      st.info("No se registran movimientos financieros actualmente.")
   except Exception as e:
     st.error(f"Error al cargar contabilidad: {e}")
 
