@@ -23,52 +23,12 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        .stApp {
-            background-color: #03070c;
-            color: #00d2ff;
-            font-family: 'Courier New', Courier, monospace;
-        }
+        .stApp { background-color: #03070c; color: #00d2ff; font-family: monospace; }
         #MainMenu, footer, header {visibility: hidden;}
-
-        h1, h2, h3, h4 {
-            color: #00d2ff !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .telemetria-container {
-            background: rgba(4, 12, 24, 0.9);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: 6px;
-            padding: 16px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            color: #7ab8ff;
-            box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
-        }
-        
-        .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
-            background-color: #050f1d !important;
-            color: #00d2ff !important;
-            border: 1px solid rgba(0, 210, 255, 0.4) !important;
-            font-family: 'Courier New', Courier, monospace !important;
-        }
-
-        .stButton button {
-            background: #040e1b !important;
-            color: #00d2ff !important;
-            font-weight: 600;
-            border: 1px solid rgba(0, 210, 255, 0.6) !important;
-            border-radius: 4px !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            text-transform: uppercase;
-        }
-        .stButton button:hover {
-            background: #00d2ff !important;
-            color: #03070c !important;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.8) !important;
-        }
+        h1, h2, h3 { color: #00d2ff !important; font-family: monospace !important; }
+        .telemetria-container { background: rgba(4, 12, 24, 0.9); border: 1px solid rgba(0, 210, 255, 0.3); padding: 15px; border-radius: 5px; color: #7ab8ff; }
+        .stTextInput input, .stSelectbox select, .stNumberInput input, .stTextArea textarea { background-color: #050f1d !important; color: #00d2ff !important; border: 1px solid rgba(0, 210, 255, 0.4) !important; }
+        .stButton button { background: #040e1b !important; color: #00d2ff !important; border: 1px solid rgba(0, 210, 255, 0.6) !important; font-weight: bold; }
     </style>
 """,
     unsafe_allow_html=True,
@@ -83,10 +43,6 @@ def init_db():
   c.execute(
       "CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " timestamp TEXT, content TEXT, category TEXT)"
-  )
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS documents_store (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, timestamp TEXT, title TEXT, category TEXT, content TEXT)"
   )
   c.execute(
       "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
@@ -120,7 +76,6 @@ class JarvisMind:
   def reason(self, query, api_key_override=""):
     q = query.strip()
     q_lower = q.lower()
-
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -148,7 +103,7 @@ class JarvisMind:
     ):
       return (
           f"Tu nombre completo es {self.creator}, naciste el {self.dob} y"
-          " cuentas con nacionalidad peruana (registrado en Central Command)."
+          " cuentas con nacionalidad peruana."
       )
 
     if any(
@@ -161,10 +116,10 @@ class JarvisMind:
         mails = c.fetchall()
         conn.close()
         if mails:
-          res_text = "[CORREOS ELECTRÓNICOS EN BANDEJA]:\n\n"
+          res_text = "[CORREOS EN BANDEJA]:\n\n"
           for m in mails:
             res_text += (
-                f"- De/Para: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n"
+                f"- De: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n"
                 f"  Fecha: {m[0]}\n\n"
             )
           return res_text
@@ -172,38 +127,6 @@ class JarvisMind:
           return "No hay correos registrados en la bandeja."
       except Exception as e:
         return f"Error al consultar correo: {e}"
-
-    try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute(
-          "SELECT title, category, expiry, content FROM legal_records WHERE"
-          " LOWER(title) LIKE ? OR LOWER(content) LIKE ?",
-          (f"%{q_lower}%", f"%{q_lower}%"),
-      )
-      legal_matches = c.fetchall()
-      c.execute(
-          "SELECT title, category, content FROM documents_store WHERE"
-          " LOWER(title) LIKE ? OR LOWER(content) LIKE ?",
-          (f"%{q_lower}%", f"%{q_lower}%"),
-      )
-      doc_matches = c.fetchall()
-      conn.close()
-
-      if legal_matches or doc_matches:
-        res_text = "[REGISTROS ENCONTRADOS EN CUSTODIA]:\n\n"
-        for lm in legal_matches:
-          res_text += (
-              f"- [Legal] {lm[0]} ({lm[1]}) [Vigencia: {lm[2]}]\n"
-              f"  Contenido: {lm[3]}\n\n"
-          )
-        for dm in doc_matches:
-          res_text += (
-              f"- [Archivo] {dm[0]} ({dm[1]})\n  Contenido: {dm[2]}\n\n"
-          )
-        return res_text
-    except Exception:
-      pass
 
     api_key_to_use = api_key_override.strip()
     if not api_key_to_use:
@@ -217,480 +140,263 @@ class JarvisMind:
       try:
         client = genai.Client(api_key=api_key_to_use)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=(
-                f"Eres J.A.R.V.I.S., el asistente personal de {self.creator}."
-                f" Responde breve, precisa y directamente a esta consulta: {q}"
+                f"Eres J.A.R.V.I.S., asistente personal de {self.creator}."
+                f" Responde directo a: {q}"
             ),
         )
         return response.text
       except Exception:
         pass
 
-    return (
-        f"[ANALISIS_CRITICO]: Procesada directiva '{q}' para"
-        f" {self.creator} con éxito."
-    )
+    return f"Procesada directiva '{q}' para {self.creator} con éxito."
 
 
 jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 st.markdown(
-    """
-    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | NÚCLEO ESTABLE // TEMP: 19.8°C
-    </div>
-""",
+    "<div style='color: #0088cc; font-size: 11px;'>SISTEMA ESTABLE // BERLIN"
+    " // NÚCLEOS COMPLETOS</div>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
-tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_memoria = (
-    st.tabs([
-        "[CONSOLE] CENTRAL COMMAND",
-        "[ARCHIVE] DOCUMENT REPOSITORY",
-        "[LEGAL] EXPEDIENTES Y CREDENCIALES",
-        "[GMAIL] GESTIÓN DE CORREOS",
-        "[FINANCE] LEDGER & BUDGET",
-        "[TELEMETRY] SYSTEM AUDIT",
-    ])
-)
+tab_consola, tab_legal, tab_gmail, tab_finanzas = st.tabs([
+    "[CONSOLE] GENERAL",
+    "[LEGAL] EXPEDIENTES",
+    "[GMAIL] CORREOS",
+    "[FINANCE] CONTABILIDAD",
+])
 
 with tab_consola:
-  col_telemetry, col_main = st.columns([1, 2.2])
-
-  with col_telemetry:
-    st.subheader("DIAGNÓSTICO Y ACCESOS")
+  col_t, col_m = st.columns([1, 2])
+  with col_t:
+    st.subheader("DIAGNÓSTICO")
     st.markdown(
         """
             <div class="telemetria-container">
-                <b>ESTADO DE NÚCLEOS:</b><br>
-                - Identidad: J.A.R.V.I.S.<br>
-                - Autonomía Cognitiva: ACTIVA<br>
-                - Módulo de Visión AI: SEGURO<br>
-                - Gestor de Comunicaciones: ACTIVO<br><br>
-                <b>CRONOGRAMA:</b><br>
-                - [!] Examen de Alemán (Próximo)<br>
-                - [!] Ausbildungsbeginn (St. Joseph)
+                - Asistente: J.A.R.V.I.S.<br>
+                - Usuaria: Marian Nathalia Bendives Ramos<br>
+                - Estado: Operativo
             </div>
         """,
         unsafe_allow_html=True,
     )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-      st.success("Sistemas sincronizados y operativos, Marian.")
-
-  with col_main:
-    st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
-
-    console_api_key = st.text_input(
-        "Gemini API Key (Opcional):",
-        type="password",
-        placeholder="Introduce tu clave API aquí...",
-        key="console_api_key_input",
-    )
-
-    user_input = st.text_area(
-        "Escribe tu instrucción o consulta de datos:",
-        placeholder=(
-            "Ej: ¿Tengo nuevos correos?, ¿Cuál es mi pasaporte?, etc..."
-        ),
-        label_visibility="collapsed",
-    )
-
-    if st.button("PROCESAR PENSAMIENTO", use_container_width=True):
-      if user_input:
-        reply = jarvis_brain.reason(user_input, console_api_key)
+  with col_m:
+    st.subheader("CONSOLA DE DIÁLOGO")
+    c_key = st.text_input("Gemini API Key (Opcional):", type="password")
+    u_input = st.text_area("Instrucción:")
+    if st.button("PROCESAR PENSAMIENTO"):
+      if u_input:
+        reply = jarvis_brain.reason(u_input, c_key)
         st.markdown(
-            f"""
-                <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
-                    <b>RESPUESTA Y TELEMETRÍA DE J.A.R.V.I.S.:</b><br><br>
-                    {reply}
-                </div>
-            """,
+            f"<div class='telemetria-container'>{reply}</div>",
             unsafe_allow_html=True,
         )
-      else:
-        st.warning("Introduce una directiva válida para procesar.")
-
-with tab_docs:
-  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS")
-  doc_title_input = st.text_input(
-      "Título o Nombre del Documento:",
-      placeholder="Ej: Seguro Social, Contrato de Trabajo, Nota médica...",
-  )
-  doc_category_input = st.selectbox(
-      "Sector / Categoría:",
-      ["Salud / Medicina", "Finanzas / Laboral", "Personal", "Otro"],
-  )
-  doc_input_mode = st.radio(
-      "Método de Ingreso de Documentación:", ["Fotografía (Imagen)", "Escrito"]
-  )
-
-  doc_content_to_save = ""
-  uploaded_file = None
-  written_text_input = ""
-
-  if doc_input_mode == "Fotografía (Imagen)":
-    uploaded_file = st.file_uploader(
-        "Sube la fotografía del documento:", type=["jpg", "png", "jpeg"]
-    )
-    if uploaded_file is not None:
-      doc_content_to_save = f"[DOCUMENTO FOTOGRÁFICO INDEXADO: {uploaded_file.name}]"
-  else:
-    written_text_input = st.text_area(
-        "Redacta o pega el contenido escrito del documento:"
-    )
-    if written_text_input:
-      doc_content_to_save = written_text_input
-
-  if st.button("ARCHIVAR EN REPOSITORIO", use_container_width=True):
-    if doc_title_input and doc_content_to_save:
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO documents_store (timestamp, title, category, content)"
-            " VALUES (?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                doc_title_input,
-                doc_category_input,
-                doc_content_to_save,
-            ),
-        )
-        conn.commit()
-        conn.close()
-        if uploaded_file is not None and uploaded_file.type.startswith("image/"):
-          st.image(
-              uploaded_file, caption=f"Imagen archivada: {doc_title_input}"
-          )
-        st.success(
-            f"Documento '{doc_title_input}' archivado e indexado con éxito."
-        )
-      except Exception as e:
-        st.error(f"Error de almacenamiento: {e}")
-    else:
-      st.warning("Por favor, ingresa un título y proporciona el contenido.")
-
-  st.markdown("---")
-  st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
-  try:
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute(
-        "SELECT id, timestamp, title, category, content FROM documents_store"
-    )
-    docs = c.fetchall()
-    conn.close()
-
-    if docs:
-      for doc in docs:
-        with st.expander(
-            f"[{doc[0]}] {doc[2] or 'Sin Título'} ({doc[3] or 'General'}) //"
-            f" REGISTRO: {doc[1]}"
-        ):
-          st.text_area(
-              "Contenido / Detalles:",
-              doc[4],
-              height=100,
-              key=f"doc_view_{doc[0]}",
-          )
-    else:
-      st.info("El repositorio documental se encuentra vacío.")
-  except Exception as e:
-    st.error(f"Error al leer el repositorio: {e}")
 
 with tab_legal:
-  st.subheader("CUSTODIA Y ANÁLISIS INTELIGENTE DE EXPEDIENTES LEGALES")
-  if st.button("PURGAR REGISTROS ANTERIORES"):
+  st.subheader("CUSTODIA DE EXPEDIENTES LEGALES")
+  if st.button("LIMPIAR REGISTROS LEGALES"):
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
       c.execute("DELETE FROM legal_records")
       conn.commit()
       conn.close()
-      st.success("Base de datos de expedientes purgada correctamente.")
+      st.success("Registros limpiados.")
       st.rerun()
     except Exception as e:
-      st.error(f"Error al purgar: {e}")
+      st.error(f"Error: {e}")
 
-  st.markdown("---")
-  custom_api_key = st.text_input(
-      "Gemini API Key (Opcional si ya está en Secrets):",
-      type="password",
-      placeholder="Introduce tu clave API aquí...",
-      key="legal_key",
-  )
-
-  st.markdown(
-      "**ANÁLISIS AUTOMÁTICO DE DOCUMENTOS POR VISIÓN ARTIFICIAL:**"
-  )
-  legal_title_input = st.text_input(
-      "Título del Expediente Legal (Ej: Pasaporte, Visa, Seguro Social):",
-      key="legal_title_field",
-  )
+  legal_title = st.text_input("Título del Documento (Ej: Pasaporte):")
   legal_img = st.file_uploader(
-      "Sube la foto de tu documento legal para análisis AI:",
-      type=["jpg", "png", "jpeg"],
-      key="legal_vision_upload",
+      "Sube tu documento:", type=["jpg", "png", "jpeg"]
   )
 
-  if legal_img is not None:
-    img_bytes = legal_img.read()
-    st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
-    if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
-      if not HAS_GENAI:
-        st.error("El módulo de visión AI requiere 'google-genai'.")
-      else:
-        with st.spinner(
-            "J.A.R.V.I.S. analizando con profundidad y extrayendo todos los"
-            " datos clave..."
-        ):
-          try:
-            api_key_to_use = custom_api_key.strip()
-            if not api_key_to_use:
-              try:
-                if "GEMINI_API_KEY" in st.secrets:
-                  api_key_to_use = st.secrets["GEMINI_API_KEY"]
-              except Exception:
-                pass
-
-            if not api_key_to_use:
-              st.error("No se detectó ninguna API Key válida.")
-            else:
-              client = genai.Client(api_key=api_key_to_use)
-              response = client.models.generate_content(
-                  model="gemini-2.5-flash",
-                  contents=[
-                      types.Part.from_bytes(
-                          data=img_bytes, mime_type=legal_img.type
-                      ),
-                      (
-                          "Extrae con absoluta precisión, detalle y abundancia"
-                          " toda la información, campos, números, fechas,"
-                          " nombres y datos clave de este documento. No"
-                          " omitas ningún detalle relevante."
-                      ),
-                  ],
-              )
-              extracted_analysis = response.text
-              final_title = (
-                  legal_title_input
-                  if legal_title_input
-                  else legal_img.name
-              )
-
-              conn = sqlite3.connect(DB_NAME)
-              c = conn.cursor()
-              c.execute(
-                  "INSERT INTO legal_records (timestamp, title, category,"
-                  " expiry, content) VALUES (?, ?, ?, ?, ?)",
-                  (
-                      str(datetime.datetime.now()),
-                      final_title,
-                      "Expediente Legal Analizado",
-                      "Ver detalle extraído",
-                      extracted_analysis,
-                  ),
-              )
-              conn.commit()
-              conn.close()
-              st.success("¡Análisis visual completado y archivado en custodia!")
-              st.markdown(
-                  f"""
-                <div class="telemetria-container" style="margin-top: 10px;">
-                    <b>DATOS EXTRAÍDOS POR J.A.R.V.I.S.:</b><br><br>
-                    {extracted_analysis}
-                </div>
-            """,
-                  unsafe_allow_html=True,
-              )
-          except Exception as e:
-            st.error(f"Error al conectar con el núcleo de visión AI: {e}")
+  if legal_img is not None and st.button("EJECUTAR ANÁLISIS VISUAL"):
+    if not HAS_GENAI:
+      st.error("Falta el módulo google-genai.")
+    else:
+      try:
+        img_bytes = legal_img.read()
+        st.image(legal_img, width=300)
+        client = genai.Client(
+            api_key=c_key.strip()
+            if c_key
+            else st.secrets.get("GEMINI_API_KEY", None)
+        )
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=[
+                types.Part.from_bytes(data=img_bytes, mime_type=legal_img.type),
+                (
+                    "Extrae con absoluto detalle: Título, Categoría, Vencimiento"
+                    " y todos los datos clave."
+                ),
+            ],
+        )
+        res_text = response.text
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO legal_records (timestamp, title, category, expiry,"
+            " content) VALUES (?, ?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                legal_title if legal_title else legal_img.name,
+                "Expediente Legal",
+                "Ver detalle",
+                res_text,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        st.success("¡Guardado con éxito!")
+        st.markdown(
+            f"<div class='telemetria-container'>{res_text}</div>",
+            unsafe_allow_html=True,
+        )
+      except Exception as e:
+        st.error(f"Error en visión AI: {e}")
 
   st.markdown("---")
-  st.subheader("EXPEDIENTES CUSTODIADOS")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute(
-        "SELECT id, timestamp, title, category, expiry, content FROM"
-        " legal_records"
+        "SELECT id, timestamp, title, content FROM legal_records ORDER BY id DESC"
     )
-    legal_rows = c.fetchall()
+    rows = c.fetchall()
     conn.close()
-    if legal_rows:
-      for lr in legal_rows:
-        with st.expander(
-            f"[{lr[0]}] {lr[2]} ({lr[3]}) // REGISTRO: {lr[1]}"
-        ):
-          st.text_area(
-              "Datos extraídos:", lr[5], height=140, key=f"legal_view_{lr[0]}"
-          )
-    else:
-      st.info("No hay expedientes legales registrados actualmente.")
-  except Exception as e:
-    st.error(f"Error al cargar expedientes: {e}")
+    for r in rows:
+      with st.expander(f"[{r[0]}] {r[2]} ({r[1]})"):
+        st.write(r[3])
+  except Exception:
+    pass
 
 with tab_gmail:
   st.subheader("GESTIÓN Y REGISTRO DE CORREOS")
   with st.form("mail_form"):
-    mail_sender = st.text_input(
-        "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
-    )
-    mail_subject = st.text_input("Asunto del correo:")
-    mail_snippet = st.text_area("Contenido o extracto principal:")
-    mail_submit = st.form_submit_button(
-        "REGISTRAR CORREO EN BANDEJA", use_container_width=True
-    )
-
-    if mail_submit and mail_sender and mail_subject:
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
-            " VALUES (?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                mail_sender,
-                mail_subject,
-                mail_snippet,
-            ),
-        )
-        conn.commit()
-        conn.close()
-        st.success("¡Correo registrado correctamente en la bandeja!")
-        st.rerun()
-      except Exception as e:
-        st.error(f"Error al registrar correo: {e}")
+    m_sender = st.text_input("Remitente (Ej: St. Joseph Krankenhaus):")
+    m_subject = st.text_input("Asunto:")
+    m_snippet = st.text_area("Contenido / Mensaje:")
+    if st.form_submit_button("REGISTRAR CORREO"):
+      if m_sender and m_subject:
+        try:
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO gmail_cache (timestamp, sender, subject, snippet)"
+              " VALUES (?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  m_sender,
+                  m_subject,
+                  m_snippet,
+              ),
+          )
+          conn.commit()
+          conn.close()
+          st.success("¡Correo registrado!")
+          st.rerun()
+        except Exception as e:
+          st.error(f"Error: {e}")
 
   st.markdown("---")
-  st.subheader("CORREOS EN BANDEJA CENTRAL")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT id, timestamp, sender, subject, snippet FROM gmail_cache")
-    mail_rows = c.fetchall()
+    c.execute(
+        "SELECT id, timestamp, sender, subject, snippet FROM gmail_cache"
+    )
+    m_rows = c.fetchall()
     conn.close()
-
-    if mail_rows:
-      for mr in mail_rows:
-        with st.expander(f"[{mr[0]}] {mr[2]} — De: {mr[1]}"):
-          st.write(f"**Fecha y Hora:** {mr[1]}")
-          st.write(f"**Contenido / Extracto:** {mr[4]}")
-    else:
-      st.info("No hay correos registrados actualmente.")
-  except Exception as e:
-    st.error(f"Error al cargar correos: {e}")
+    for mr in m_rows:
+      with st.expander(f"[{mr[0]}] {mr[2]} — De: {mr[1]}"):
+        st.write(f"Fecha: {mr[1]}")
+        st.write(f"Mensaje: {mr[4]}")
+  except Exception:
+    pass
 
 with tab_finanzas:
-  st.subheader("CONTROL Y GESTIÓN FINANCIERA")
-
-  with st.form("capital_form"):
-    st.markdown("**1. ESTABLECER CAPITAL / DINERO INICIAL**")
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-      base_efectivo = st.number_input(
-          "Dinero Físico Inicial (€):", min_value=0.0, step=1.0, key="base_ef"
+  st.subheader("CONTROL FINANCIERO Y GASTOS")
+  with st.form("cap_form"):
+    st.markdown("**1. CAPITAL INICIAL**")
+    c1, c2 = st.columns(2)
+    ef_ini = c1.number_input("Dinero Físico (€):", min_value=0.0, step=1.0)
+    tj_ini = c2.number_input("Dinero en Tarjeta (€):", min_value=0.0, step=1.0)
+    if st.form_submit_button("ESTABLECER CAPITAL INICIAL"):
+      conn = sqlite3.connect(DB_NAME)
+      c = conn.cursor()
+      c.execute(
+          "INSERT INTO finances (timestamp, concept, amount, type, category,"
+          " method) VALUES (?, ?, ?, ?, ?, ?)",
+          (
+              str(datetime.datetime.now()),
+              "Capital Inicial Físico",
+              ef_ini,
+              "Ingreso",
+              "Capital Base",
+              "Efectivo",
+          ),
       )
-    with col_c2:
-      base_tarjeta = st.number_input(
-          "Dinero en Tarjeta Inicial (€):", min_value=0.0, step=1.0, key="base_tj"
+      c.execute(
+          "INSERT INTO finances (timestamp, concept, amount, type, category,"
+          " method) VALUES (?, ?, ?, ?, ?, ?)",
+          (
+              str(datetime.datetime.now()),
+              "Capital Inicial Tarjeta",
+              tj_ini,
+              "Ingreso",
+              "Capital Base",
+              "Tarjeta",
+          ),
       )
-    if st.form_submit_button("ACTUALIZAR CAPITAL BASE", use_container_width=True):
-      try:
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO finances (timestamp, concept, amount, type, category,"
-            " method) VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                "Capital Base - Efectivo",
-                base_efectivo,
-                "Ingreso",
-                "Capital Base",
-                "Efectivo",
-            ),
-        )
-        c.execute(
-            "INSERT INTO finances (timestamp, concept, amount, type, category,"
-            " method) VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                str(datetime.datetime.now()),
-                "Capital Base - Tarjeta",
-                base_tarjeta,
-                "Ingreso",
-                "Capital Base",
-                "Tarjeta",
-            ),
-        )
-        conn.commit()
-        conn.close()
-        st.success("¡Capital base actualizado con éxito!")
-        st.rerun()
-      except Exception as e:
-        st.error(f"Error al actualizar capital: {e}")
+      conn.commit()
+      conn.close()
+      st.success("Capital actualizado.")
+      st.rerun()
 
   st.markdown("---")
+  col_i, col_g = st.columns(2)
 
-  col_ing, col_gas = st.columns(2)
-
-  with col_ing:
+  with col_i:
     st.markdown("**2. REGISTRAR INGRESO**")
-    with st.form("income_form"):
-      i_concept = st.text_input(
-          "Concepto (Ej: Pago mensual, Propina turno)"
-      )
-      i_amount = st.number_input(
-          "Monto (€):", min_value=0.0, step=1.0, key="inc_amt"
-      )
-      i_category = st.selectbox(
-          "Fuente de Ingreso:", ["Salario", "Propinas", "Otro Ingreso"]
-      )
-      i_method = st.selectbox(
-          "Método:", ["Efectivo", "Tarjeta"], key="inc_meth"
-      )
+    with st.form("inc_form"):
+      inc_con = st.text_input("Concepto (Ej: Salario, Propina):")
+      inc_amt = st.number_input("Monto (€):", min_value=0.0, step=1.0)
+      inc_cat = st.selectbox("Fuente:", ["Salario", "Propinas", "Otro Ingreso"])
+      inc_met = st.selectbox("Método:", ["Efectivo", "Tarjeta"])
+      if st.form_submit_button("GUARDAR INGRESO"):
+        if inc_con:
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO finances (timestamp, concept, amount, type,"
+              " category, method) VALUES (?, ?, ?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  inc_con,
+                  inc_amt,
+                  "Ingreso",
+                  inc_cat,
+                  inc_met,
+              ),
+          )
+          conn.commit()
+          conn.close()
+          st.success("Ingreso guardado.")
+          st.rerun()
 
-      if st.form_submit_button("REGISTRAR INGRESO", use_container_width=True):
-        if i_concept:
-          try:
-            conn = sqlite3.connect(DB_NAME)
-            c = conn.cursor()
-            c.execute(
-                "INSERT INTO finances (timestamp, concept, amount, type,"
-                " category, method) VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    str(datetime.datetime.now()),
-                    i_concept,
-                    i_amount,
-                    "Ingreso",
-                    i_category,
-                    i_method,
-                ),
-            )
-            conn.commit()
-            conn.close()
-            st.success(f"Ingreso '{i_concept}' registrado correctamente.")
-            st.rerun()
-          except Exception as e:
-            st.error(f"Error: {e}")
-        else:
-          st.warning("Introduce un concepto válido.")
-
-  with col_gas:
+  with col_g:
     st.markdown("**3. REGISTRAR GASTO**")
-    with st.form("expense_form"):
-      e_concept = st.text_input("Concepto (Ej: Supermercado, Compra ropa)")
-      e_amount = st.number_input(
-          "Monto (€):", min_value=0.0, step=1.0, key="exp_amt"
-      )
-      e_category = st.selectbox(
-          "Categoría de Gasto:",
+    with st.form("exp_form"):
+      exp_con = st.text_input("Concepto (Ej: Comida, Alquiler):")
+      exp_amt = st.number_input("Monto (€):", min_value=0.0, step=1.0, key="e_amt")
+      exp_cat = st.selectbox(
+          "Categoría:",
           [
               "Alquiler",
               "Comida",
@@ -698,43 +404,37 @@ with tab_finanzas:
               "Internet",
               "Ropa",
               "Salidas",
-              "Accidentes / Urgencias",
-              "Reserva / Ahorro",
+              "Accidentes",
+              "Reserva",
               "Otro Gasto",
           ],
       )
-      e_method = st.selectbox(
-          "Método de Pago:", ["Efectivo", "Tarjeta"], key="exp_meth"
+      exp_met = st.selectbox(
+          "Método de Pago:", ["Efectivo", "Tarjeta"], key="e_met"
       )
-
-      if st.form_submit_button("REGISTRAR GASTO", use_container_width=True):
-        if e_concept:
-          try:
-            conn = sqlite3.connect(DB_NAME)
-            c = conn.cursor()
-            c.execute(
-                "INSERT INTO finances (timestamp, concept, amount, type,"
-                " category, method) VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    str(datetime.datetime.now()),
-                    e_concept,
-                    e_amount,
-                    "Gasto",
-                    e_category,
-                    e_method,
-                ),
-            )
-            conn.commit()
-            conn.close()
-            st.success(f"Gasto '{e_concept}' registrado correctamente.")
-            st.rerun()
-          except Exception as e:
-            st.error(f"Error: {e}")
-        else:
-          st.warning("Introduce un concepto válido.")
+      if st.form_submit_button("GUARDAR GASTO"):
+        if exp_con:
+          conn = sqlite3.connect(DB_NAME)
+          c = conn.cursor()
+          c.execute(
+              "INSERT INTO finances (timestamp, concept, amount, type,"
+              " category, method) VALUES (?, ?, ?, ?, ?, ?)",
+              (
+                  str(datetime.datetime.now()),
+                  exp_con,
+                  exp_amt,
+                  "Gasto",
+                  exp_cat,
+                  exp_met,
+              ),
+          )
+          conn.commit()
+          conn.close()
+          st.success("Gasto guardado.")
+          st.rerun()
 
   st.markdown("---")
-  st.subheader("BALANCE GLOBAL Y LIBRO CONTABLE")
+  st.subheader("RESUMEN Y BALANCE")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -742,61 +442,33 @@ with tab_finanzas:
         "SELECT id, timestamp, concept, amount, type, category, method FROM"
         " finances"
     )
-    fin_rows = c.fetchall()
+    rows = c.fetchall()
     conn.close()
 
-    if fin_rows:
-      total_ingresos = sum(r[3] for r in fin_rows if r[4] == "Ingreso")
-      total_gastos = sum(r[3] for r in fin_rows if r[4] == "Gasto")
-      balance_neto = total_ingresos - total_gastos
+    if rows:
+      t_ing = sum(r[3] for r in rows if r[4] == "Ingreso")
+      t_gas = sum(r[3] for r in rows if r[4] == "Gasto")
+      neto = t_ing - t_gas
 
-      efectivo_ing = sum(
-          r[3] for r in fin_rows if r[4] == "Ingreso" and r[6] == "Efectivo"
-      )
-      efectivo_gas = sum(
-          r[3] for r in fin_rows if r[4] == "Gasto" and r[6] == "Efectivo"
-      )
-      balance_efectivo = efectivo_ing - efectivo_gas
+      ef_ing = sum(r[3] for r in rows if r[4] == "Ingreso" and r[6] == "Efectivo")
+      ef_gas = sum(r[3] for r in rows if r[4] == "Gasto" and r[6] == "Efectivo")
+      ef_tot = ef_ing - ef_gas
 
-      tarjeta_ing = sum(
-          r[3] for r in fin_rows if r[4] == "Ingreso" and r[6] == "Tarjeta"
-      )
-      tarjeta_gas = sum(
-          r[3] for r in fin_rows if r[4] == "Gasto" and r[6] == "Tarjeta"
-      )
-      balance_tarjeta = tarjeta_ing - tarjeta_gas
+      tj_ing = sum(r[3] for r in rows if r[4] == "Ingreso" and r[6] == "Tarjeta")
+      tj_gas = sum(r[3] for r in rows if r[4] == "Gasto" and r[6] == "Tarjeta")
+      tj_tot = tj_ing - tj_gas
 
-      col_m1, col_m2, col_m3 = st.columns(3)
-      col_m1.metric("Dinero Físico (Efectivo)", f"{balance_efectivo:.2f} €")
-      col_m2.metric("Dinero en Tarjeta", f"{balance_tarjeta:.2f} €")
-      col_m3.metric("Balance Neto Total", f"{balance_neto:.2f} €")
+      m1, m2, m3 = st.columns(3)
+      m1.metric("Efectivo Físico", f"{ef_tot:.2f} €")
+      m2.metric("En Tarjeta", f"{tj_tot:.2f} €")
+      m3.metric("Balance Total", f"{neto:.2f} €")
 
-      st.markdown("<br>", unsafe_allow_html=True)
-      st.markdown("**HISTORIAL DE MOVIMIENTOS:**")
-      for fr in fin_rows:
+      st.markdown("<br>**MOVIMIENTOS:**", unsafe_allow_html=True)
+      for r in rows:
         st.info(
-            f"[{fr[4]}] {fr[2]} — **{fr[3]:.2f} €** | Categoría: {fr[5]} |"
-            f" Método: {fr[6]} ({fr[1]})"
+            f"[{r[4]}] {r[2]} — **{r[3]:.2f} €** | Cat: {r[5]} | Método: {r[6]}"
         )
     else:
-      st.info("No se registran movimientos financieros actualmente.")
+      st.info("No hay registros financieros.")
   except Exception as e:
-    st.error(f"Error al cargar contabilidad: {e}")
-
-with tab_memoria:
-  st.subheader("AUDITORÍA DE NÚCLEO Y MEMORIA CENTRAL")
-  if st.button("CONSULTAR HISTORIAL DE DIÁLOGO"):
-    try:
-      conn = sqlite3.connect(DB_NAME)
-      c = conn.cursor()
-      c.execute("SELECT id, timestamp, content, category FROM memory")
-      rows = c.fetchall()
-      conn.close()
-      if rows:
-        st.write(f"Se han recuperado **{len(rows)}** registros de auditoría:")
-        for row in rows:
-          st.info(f"[{row[0]}] ({row[3]}) {row[1]}: {row[2]}")
-      else:
-        st.info("La base de datos central se encuentra limpia.")
-    except Exception as e:
-      st.error(f"Error al leer auditoría: {e}")
+    st.error(f"Error al cargar finanzas: {e}")
