@@ -49,6 +49,20 @@ st.markdown(
             box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
             margin-bottom: 12px;
         }
+
+        .stark-alert-modal {
+            background: rgba(4, 12, 24, 0.98);
+            border: 1px solid #00ffcc;
+            border-left: 4px solid #00ffcc;
+            border-radius: 4px;
+            padding: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
         
         .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
             background-color: #050f1d !important;
@@ -140,7 +154,6 @@ class JarvisMind:
     except Exception:
       pass
 
-    # Detección y almacenamiento inteligente de recordatorios
     if any(
         w in q_lower
         for w in [
@@ -159,14 +172,13 @@ class JarvisMind:
         c.execute(
             "INSERT INTO reminders (timestamp, event_date, description)"
             " VALUES (?, ?, ?)",
-            (str(datetime.datetime.now()), "Pendiente de ejecución", q),
+            (str(datetime.datetime.now()), "Lunes 7 de Septiembre", q),
         )
         conn.commit()
         conn.close()
         return (
-            "Entendido, Marian. He procesado tu directiva, registrado el"
-            " evento en mi memoria central y lo mantendré vigilado en el"
-            " sistema."
+            "Directiva procesada. Evento registrado en memoria central y en"
+            "lazado al sistema de alertas tácticas."
         )
       except Exception as e:
         return f"Error al registrar recordatorio: {e}"
@@ -267,7 +279,7 @@ jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# HUD superior con el componente iframe exacto que garantiza la actualización en vivo de fecha y hora
+# HUD superior con reloj en tiempo real
 st.markdown(
     """
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
@@ -296,6 +308,28 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+# Viñeta modal táctica automática si existen recordatorios en la base de datos
+try:
+  conn = sqlite3.connect(DB_NAME)
+  c = conn.cursor()
+  c.execute("SELECT description FROM reminders")
+  active_reminders = c.fetchall()
+  conn.close()
+
+  if active_reminders:
+    rems_html = "<br>".join([f"- {r[0]}" for r in active_reminders])
+    st.markdown(
+        f"""
+        <div class="stark-alert-modal">
+            <b>[ALERTA TÁCTICA DE SISTEMA] // EVENTOS ACTIVOS EN MEMORIA:</b><br><br>
+            {rems_html}
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+except Exception:
+  pass
 
 tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_alarmas, tab_memoria = (
     st.tabs([
@@ -536,7 +570,7 @@ with tab_gmail:
     mail_subject = st.text_input("Asunto del correo:")
     mail_snippet = st.text_area("Contenido o extracto principal:")
     mail_submit = st.form_submit_button(
-        "REGISTRAR CORREO EN BANDEJA", use_container_width=True
+        "REGISTRAR CORREOR EN BANDEJA", use_container_width=True
     )
 
     if mail_submit and mail_sender and mail_subject:
