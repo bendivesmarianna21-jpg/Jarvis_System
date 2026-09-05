@@ -209,34 +209,35 @@ class JarvisMind:
 jarvis_brain = JarvisMind()
 
 ahora_berlin = datetime.datetime.now()
-fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
+fecha_inicial = ahora_berlin.strftime(
+    "%A, %d de %B de %Y - %H:%M:%S"
+).upper()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Reloj digital en vivo 100% autónomo (separado de f-strings para evitar errores de sintaxis)
+# Reloj digital en vivo con hora inicial de Python para evitar carga en blanco
 st.markdown(
-    """
+    f"""
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">SINCRO...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">{fecha_inicial}</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
-    (function() {
-        if (window.jarvisRealtimeClock) {
+    (function() {{
+        if (window.jarvisRealtimeClock) {{
             clearInterval(window.jarvisRealtimeClock);
-        }
-        function tickClock() {
+        }}
+        function tickClock() {{
             const now = new Date();
-            const options = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const options = {{ timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
             const formatter = new Intl.DateTimeFormat('es-ES', options);
             const el = document.getElementById('reloj-jarvis-vivo');
-            if (el) {
+            if (el) {{
                 el.innerText = formatter.format(now).toUpperCase();
-            }
-        }
-        tickClock();
+            }}
+        }}
         window.jarvisRealtimeClock = setInterval(tickClock, 1000);
-    })();
+    }})();
     </script>
 """,
     unsafe_allow_html=True,
