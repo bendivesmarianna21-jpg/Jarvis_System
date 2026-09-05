@@ -584,7 +584,7 @@ with tab_legal:
   if "processed_doc_sig" not in st.session_state:
     st.session_state.processed_doc_sig = None
 
-  if st.button("PURGAR REGISTROS DUPLICADOS Y ANTERIORES"):
+  if st.button("PURGAR REGISTROS DUPLICADOS"):
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -593,7 +593,7 @@ with tab_legal:
       conn.close()
       export_to_json_backup()
       st.session_state.processed_doc_sig = None
-      st.success("Base de datos purgada correctamente.")
+      st.success("Registros duplicados purgados correctamente.")
       st.rerun()
     except Exception as e:
       st.error(f"Error al purgar: {e}")
@@ -619,15 +619,14 @@ with tab_legal:
   )
 
   if legal_img is not None:
-    img_bytes = legal_img.read()
+    img_bytes = legal_img.getvalue()
     doc_signature = f"{legal_img.name}_{len(img_bytes)}"
     st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
 
     if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
       if st.session_state.processed_doc_sig == doc_signature:
         st.warning(
-            "Este documento ya fue analizado y registrado en esta sesión para"
-            " evitar duplicados."
+            "Este documento ya fue analizado y registrado en esta sesión."
         )
       elif not HAS_GENAI:
         st.error("El módulo de visión AI requiere 'google-genai'.")
@@ -687,10 +686,7 @@ with tab_legal:
               export_to_json_backup()
 
               st.session_state.processed_doc_sig = doc_signature
-              st.success(
-                  "¡Análisis visual completado y archivado con persistencia y sin"
-                  " duplicados!"
-              )
+              st.success("¡Análisis completado y guardado sin duplicados!")
               st.markdown(
                   f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
