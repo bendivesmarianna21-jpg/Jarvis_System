@@ -20,54 +20,62 @@ st.set_page_config(
     layout="wide",
 )
 
+# Estética HUD Avanzada: Paneles oscuros, bordes de neón cian y fuentes de consola
 st.markdown(
     """
     <style>
         .stApp {
-            background-color: #03070c;
+            background-color: #02050a;
             color: #00d2ff;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Courier New', Courier, monospace;
         }
         #MainMenu, footer, header {visibility: hidden;}
 
         h1, h2, h3, h4 {
             color: #00d2ff !important;
             font-family: 'Courier New', Courier, monospace !important;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             text-transform: uppercase;
         }
 
+        /* Paneles laterales estilo HUD */
+        .sidebar .st-emotion-cache-16txtl3 {
+            background-color: #040c18 !important;
+        }
+
         .telemetria-container {
-            background: rgba(4, 12, 24, 0.9);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: 6px;
-            padding: 16px;
+            background: rgba(3, 14, 28, 0.95);
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            border-radius: 4px;
+            padding: 14px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 11px;
             color: #7ab8ff;
-            box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.05);
+            box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.08);
+            margin-bottom: 10px;
         }
         
         .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
-            background-color: #050f1d !important;
+            background-color: #040c18 !important;
             color: #00d2ff !important;
-            border: 1px solid rgba(0, 210, 255, 0.4) !important;
+            border: 1px solid rgba(0, 210, 255, 0.5) !important;
             font-family: 'Courier New', Courier, monospace !important;
         }
 
         .stButton button {
-            background: #040e1b !important;
+            background: #030e1b !important;
             color: #00d2ff !important;
             font-weight: 600;
-            border: 1px solid rgba(0, 210, 255, 0.6) !important;
-            border-radius: 4px !important;
+            border: 1px solid rgba(0, 210, 255, 0.7) !important;
+            border-radius: 3px !important;
             font-family: 'Courier New', Courier, monospace !important;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
         .stButton button:hover {
             background: #00d2ff !important;
-            color: #03070c !important;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.8) !important;
+            color: #02050a !important;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.9) !important;
         }
     </style>
 """,
@@ -202,37 +210,73 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-# Fecha estática de Berlín y Reloj Dinámico en vivo por JavaScript
+# ==========================================
+# PANEL LATERAL (APROVECHANDO LOS BORDES)
+# ==========================================
+with st.sidebar:
+  st.markdown("### ⚡ NÚCLEO STARK // HUD")
+  st.markdown(
+      """
+        <div class="telemetria-container">
+            <b>ESTADO DEL SISTEMA:</b><br>
+            - Operativo: 99.9%<br>
+            - Ubicación: Berlín, DE<br>
+            - Enlace: Encriptado AES-256<br>
+            - Temperatura núcleo: 19.8°C
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+
+  st.markdown("### 📅 CRONOGRAMA CLÍNICO")
+  st.markdown(
+      """
+        <div class="telemetria-container">
+            - [!] Examen telc Deutsch B2<br>
+            - [!] Ausbildungsbeginn (St. Joseph)<br>
+            - Rotación Nephrologie / Orthopädie
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+
+  st.markdown("### 🛠️ ACCESOS RÁPIDOS")
+  if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
+    st.success("¡Sistemas sincronizados, Marian!")
+
+# ==========================================
+# PANTALLA PRINCIPAL (WIDESCREEN TOTAL)
+# ==========================================
 ahora_berlin = datetime.datetime.now()
 fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Contenedor superior con JavaScript puro para que los segundos avancen solos
+# Barra superior con reloj dinámico corregido en tiempo real
 st.markdown(
     f"""
-    <div style='background: rgba(0, 210, 255, 0.05); border-left: 3px solid #00d2ff; padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1px; margin-bottom: 15px;'>
-        <b>UBICACIÓN:</b> BERLÍN, ALEMANIA &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL (BERLÍN):</b> <span id="reloj-jarvis" style="color: #00ffcc; font-weight: bold;">--:--:--</span> &nbsp;|&nbsp; <b>CLIMA:</b> 19.8°C (ESTABLE)
+    <div style='background: rgba(0, 210, 255, 0.05); border-left: 3px solid #00d2ff; padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 20px;'>
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> <span id="reloj-jarvis" style="color: #00ffcc; font-weight: bold;">00:00:00</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
-    function actualizarReloj() {{
-        const ahora = new Date();
-        // Forzar zona horaria de Berlín (Europe/Berlin)
-        const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
-        const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
-        const elem = document.getElementById('reloj-jarvis');
-        if (elem) {{
-            elem.innerText = horaBerling;
-        }}
-    }}
-    setInterval(actualizarReloj, 1000);
-    actualizarReloj();
+    if (typeof timerReloj === 'undefined') {
+        const timerReloj = setInterval(function() {
+            const ahora = new Date();
+            const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
+            try {
+                const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
+                const elem = document.getElementById('reloj-jarvis');
+                if (elem) {{
+                    elem.innerText = horaBerling;
+                }}
+            } catch(e) {{}}
+        }, 1000);
+    }
     </script>
 """,
     unsafe_allow_html=True,
 )
-st.markdown("---")
 
 tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_alarmas, tab_memoria = (
     st.tabs([
@@ -241,67 +285,39 @@ tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_alarmas, tab_memo
         "[LEGAL] EXPEDIENTES",
         "[GMAIL] CORREOS",
         "[FINANCE] CONTABILIDAD",
-        "[ALARMS] CRONÓMETRO / ALARMA",
+        "[ALARMS] CRONÓMETRO",
         "[TELEMETRY] AUDITORÍA",
     ])
 )
 
 with tab_consola:
-  col_telemetry, col_main = st.columns([1, 2.2])
+  st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO TÁCTICO")
+  console_api_key = st.text_input(
+      "Gemini API Key (Opcional):",
+      type="password",
+      placeholder="Introduce tu clave API aquí...",
+      key="console_api_key_input",
+  )
+  user_input = st.text_area(
+      "Escribe tu instrucción o consulta de datos:",
+      placeholder="Ej: ¿Tengo nuevos correos?, ¿Cuál es mi pasaporte?, etc...",
+      label_visibility="collapsed",
+  )
 
-  with col_telemetry:
-    st.subheader("DIAGNÓSTICO")
-    st.markdown(
-        """
-            <div class="telemetria-container">
-                <b>ESTADO DE NÚCLEOS:</b><br>
-                - Identidad: J.A.R.V.I.S.<br>
-                - Usuaria: Marian Nathalia Bendives Ramos<br>
-                - Motor SQLite: ÓPTIMO<br>
-                - Módulo de Visión AI: SEGURO<br>
-                - Gestor de Comunicaciones: ACTIVO<br><br>
-                <b>CRONOGRAMA:</b><br>
-                - [!] Examen de Alemán (Próximo)<br>
-                - [!] Ausbildungsbeginn (St. Joseph)
-            </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
-      st.success("Sistemas sincronizados y operativos, Marian.")
-
-  with col_main:
-    st.subheader("CONSOLA DE DIÁLOGO")
-    console_api_key = st.text_input(
-        "Gemini API Key (Opcional):",
-        type="password",
-        placeholder="Introduce tu clave API aquí...",
-        key="console_api_key_input",
-    )
-    user_input = st.text_area(
-        "Escribe tu instrucción o consulta de datos:",
-        placeholder=(
-            "Ej: ¿Tengo nuevos correos?, ¿Cuál es mi pasaporte?, etc..."
-        ),
-        label_visibility="collapsed",
-    )
-
-    if st.button("PROCESAR PENSAMIENTO", use_container_width=True):
-      if user_input:
-        reply = jarvis_brain.reason(user_input, console_api_key)
-        st.markdown(
-            f"""
+  if st.button("PROCESAR PENSAMIENTO", use_container_width=True):
+    if user_input:
+      reply = jarvis_brain.reason(user_input, console_api_key)
+      st.markdown(
+          f"""
                 <div class="telemetria-container" style="margin-top: 15px; border-color: rgba(0, 210, 255, 0.7);">
                     <b>RESPUESTA Y TELEMETRÍA DE J.A.R.V.I.S.:</b><br><br>
                     {reply}
                 </div>
             """,
-            unsafe_allow_html=True,
-        )
-      else:
-        st.warning("Introduce una directiva válida para procesar.")
+          unsafe_allow_html=True,
+      )
+    else:
+      st.warning("Introduce una directiva válida para procesar.")
 
 with tab_docs:
   st.subheader("REPOSITORIO GENERAL DE DOCUMENTOS")
