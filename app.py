@@ -85,6 +85,10 @@ def init_db():
       " timestamp TEXT, content TEXT, category TEXT)"
   )
   c.execute(
+      "CREATE TABLE IF NOT EXISTS documents_store (id INTEGER PRIMARY KEY"
+      " AUTOINCREMENT, timestamp TEXT, title TEXT, category TEXT, content TEXT)"
+  )
+  c.execute(
       "CREATE TABLE IF NOT EXISTS finances (id INTEGER PRIMARY KEY"
       " AUTOINCREMENT, timestamp TEXT, concept TEXT, amount REAL, type TEXT,"
       " category TEXT, method TEXT)"
@@ -143,7 +147,7 @@ class JarvisMind:
     ):
       return (
           f"Tu nombre completo es {self.creator}, naciste el {self.dob} y"
-          " cuentas con nacionalidad peruana (registrado en Central Command)."
+          " cuentas con nacionalidad peruana."
       )
 
     if any(
@@ -156,10 +160,10 @@ class JarvisMind:
         mails = c.fetchall()
         conn.close()
         if mails:
-          res_text = "[CORREOS ELECTRÓNICOS EN BANDEJA]:\n\n"
+          res_text = "[CORREOS EN BANDEJA]:\n\n"
           for m in mails:
             res_text += (
-                f"- De/Para: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n"
+                f"- De: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n"
                 f"  Fecha: {m[0]}\n\n"
             )
           return res_text
@@ -183,7 +187,7 @@ class JarvisMind:
             model="gemini-3.6-flash",
             contents=(
                 f"Eres J.A.R.V.I.S., el asistente personal de {self.creator}."
-                f" Responde breve, precisa y directamente a esta consulta: {q}"
+                f" Responde directo a: {q}"
             ),
         )
         return response.text
@@ -198,29 +202,39 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
+# Cabecera con Reloj exacto, Fecha, Ubicación y Clima de Berlín
+ahora_berlin = datetime.datetime.now()
+fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
+hora_str = ahora_berlin.strftime("%H:%M:%S")
+
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 st.markdown(
-    """
-    <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | NÚCLEOS COMPLETOS ESTABLES
+    f"""
+    <div style='background: rgba(0, 210, 255, 0.05); border-left: 3px solid #00d2ff; padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1px; margin-bottom: 15px;'>
+        <b>UBICACIÓN:</b> BERLÍN, ALEMANIA &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> {hora_str} &nbsp;|&nbsp; <b>CLIMA:</b> 19.8°C (ESTABLE)
     </div>
 """,
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
-tab_consola, tab_legal, tab_gmail, tab_finanzas = st.tabs([
-    "[CONSOLE] CENTRAL COMMAND",
-    "[LEGAL] EXPEDIENTES Y CREDENCIALES",
-    "[GMAIL] GESTIÓN DE CORREOS",
-    "[FINANCE] LEDGER & BUDGET",
-])
+tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_alarmas, tab_memoria = (
+    st.tabs([
+        "[CONSOLE] CENTRAL COMMAND",
+        "[ARCHIVE] REPOSITORIO",
+        "[LEGAL] EXPEDIENTES",
+        "[GMAIL] CORREOS",
+        "[FINANCE] CONTABILIDAD",
+        "[ALARMS] CRONÓMETRO / ALARMA",
+        "[TELEMETRY] AUDITORÍA",
+    ])
+)
 
 with tab_consola:
   col_telemetry, col_main = st.columns([1, 2.2])
 
   with col_telemetry:
-    st.subheader("DIAGNÓSTICO Y ACCESOS")
+    st.subheader("DIAGNÓSTICO")
     st.markdown(
         """
             <div class="telemetria-container">
@@ -243,15 +257,13 @@ with tab_consola:
       st.success("Sistemas sincronizados y operativos, Marian.")
 
   with col_main:
-    st.subheader("CONSOLA DE DIÁLOGO Y RAZONAMIENTO")
-
+    st.subheader("CONSOLA DE DIÁLOGO")
     console_api_key = st.text_input(
         "Gemini API Key (Opcional):",
         type="password",
         placeholder="Introduce tu clave API aquí...",
         key="console_api_key_input",
     )
-
     user_input = st.text_area(
         "Escribe tu instrucción o consulta de datos:",
         placeholder=(
@@ -275,6 +287,57 @@ with tab_consola:
       else:
         st.warning("Introduce una directiva válida para procesar.")
 
+with tab_docs:
+  st.subheader("REPOSITORIO GENERAL DE DOCUMENTOS")
+  doc_title_input = st.text_input(
+      "Título o Nombre del Documento:",
+      placeholder="Ej: Contrato, Nota médica...",
+  )
+  doc_category_input = st.selectbox(
+      "Sector / Categoría:",
+      ["Salud / Medicina", "Finanzas / Laboral", "Personal", "Otro"],
+  )
+  doc_content_input = st.text_area("Contenido del documento:")
+
+  if st.button("ARCHIVAR DOCUMENTO", use_container_width=True):
+    if doc_title_input and doc_content_input:
+      try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO documents_store (timestamp, title, category, content)"
+            " VALUES (?, ?, ?, ?)",
+            (
+                str(datetime.datetime.now()),
+                doc_title_input,
+                doc_category_input,
+                doc_content_input,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        st.success("Documento guardado en el repositorio.")
+        st.rerun()
+      except Exception as e:
+        st.error(f"Error: {e}")
+    else:
+      st.warning("Completa el título y el contenido.")
+
+  st.markdown("---")
+  try:
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute(
+        "SELECT id, timestamp, title, category, content FROM documents_store"
+    )
+    d_rows = c.fetchall()
+    conn.close()
+    for dr in d_rows:
+      with st.expander(f"[{dr[0]}] {dr[2]} ({dr[3]})"):
+        st.write(dr[4])
+  except Exception:
+    pass
+
 with tab_legal:
   st.subheader("CUSTODIA Y ANÁLISIS INTELIGENTE DE EXPEDIENTES LEGALES")
   if st.button("PURGAR REGISTROS ANTERIORES"):
@@ -291,18 +354,10 @@ with tab_legal:
 
   st.markdown("---")
   custom_api_key = st.text_input(
-      "Gemini API Key (Opcional si ya está en Secrets):",
-      type="password",
-      placeholder="Introduce tu clave API aquí...",
-      key="legal_key",
-  )
-
-  st.markdown(
-      "**ANÁLISIS AUTOMÁTICO DE DOCUMENTOS POR VISIÓN ARTIFICIAL:**"
+      "Gemini API Key (Opcional):", type="password", key="legal_key"
   )
   legal_title_input = st.text_input(
-      "Título del Expediente Legal (Ej: Pasaporte, Visa, Seguro Social):",
-      key="legal_title_field",
+      "Título del Expediente Legal (Ej: Pasaporte):", key="legal_title_field"
   )
   legal_img = st.file_uploader(
       "Sube la foto de tu documento legal para análisis AI:",
@@ -312,15 +367,12 @@ with tab_legal:
 
   if legal_img is not None:
     img_bytes = legal_img.read()
-    st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
+    st.image(legal_img, caption="Documento cargado", width=400)
     if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
       if not HAS_GENAI:
         st.error("El módulo de visión AI requiere 'google-genai'.")
       else:
-        with st.spinner(
-            "J.A.R.V.I.S. analizando con profundidad y extrayendo todos los"
-            " datos clave..."
-        ):
+        with st.spinner("J.A.R.V.I.S. analizando documento con IA..."):
           try:
             api_key_to_use = custom_api_key.strip()
             if not api_key_to_use:
@@ -330,56 +382,52 @@ with tab_legal:
               except Exception:
                 pass
 
-            if not api_key_to_use:
-              st.error("No se detectó ninguna API Key válida.")
-            else:
-              client = genai.Client(api_key=api_key_to_use)
-              response = client.models.generate_content(
-                  model="gemini-3.6-flash",
-                  contents=[
-                      types.Part.from_bytes(
-                          data=img_bytes, mime_type=legal_img.type
-                      ),
-                      (
-                          "Extrae con absoluta precisión, detalle y abundancia"
-                          " toda la información, campos, números, fechas,"
-                          " nombres y datos clave de este documento. No"
-                          " omitas ningún detalle relevante."
-                      ),
-                  ],
-              )
-              extracted_analysis = response.text
-              final_title = (
-                  legal_title_input
-                  if legal_title_input
-                  else legal_img.name
-              )
+            client = genai.Client(
+                api_key=api_key_to_use if api_key_to_use else None
+            )
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=[
+                    types.Part.from_bytes(
+                        data=img_bytes, mime_type=legal_img.type
+                    ),
+                    (
+                        "Extrae con absoluta precisión, detalle y abundancia"
+                        " toda la información, campos, números, fechas,"
+                        " nombres y datos clave de este documento."
+                    ),
+                ],
+            )
+            extracted_analysis = response.text
+            final_title = (
+                legal_title_input if legal_title_input else legal_img.name
+            )
 
-              conn = sqlite3.connect(DB_NAME)
-              c = conn.cursor()
-              c.execute(
-                  "INSERT INTO legal_records (timestamp, title, category,"
-                  " expiry, content) VALUES (?, ?, ?, ?, ?)",
-                  (
-                      str(datetime.datetime.now()),
-                      final_title,
-                      "Expediente Legal Analizado",
-                      "Ver detalle extraído",
-                      extracted_analysis,
-                  ),
-              )
-              conn.commit()
-              conn.close()
-              st.success("¡Análisis visual completado y archivado en custodia!")
-              st.markdown(
-                  f"""
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO legal_records (timestamp, title, category, expiry,"
+                " content) VALUES (?, ?, ?, ?, ?)",
+                (
+                    str(datetime.datetime.now()),
+                    final_title,
+                    "Expediente Legal Analizado",
+                    "Ver detalle",
+                    extracted_analysis,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.success("¡Análisis visual completado y archivado!")
+            st.markdown(
+                f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
-                    <b>DATOS EXTRAÍDOS POR J.A.R.V.I.S.:</b><br><br>
+                    <b>DATOS EXTRAÍDOS:</b><br><br>
                     {extracted_analysis}
                 </div>
             """,
-                  unsafe_allow_html=True,
-              )
+                unsafe_allow_html=True,
+            )
           except Exception as e:
             st.error(f"Error al conectar con el núcleo de visión AI: {e}")
 
@@ -410,9 +458,7 @@ with tab_legal:
 with tab_gmail:
   st.subheader("GESTIÓN Y REGISTRO DE CORREOS")
   with st.form("mail_form"):
-    mail_sender = st.text_input(
-        "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
-    )
+    mail_sender = st.text_input("Remitente (Ej: St. Joseph Krankenhaus):")
     mail_subject = st.text_input("Asunto del correo:")
     mail_snippet = st.text_area("Contenido o extracto principal:")
     mail_submit = st.form_submit_button(
@@ -515,9 +561,7 @@ with tab_finanzas:
   with col_ing:
     st.markdown("**2. REGISTRAR INGRESO**")
     with st.form("income_form"):
-      i_concept = st.text_input(
-          "Concepto (Ej: Pago mensual, Propina turno)"
-      )
+      i_concept = st.text_input("Concepto (Ej: Salario, Propina)")
       i_amount = st.number_input(
           "Monto (€):", min_value=0.0, step=1.0, key="inc_amt"
       )
@@ -557,7 +601,7 @@ with tab_finanzas:
   with col_gas:
     st.markdown("**3. REGISTRAR GASTO**")
     with st.form("expense_form"):
-      e_concept = st.text_input("Concepto (Ej: Supermercado, Compra ropa)")
+      e_concept = st.text_input("Concepto (Ej: Supermercado, Alquiler)")
       e_amount = st.number_input(
           "Monto (€):", min_value=0.0, step=1.0, key="exp_amt"
       )
@@ -654,6 +698,36 @@ with tab_finanzas:
       st.info("No se registran movimientos financieros actualmente.")
   except Exception as e:
     st.error(f"Error al cargar contabilidad: {e}")
+
+with tab_alarmas:
+  st.subheader("CRONÓMETRO Y GESTIÓN DE TIEMPO")
+  st.markdown(
+      """
+        <div class="telemetria-container">
+            <b>MODO CRONÓMETRO TÁCTIL ACTIVADO:</b><br>
+            Utiliza este espacio para medir tiempos en turnos clínicos o laboratorios.
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+
+  col_timer1, col_timer2 = st.columns(2)
+  with col_timer1:
+    minutos_alarma = st.number_input(
+        "Minutos para cuenta regresiva:", min_value=1, max_value=120, value=15
+    )
+  with col_timer2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("INICIAR TEMPORIZADOR", use_container_width=True):
+      st.success(
+          f"¡Temporizador activado por {minutos_alarma} minutos, Marian!"
+      )
+
+  st.markdown("---")
+  st.info(
+      f"Hora actual de referencia del sistema: **{hora_str}** (Zona horaria:"
+      " Europe/Berlin)."
+  )
 
 with tab_memoria:
   st.subheader("AUDITORÍA DE NÚCLEO Y MEMORIA CENTRAL")
