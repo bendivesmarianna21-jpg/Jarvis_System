@@ -1,11 +1,9 @@
 import datetime
-import json
 import os
 import smtplib
 import sqlite3
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import urllib.request
 import streamlit as st
 
 # Importación segura de Google GenAI
@@ -108,15 +106,15 @@ def init_db():
       " TEXT)"
   )
 
-  # Migración segura por si la tabla de finanzas ya existía sin las nuevas columnas
-  try:
-    c.execute("ALTER TABLE finances ADD COLUMN category TEXT")
-  except Exception:
-    pass
-  try:
-    c.execute("ALTER TABLE finances ADD COLUMN method TEXT")
-  except Exception:
-    pass
+  # Migraciones de seguridad por columnas faltantes
+  for col_def in [
+      ("finances", "category TEXT"),
+      ("finances", "method TEXT"),
+  ]:
+    try:
+      c.execute(f"ALTER TABLE {col_def[0]} ADD COLUMN {col_def[1]}")
+    except Exception:
+      pass
 
   conn.commit()
   conn.close()
@@ -253,46 +251,15 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-live_temp = "21.5°C"
-try:
-  url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m"
-  req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-  with urllib.request.urlopen(req, timeout=2) as response:
-    data = json.loads(response.read().decode())
-    live_temp = f"{data['current']['temperature_2m']}°C"
-except Exception:
-  pass
-
+# Interfaz HUD Principal optimizada (Sin llamadas pesadas de red externas)
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-clock_html = f"""
+clock_html = """
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
-        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | TIMESTAMP: <span id="live-date">SATURDAY, 05 SEPTEMBER 2026</span> // <span id="live-clock" style="color: #00d2ff; font-weight: bold;">00:00:00</span> | TEMP: {live_temp}
+        GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | NÚCLEO ESTABLE // TEMP: 19.8°C
     </div>
-    <script>
-        function updateClock() {{
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const berlinTime = new Date(utc + (3600000 * 2));
-            
-            const options = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
-            const dateString = berlinTime.toLocaleDateString('en-US', options).toUpperCase();
-            
-            const hours = String(berlinTime.getHours()).padStart(2, '0');
-            const minutes = String(berlinTime.getMinutes()).padStart(2, '0');
-            const seconds = String(berlinTime.getSeconds()).padStart(2, '0');
-            
-            const dateEl = document.getElementById('live-date');
-            const clockEl = document.getElementById('live-clock');
-            
-            if (dateEl) dateEl.innerText = dateString;
-            if (clockEl) clockEl.innerText = hours + ':' + minutes + ':' + seconds;
-        }}
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
 """
-st.components.v1.html(clock_html, height=30)
+st.markdown(clock_html, unsafe_allow_html=True)
 st.markdown("---")
 
 tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_memoria = (
@@ -316,7 +283,7 @@ with tab_consola:
             <div class="telemetria-container">
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
-                - Autonomía Cognitiva: ACTIVA<br>
+                - Motor SQLite: ÓPTIMO<br>
                 - Módulo de Visión AI: SEGURO<br>
                 - Gestor de Comunicaciones: ACTIVO<br><br>
                 <b>CRONOGRAMA:</b><br>
@@ -639,7 +606,6 @@ with tab_gmail:
 with tab_finanzas:
   st.subheader("CONTROL Y GESTIÓN FINANCIERA AVANZADA")
 
-  # Sección 1: Capital Base / Dinero Inicial
   with st.form("capital_form"):
     st.markdown("**1. ESTABLECER CAPITAL / DINERO INICIAL**")
     col_c1, col_c2 = st.columns(2)
@@ -688,7 +654,6 @@ with tab_finanzas:
 
   st.markdown("---")
 
-  # Sección 2: Registro de Ingresos (Salario, Propinas, etc.)
   col_ing, col_gas = st.columns(2)
 
   with col_ing:
@@ -733,7 +698,6 @@ with tab_finanzas:
         else:
           st.warning("Introduce un concepto válido.")
 
-  # Sección 3: Registro de Gastos (Comida, Alquiler, etc.)
   with col_gas:
     st.markdown("**3. REGISTRAR GASTO**")
     with st.form("expense_form"):
