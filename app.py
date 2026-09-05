@@ -76,7 +76,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-DB_NAME = "jarvis_command_core.db"
+# Usar un nuevo nombre de base de datos evita cualquier conflicto con registros antiguos corruptos
+DB_NAME = "jarvis_command_core_v2.db"
 
 
 def init_db():
@@ -105,17 +106,6 @@ def init_db():
       " AUTOINCREMENT, timestamp TEXT, sender TEXT, subject TEXT, snippet"
       " TEXT)"
   )
-
-  # Asegurar que las columnas de finanzas existan siempre
-  try:
-    c.execute("ALTER TABLE finances ADD COLUMN category TEXT")
-  except Exception:
-    pass
-  try:
-    c.execute("ALTER TABLE finances ADD COLUMN method TEXT")
-  except Exception:
-    pass
-
   conn.commit()
   conn.close()
 
@@ -605,7 +595,7 @@ with tab_gmail:
 
 with tab_finanzas:
   st.subheader("CONTROL Y GESTIÓN FINANCIERA")
-  
+
   with st.form("capital_form"):
     st.markdown("**1. ESTABLECER CAPITAL / DINERO INICIAL**")
     col_c1, col_c2 = st.columns(2)
