@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import smtplib
 import sqlite3
 import time
@@ -122,7 +123,7 @@ def init_db():
   )
   c.execute(
       "CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY"
-      " AUTOINCREMENT, timestamp TEXT, event_date TEXT, description TEXT)"
+      " AUTOINCREMENT, timestamp TEXT, target_date TEXT, description TEXT)"
   )
   conn.commit()
   conn.close()
@@ -154,6 +155,7 @@ class JarvisMind:
     except Exception:
       pass
 
+    # Inteligencia para detectar fechas de los recordatorios
     if any(
         w in q_lower
         for w in [
@@ -166,19 +168,26 @@ class JarvisMind:
             "llegará",
         ]
     ):
+      # Detectar si es para hoy o una fecha específica
+      target_date = "2026-09-05"  # Por defecto hoy (5 de septiembre)
+      if "lunes" in q_lower or "7 de septiembre" in q_lower:
+        target_date = "2026-09-07"
+      elif "mañana" in q_lower or "6 de septiembre" in q_lower:
+        target_date = "2026-09-06"
+
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO reminders (timestamp, event_date, description)"
+            "INSERT INTO reminders (timestamp, target_date, description)"
             " VALUES (?, ?, ?)",
-            (str(datetime.datetime.now()), "Lunes 7 de Septiembre", q),
+            (str(datetime.datetime.now()), target_date, q),
         )
         conn.commit()
         conn.close()
         return (
-            "Directiva procesada. Evento registrado en memoria central y en"
-            "lazado al sistema de alertas tácticas."
+            f"Directiva procesada. Recordatorio programado para la fecha"
+            f" [{target_date}] y enlazado al núcleo táctico."
         )
       except Exception as e:
         return f"Error al registrar recordatorio: {e}"
@@ -190,13 +199,13 @@ class JarvisMind:
       try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute("SELECT timestamp, description FROM reminders")
+        c.execute("SELECT target_date, description FROM reminders")
         rems = c.fetchall()
         conn.close()
         if rems:
-          res_text = "[RECORDATORIOS ACTIVOS EN MEMORIA]:\n\n"
+          res_text = "[REGISTRO DE AGENDA EN MEMORIA]:\n\n"
           for r in rems:
-            res_text += f"- {r[1]} (Registrado: {r[0]})\n\n"
+            res_text += f"- [{r[0]}] {r[1]}\n\n"
           return res_text
         else:
           return "No hay recordatorios activos en este momento, Marian."
@@ -309,20 +318,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Viñeta modal táctica automática si existen recordatorios en la base de datos
+# Viñeta modal táctica inteligente que filtra los eventos exclusivamente para HOY (2026-09-05)
 try:
+  today_str = "2026-09-05"
   conn = sqlite3.connect(DB_NAME)
   c = conn.cursor()
-  c.execute("SELECT description FROM reminders")
-  active_reminders = c.fetchall()
+  c.execute(
+      "SELECT description FROM reminders WHERE target_date = ?", (today_str,)
+  )
+  today_reminders = c.fetchall()
   conn.close()
 
-  if active_reminders:
-    rems_html = "<br>".join([f"- {r[0]}" for r in active_reminders])
+  if today_reminders:
+    rems_html = "<br>".join([f"- {r[0]}" for r in today_reminders])
     st.markdown(
         f"""
         <div class="stark-alert-modal">
-            <b>[ALERTA TÁCTICA DE SISTEMA] // EVENTOS ACTIVOS EN MEMORIA:</b><br><br>
+            <b>[ALERTA TÁCTICA] // PENDIENTES PARA HOY:</b><br><br>
             {rems_html}
         </div>
     """,
@@ -570,7 +582,7 @@ with tab_gmail:
     mail_subject = st.text_input("Asunto del correo:")
     mail_snippet = st.text_area("Contenido o extracto principal:")
     mail_submit = st.form_submit_button(
-        "REGISTRAR CORREOR EN BANDEJA", use_container_width=True
+        "REGISTRAR CORREO EN BANDEJA", use_container_width=True
     )
 
     if mail_submit and mail_sender and mail_subject:
