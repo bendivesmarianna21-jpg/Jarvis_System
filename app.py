@@ -112,7 +112,7 @@ def init_db_and_sync():
       " TEXT)"
   )
 
-  # Si la BD está vacía pero existe un respaldo JSON previo, restaurar automáticamente
+  # Restauración automática desde archivo JSON si la BD local está vacía
   c.execute("SELECT COUNT(*) FROM documents_store")
   doc_count = c.fetchone()[0]
 
@@ -580,7 +580,11 @@ with tab_docs:
 
 with tab_legal:
   st.subheader("CUSTODIA Y ANÁLISIS DE EXPEDIENTES LEGALES")
-  if st.button("PURGAR REGISTROS ANTERIORES"):
+
+  if "processed_doc_sig" not in st.session_state:
+    st.session_state.processed_doc_sig = None
+
+  if st.button("PURGAR REGISTROS DUPLICADOS Y ANTERIORES"):
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -588,6 +592,7 @@ with tab_legal:
       conn.commit()
       conn.close()
       export_to_json_backup()
+      st.session_state.processed_doc_sig = None
       st.success("Base de datos purgada correctamente.")
       st.rerun()
     except Exception as e:
@@ -615,9 +620,16 @@ with tab_legal:
 
   if legal_img is not None:
     img_bytes = legal_img.read()
+    doc_signature = f"{legal_img.name}_{len(img_bytes)}"
     st.image(legal_img, caption="Documento cargado para análisis visual", width=400)
+
     if st.button("EJECUTAR EXTRACCIÓN VISUAL AI", use_container_width=True):
-      if not HAS_GENAI:
+      if st.session_state.processed_doc_sig == doc_signature:
+        st.warning(
+            "Este documento ya fue analizado y registrado en esta sesión para"
+            " evitar duplicados."
+        )
+      elif not HAS_GENAI:
         st.error("El módulo de visión AI requiere 'google-genai'.")
       else:
         with st.spinner(
@@ -674,7 +686,11 @@ with tab_legal:
               conn.close()
               export_to_json_backup()
 
-              st.success("¡Análisis visual completado y archivado con persistencia!")
+              st.session_state.processed_doc_sig = doc_signature
+              st.success(
+                  "¡Análisis visual completado y archivado con persistencia y sin"
+                  " duplicados!"
+              )
               st.markdown(
                   f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
