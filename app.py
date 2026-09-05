@@ -135,10 +135,7 @@ class JarvisMind:
       pass
 
     if any(w in q_lower for w in ["hola", "saludos", "buenos dias", "hey"]):
-      return (
-          "Hola, Marian. Todos los sistemas están en línea y listos. ¿Qué"
-          " necesitas?"
-      )
+      return "Hola, Marian. Todos los sistemas operativos están listos."
 
     if any(
         w in q_lower
@@ -212,7 +209,6 @@ fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Barra superior con ID único para actualización nativa por JS con el color exacto del tema
 st.markdown(
     f"""
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
@@ -220,29 +216,28 @@ st.markdown(
     </div>
     
     <script>
-    if (typeof window.jarvisClockInterval === 'undefined') {
-        window.jarvisClockInterval = setInterval(function() {
+    if (typeof window.jarvisClockInterval === 'undefined') {{
+        window.jarvisClockInterval = setInterval(function() {{
             const ahora = new Date();
-            const opciones = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            try {
+            const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
+            try {{
                 const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
                 const elem = document.getElementById('reloj-jarvis');
-                if (elem) {
+                if (elem) {{
                     elem.innerText = horaBerling;
-                }
-            } catch(e) {}
-        }, 1000);
-    }
-    // Ejecutar inmediatamente al cargar
-    (function() {
+                }}
+            }} catch(e) {{}}
+        }}, 1000);
+    }}
+    (function() {{
         const ahora = new Date();
-        const opciones = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-        try {
+        const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
+        try {{
             const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
             const elem = document.getElementById('reloj-jarvis');
-            if (elem) { elem.innerText = horaBerling; }
-        } catch(e) {}
-    })();
+            if (elem) {{ elem.innerText = horaBerling; }}
+        }} catch(e) {{}}
+    }})();
     </script>
 """,
     unsafe_allow_html=True,
