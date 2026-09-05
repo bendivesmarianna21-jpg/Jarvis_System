@@ -202,17 +202,33 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-# Cabecera con Reloj exacto, Fecha, Ubicación y Clima de Berlín
+# Fecha estática de Berlín y Reloj Dinámico en vivo por JavaScript
 ahora_berlin = datetime.datetime.now()
 fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
-hora_str = ahora_berlin.strftime("%H:%M:%S")
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
+
+# Contenedor superior con JavaScript puro para que los segundos avancen solos
 st.markdown(
     f"""
     <div style='background: rgba(0, 210, 255, 0.05); border-left: 3px solid #00d2ff; padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1px; margin-bottom: 15px;'>
-        <b>UBICACIÓN:</b> BERLÍN, ALEMANIA &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> {hora_str} &nbsp;|&nbsp; <b>CLIMA:</b> 19.8°C (ESTABLE)
+        <b>UBICACIÓN:</b> BERLÍN, ALEMANIA &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL (BERLÍN):</b> <span id="reloj-jarvis" style="color: #00ffcc; font-weight: bold;">--:--:--</span> &nbsp;|&nbsp; <b>CLIMA:</b> 19.8°C (ESTABLE)
     </div>
+    
+    <script>
+    function actualizarReloj() {{
+        const ahora = new Date();
+        // Forzar zona horaria de Berlín (Europe/Berlin)
+        const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
+        const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
+        const elem = document.getElementById('reloj-jarvis');
+        if (elem) {{
+            elem.innerText = horaBerling;
+        }}
+    }}
+    setInterval(actualizarReloj, 1000);
+    actualizarReloj();
+    </script>
 """,
     unsafe_allow_html=True,
 )
@@ -725,8 +741,8 @@ with tab_alarmas:
 
   st.markdown("---")
   st.info(
-      f"Hora actual de referencia del sistema: **{hora_str}** (Zona horaria:"
-      " Europe/Berlin)."
+      "El reloj superior está sincronizado en tiempo real con la zona horaria"
+      " de Berlín (Europe/Berlin)."
   )
 
 with tab_memoria:
