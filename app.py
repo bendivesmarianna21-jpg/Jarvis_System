@@ -105,6 +105,17 @@ def init_db():
       " AUTOINCREMENT, timestamp TEXT, sender TEXT, subject TEXT, snippet"
       " TEXT)"
   )
+
+  # Asegurar que las columnas de finanzas existan siempre
+  try:
+    c.execute("ALTER TABLE finances ADD COLUMN category TEXT")
+  except Exception:
+    pass
+  try:
+    c.execute("ALTER TABLE finances ADD COLUMN method TEXT")
+  except Exception:
+    pass
+
   conn.commit()
   conn.close()
 
