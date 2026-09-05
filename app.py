@@ -105,17 +105,6 @@ def init_db():
       " AUTOINCREMENT, timestamp TEXT, sender TEXT, subject TEXT, snippet"
       " TEXT)"
   )
-
-  # Migraciones de seguridad por columnas faltantes
-  for col_def in [
-      ("finances", "category TEXT"),
-      ("finances", "method TEXT"),
-  ]:
-    try:
-      c.execute(f"ALTER TABLE {col_def[0]} ADD COLUMN {col_def[1]}")
-    except Exception:
-      pass
-
   conn.commit()
   conn.close()
 
@@ -251,15 +240,15 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-# Interfaz HUD Principal optimizada (Sin llamadas pesadas de red externas)
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
-
-clock_html = """
+st.markdown(
+    """
     <div style='color: #0088cc; font-family: "Courier New", Courier, monospace; font-size: 12px; letter-spacing: 1px; margin-bottom: 15px;'>
         GLOBAL STATUS: ONLINE (BERLIN / ROAMING) | NÚCLEO ESTABLE // TEMP: 19.8°C
     </div>
-"""
-st.markdown(clock_html, unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 st.markdown("---")
 
 tab_consola, tab_docs, tab_legal, tab_gmail, tab_finanzas, tab_memoria = (
@@ -604,8 +593,8 @@ with tab_gmail:
     st.error(f"Error al cargar correos: {e}")
 
 with tab_finanzas:
-  st.subheader("CONTROL Y GESTIÓN FINANCIERA AVANZADA")
-
+  st.subheader("CONTROL Y GESTIÓN FINANCIERA")
+  
   with st.form("capital_form"):
     st.markdown("**1. ESTABLECER CAPITAL / DINERO INICIAL**")
     col_c1, col_c2 = st.columns(2)
