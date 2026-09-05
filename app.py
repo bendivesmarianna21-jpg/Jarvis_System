@@ -213,11 +213,11 @@ fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Reloj digital en vivo 100% autónomo por JavaScript continuo
+# Reloj digital en vivo 100% autónomo (separado de f-strings para evitar errores de sintaxis)
 st.markdown(
-    f"""
+    """
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA:</b> {fecha_str} &nbsp;|&nbsp; <b>HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">00:00:00</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-jarvis-vivo" style="color: #00ffcc; font-weight: bold;">SINCRO...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
     
     <script>
@@ -227,12 +227,11 @@ st.markdown(
         }
         function tickClock() {
             const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
+            const options = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const formatter = new Intl.DateTimeFormat('es-ES', options);
             const el = document.getElementById('reloj-jarvis-vivo');
             if (el) {
-                el.innerText = h + ":" + m + ":" + s;
+                el.innerText = formatter.format(now).toUpperCase();
             }
         }
         tickClock();
