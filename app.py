@@ -1,6 +1,5 @@
 import datetime
 import os
-import re
 import smtplib
 import sqlite3
 import time
@@ -129,7 +128,6 @@ class JarvisMind:
     q = query.strip()
     q_lower = q.lower()
 
-    # Guardar en memoria general de auditoría
     try:
       conn = sqlite3.connect(DB_NAME)
       c = conn.cursor()
@@ -142,7 +140,7 @@ class JarvisMind:
     except Exception:
       pass
 
-    # 1. Detección de intención de recordatorio / agenda
+    # Detección y almacenamiento inteligente de recordatorios
     if any(
         w in q_lower
         for w in [
@@ -152,6 +150,7 @@ class JarvisMind:
             "agendar",
             "anota",
             "cita",
+            "llegará",
         ]
     ):
       try:
@@ -160,19 +159,18 @@ class JarvisMind:
         c.execute(
             "INSERT INTO reminders (timestamp, event_date, description)"
             " VALUES (?, ?, ?)",
-            (str(datetime.datetime.now()), "Por programar / Ver detalle", q),
+            (str(datetime.datetime.now()), "Pendiente de ejecución", q),
         )
         conn.commit()
         conn.close()
         return (
-            "Entendido, Marian. He procesado tu directiva y he registrado el"
-            " evento en mi memoria central de recordatorios con éxito. Lo"
-            " tendré presente en el cronograma."
+            "Entendido, Marian. He procesado tu directiva, registrado el"
+            " evento en mi memoria central y lo mantendré vigilado en el"
+            " sistema."
         )
       except Exception as e:
-        return f"Error al registrar recordatorio en memoria: {e}"
+        return f"Error al registrar recordatorio: {e}"
 
-    # 2. Consultar recordatorios guardados
     if any(
         w in q_lower
         for w in ["que recordatorios", "ver recordatorios", "mis tareas", "agenda"]
@@ -193,7 +191,6 @@ class JarvisMind:
       except Exception as e:
         return f"Error al consultar recordatorios: {e}"
 
-    # 3. Saludos
     if any(w in q_lower for w in ["hola", "saludos", "buenos dias", "hey"]):
       return (
           "Hola, Marian. Es un placer asistirte. Todos los sistemas de Central"
@@ -201,7 +198,6 @@ class JarvisMind:
           " en este momento?"
       )
 
-    # 4. Datos de identidad
     if any(
         w in q_lower
         for w in [
@@ -220,7 +216,6 @@ class JarvisMind:
           " cuentas con nacionalidad peruana."
       )
 
-    # 5. Correos
     if any(
         w in q_lower for w in ["correo", "gmail", "mensaje", "bandeja", "mail"]
     ):
@@ -243,7 +238,6 @@ class JarvisMind:
       except Exception as e:
         return f"Error al consultar correo: {e}"
 
-    # 6. Fallback a Gemini si hay API Key
     api_key_to_use = api_key_override.strip()
     if not api_key_to_use:
       try:
@@ -273,35 +267,32 @@ jarvis_brain = JarvisMind()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Barra HUD superior con Fecha y Hora 100% dinámicas, continuas y automáticas en tiempo real (Zona Berlín)
+# HUD superior con el componente iframe exacto que garantiza la actualización en vivo de fecha y hora
 st.markdown(
     """
     <div style='background: rgba(4, 12, 24, 0.95); border: 1px solid rgba(0, 210, 255, 0.4); padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; color: #00d2ff; letter-spacing: 1.5px; margin-bottom: 20px;'>
-        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="reloj-hud-total" style="color: #00ffcc; font-weight: bold;">--/--/---- --:--:--</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
+        <b>UBICACIÓN:</b> BERLÍN, DE &nbsp;|&nbsp; <b>FECHA Y HORA LOCAL:</b> <span id="jarvis-hud-clock" style="color: #00ffcc; font-weight: bold;">CARGANDO...</span> &nbsp;|&nbsp; <b>ESTADO:</b> SEGURO // ONLINE
     </div>
-    
-    <script>
-    (function() {
-        function updateHud() {
-            const el = document.getElementById('reloj-hud-total');
-            if (!el) return;
-            
-            const now = new Date();
-            const optionsDate = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const optionsTime = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            
-            const dateStr = new Intl.DateTimeFormat('es-ES', optionsDate).format(now).toUpperCase();
-            const timeStr = new Intl.DateTimeFormat('de-DE', optionsTime).format(now);
-            
-            el.innerText = dateStr + " - " + timeStr;
-        }
-        updateHud();
-        if (window.jarvisHudTimer) {
-            clearInterval(window.jarvisHudTimer);
-        }
-        window.jarvisHudTimer = setInterval(updateHud, 1000);
-    })();
-    </script>
+
+    <iframe style="display: none;" srcdoc="
+        <script>
+            function updateParentClock() {
+                if (window.parent && window.parent.document) {
+                    const el = window.parent.document.getElementById('jarvis-hud-clock');
+                    if (el) {
+                        const now = new Date();
+                        const optionsDate = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                        const optionsTime = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                        const dateStr = new Intl.DateTimeFormat('es-ES', optionsDate).format(now).toUpperCase();
+                        const timeStr = new Intl.DateTimeFormat('de-DE', optionsTime).format(now);
+                        el.innerText = dateStr + ' - ' + timeStr;
+                    }
+                }
+            }
+            setInterval(updateParentClock, 1000);
+            updateParentClock();
+        </script>
+    "></iframe>
 """,
     unsafe_allow_html=True,
 )
