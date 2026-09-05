@@ -20,7 +20,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# Estética HUD Avanzada: Paneles oscuros, bordes de neón cian y fuentes de consola
 st.markdown(
     """
     <style>
@@ -36,11 +35,6 @@ st.markdown(
             font-family: 'Courier New', Courier, monospace !important;
             letter-spacing: 2px;
             text-transform: uppercase;
-        }
-
-        /* Paneles laterales estilo HUD */
-        .sidebar .st-emotion-cache-16txtl3 {
-            background-color: #040c18 !important;
         }
 
         .telemetria-container {
@@ -210,9 +204,6 @@ class JarvisMind:
 
 jarvis_brain = JarvisMind()
 
-# ==========================================
-# PANEL LATERAL (APROVECHANDO LOS BORDES)
-# ==========================================
 with st.sidebar:
   st.markdown("### ⚡ NÚCLEO STARK // HUD")
   st.markdown(
@@ -244,15 +235,11 @@ with st.sidebar:
   if st.button("VERIFICAR INTEGRIDAD", use_container_width=True):
     st.success("¡Sistemas sincronizados, Marian!")
 
-# ==========================================
-# PANTALLA PRINCIPAL (WIDESCREEN TOTAL)
-# ==========================================
 ahora_berlin = datetime.datetime.now()
 fecha_str = ahora_berlin.strftime("%A, %d de %B de %Y").upper()
 
 st.title("J.A.R.V.I.S. // CENTRAL COMMAND")
 
-# Barra superior con reloj dinámico corregido en tiempo real
 st.markdown(
     f"""
     <div style='background: rgba(0, 210, 255, 0.05); border-left: 3px solid #00d2ff; padding: 10px 15px; font-family: "Courier New", Courier, monospace; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 20px;'>
@@ -263,14 +250,14 @@ st.markdown(
     if (typeof timerReloj === 'undefined') {
         const timerReloj = setInterval(function() {
             const ahora = new Date();
-            const opciones = {{ timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
             try {
+                const opciones = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
                 const horaBerling = new Intl.DateTimeFormat('de-DE', opciones).format(ahora);
                 const elem = document.getElementById('reloj-jarvis');
-                if (elem) {{
+                if (elem) {
                     elem.innerText = horaBerling;
-                }}
-            } catch(e) {{}}
+                }
+            } catch(e) {}
         }, 1000);
     }
     </script>
