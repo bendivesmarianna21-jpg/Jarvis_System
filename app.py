@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import smtplib
 import sqlite3
 from email.mime.multipart import MIMEMultipart
@@ -106,7 +107,7 @@ def init_db():
       " TEXT)"
   )
 
-  # Datos iniciales si la tabla está vacía
+  # Datos base permanentes para asegurar contexto inicial
   c.execute("SELECT COUNT(*) FROM gmail_cache")
   if c.fetchone()[0] == 0:
     c.execute(
@@ -184,17 +185,17 @@ class JarvisMind:
         mails = c.fetchall()
         conn.close()
         if mails:
-          res_text = "[CORREOS ELECTRÓNICOS REGISTRADOS EN BANDEJA]:\n\n"
+          res_text = "[CORREOS ELECTRÓNICOS EN MEMORIA PERMANENTE]:\n\n"
           for m in mails:
             res_text += (
-                f"- De: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n  Fecha:"
-                f" {m[0]}\n\n"
+                f"- De/Para: {m[1]} | Asunto: {m[2]}\n  Contenido: {m[3]}\n"
+                f"  Fecha: {m[0]}\n\n"
             )
           return res_text
         else:
-          return "No hay correos registrados en la bandeja de J.A.R.V.I.S."
+          return "No hay correos registrados en la memoria central."
       except Exception as e:
-        return f"Error al consultar caché de correo: {e}"
+        return f"Error al consultar memoria de correo: {e}"
 
     try:
       conn = sqlite3.connect(DB_NAME)
@@ -214,7 +215,7 @@ class JarvisMind:
       conn.close()
 
       if legal_matches or doc_matches:
-        res_text = "[REGISTROS ENCONTRADOS EN CUSTODIA]:\n\n"
+        res_text = "[REGISTROS ENCONTRADOS EN CUSTODIA PERSISTENTE]:\n\n"
         for lm in legal_matches:
           res_text += (
               f"- [Legal] {lm[0]} ({lm[1]}) [Vigencia: {lm[2]}]\n"
@@ -321,7 +322,7 @@ with tab_consola:
             <div class="telemetria-container">
                 <b>ESTADO DE NÚCLEOS:</b><br>
                 - Identidad: J.A.R.V.I.S.<br>
-                - Autonomía Cognitiva: ACTIVA<br>
+                - Memoria Persistente: ACTIVA<br>
                 - Módulo de Visión AI: SEGURO<br>
                 - Gestor de Comunicaciones: ACTIVO<br><br>
                 <b>CRONOGRAMA:</b><br>
@@ -370,7 +371,7 @@ with tab_consola:
         st.warning("Introduce una directiva válida para procesar.")
 
 with tab_docs:
-  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS (FOTO O ESCRITO)")
+  st.subheader("REPOSITORIO Y GESTIÓN DE DOCUMENTOS (PERSISTENTE)")
   doc_title_input = st.text_input(
       "Título o Nombre del Documento:",
       placeholder="Ej: Seguro Social, Contrato de Trabajo, Nota médica...",
@@ -422,7 +423,7 @@ with tab_docs:
               uploaded_file, caption=f"Imagen archivada: {doc_title_input}"
           )
         st.success(
-            f"Documento '{doc_title_input}' archivado e indexado con éxito."
+            f"Documento '{doc_title_input}' archivado en memoria persistente."
         )
       except Exception as e:
         st.error(f"Error de almacenamiento: {e}")
@@ -430,7 +431,7 @@ with tab_docs:
       st.warning("Por favor, ingresa un título y proporciona el contenido.")
 
   st.markdown("---")
-  st.subheader("ARCHIVOS INDEXADOS EN EL SISTEMA")
+  st.subheader("ARCHIVOS EN CUSTODIA PERSISTENTE")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -453,12 +454,12 @@ with tab_docs:
               key=f"doc_view_{doc[0]}",
           )
     else:
-      st.info("El repositorio documental se encuentra vacío.")
+      st.info("El repositorio documental persistente se encuentra vacío.")
   except Exception as e:
     st.error(f"Error al leer el repositorio: {e}")
 
 with tab_legal:
-  st.subheader("CUSTODIA Y ANÁLISIS INTELIGENTE DE EXPEDIENTES LEGALES")
+  st.subheader("CUSTODIA Y ANÁLISIS DE EXPEDIENTES LEGALES")
   if st.button("PURGAR REGISTROS ANTERIORES"):
     try:
       conn = sqlite3.connect(DB_NAME)
@@ -466,7 +467,7 @@ with tab_legal:
       c.execute("DELETE FROM legal_records")
       conn.commit()
       conn.close()
-      st.success("Base de datos de expedientes purgada correctamente.")
+      st.success("Base de datos purgada correctamente.")
       st.rerun()
     except Exception as e:
       st.error(f"Error al purgar: {e}")
@@ -550,7 +551,7 @@ with tab_legal:
               )
               conn.commit()
               conn.close()
-              st.success("¡Análisis visual completado y archivado en custodia!")
+              st.success("¡Análisis visual completado y archivado con persistencia!")
               st.markdown(
                   f"""
                 <div class="telemetria-container" style="margin-top: 10px;">
@@ -596,7 +597,7 @@ with tab_gmail:
   )
 
   if action_mode == "Registrar / Guardar Notificación":
-    st.markdown("Añade cualquier notificación o correo importante a la base de datos:")
+    st.markdown("Añade cualquier notificación o correo importante a la memoria:")
     with st.form("mail_form"):
       mail_sender = st.text_input(
           "Remitente (Ej: St. Joseph Krankenhaus, telc, etc.):"
@@ -604,7 +605,7 @@ with tab_gmail:
       mail_subject = st.text_input("Asunto del correo:")
       mail_snippet = st.text_area("Contenido o extracto principal:")
       mail_submit = st.form_submit_button(
-          "REGISTRAR CORREO EN BANDEJA", use_container_width=True
+          "REGISTRAR CORREO EN MEMORIA", use_container_width=True
       )
 
       if mail_submit and mail_sender and mail_subject:
@@ -623,7 +624,7 @@ with tab_gmail:
           )
           conn.commit()
           conn.close()
-          st.success("¡Correo registrado correctamente en la bandeja!")
+          st.success("¡Correo registrado con persistencia en bandeja!")
           st.rerun()
         except Exception as e:
           st.error(f"Error al registrar correo: {e}")
@@ -664,7 +665,6 @@ with tab_gmail:
 
           st.success(f"¡Correo enviado con éxito a {mail_to}!")
 
-          # Guardar copia en el historial local
           conn = sqlite3.connect(DB_NAME)
           c = conn.cursor()
           c.execute(
@@ -683,7 +683,7 @@ with tab_gmail:
           st.error(f"Error al enviar el correo (verifica tu contraseña de aplicación): {e}")
 
   st.markdown("---")
-  st.subheader("CORREOS EN BANDEJA CENTRAL")
+  st.subheader("CORREOS EN MEMORIA CENTRAL")
   try:
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
